@@ -528,7 +528,8 @@
     margin-bottom: 20px;
 }
 
-.bulk-import-modal .form-row .form-group label {
+/* Đơn giản hóa selector */
+.bulk-import-form-row .form-group label {
     color: #00695c; /* Màu chữ xanh đậm hơn */
     font-weight: 600;
     margin-bottom: 0; /* Ghi đè margin-bottom mặc định từ layout.css */

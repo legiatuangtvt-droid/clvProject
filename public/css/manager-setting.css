@@ -565,34 +565,6 @@
     font-weight: 600;
 }
 
-/* --- Toast Notifications --- */
-.toast {
-    background-color: #333;
-    color: #fff;
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    margin-bottom: 10px;
-    opacity: 0;
-    transform: translateY(-100%);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-    min-width: 250px;
-    text-align: left;
-}
-
-.toast.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.toast-error {
-    background-color: #dc3545;
-}
-
-.toast-info {
-    background-color: #17a2b8;
-}
-
 /* --- Responsive Styles for Mobile --- */
 @media (max-width: 768px) {
     /* --- General Layout --- */
