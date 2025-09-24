@@ -1,0 +1,261 @@
+/* Reset and Global Box Sizing */
+html {
+    box-sizing: border-box;
+    height: 100%; /* Đảm bảo html chiếm toàn bộ chiều cao */
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+/* General Layout */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f4f6f9; /* Chuyển sang màu nền của teacher-layout */
+    margin: 0;
+    color: #333;
+    height: 100%; /* Đảm bảo body chiếm toàn bộ chiều cao của html */
+}
+
+.manager-layout {
+    display: flex;
+    height: 100%; /* Chiếm toàn bộ chiều cao của body */
+}
+
+/* Sidebar */
+.sidebar {
+    width: 75px; /* Chiều rộng khi thu gọn */
+    background: #2c3e50;
+    color: #ecf0f1;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    transition: width 0.3s ease;
+}
+
+.sidebar-header {
+    padding: 20px;
+    text-align: left;
+    border-bottom: 1px solid #34495e;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    white-space: nowrap; /* Ngăn chữ xuống dòng khi thu gọn */
+    color: #1abc9c;
+    opacity: 0; /* Ẩn chữ mặc định */
+    transition: opacity 0.2s ease;
+}
+
+.sidebar.expanded .sidebar-header h3 {
+    opacity: 1; /* Hiện chữ khi mở rộng */
+}
+
+.menu-links {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+    flex-grow: 1;
+}
+
+.menu-links li a {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Khoảng cách giữa icon và chữ */
+    padding: 14px 25px;
+    color: #ecf0f1;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: background 0.2s, color 0.2s;
+    border-left: 4px solid transparent;
+}
+
+.menu-links li a span {
+    white-space: nowrap;
+    opacity: 0; /* Ẩn chữ mặc định */
+    transition: opacity 0.2s ease;
+}
+
+.sidebar.expanded .menu-links li a span {
+    opacity: 1; /* Hiện chữ khi mở rộng */
+    transition-delay: 0.1s;
+}
+
+.menu-links li a .fas {
+    width: 20px; /* Đặt chiều rộng cố định cho icon để các dòng chữ thẳng hàng */
+    text-align: center;
+    font-size: 1.1rem; /* Tăng nhẹ kích thước icon */
+}
+
+.menu-links li a:hover {
+    background: #34495e;
+    color: #fff;
+}
+
+.menu-links li a.active {
+    background: #34495e;
+    font-weight: 600;
+    border-left-color: #1abc9c; /* Màu xanh lá cho active */
+}
+
+/* Trạng thái mở rộng của sidebar */
+.sidebar.expanded {
+    width: 260px; /* Chiều rộng khi mở rộng */
+}
+
+/* Main Content Area */
+.content-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 30px;
+    overflow-y: auto; /* Đảm bảo có thể cuộn nếu nội dung dài */
+}
+
+/* Nút hamburger menu */
+.menu-toggle-btn {
+    display: none; /* Ẩn trên desktop */
+    font-size: 1.2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Đảm bảo modal nằm trên cùng */
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 600px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
+    font-family: inherit; /* Kế thừa font chữ */
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-row .form-group {
+    margin-bottom: 0; /* Bỏ margin dưới trong form-row */
+    flex: 1;
+}
+
+/* --- Toast Notification Styles --- */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-success {
+    background-color: #28a745;
+}
+
+.toast-error {
+    background-color: #dc3545;
+}
+
+.toast-info {
+    background-color: #17a2b8;
+}
+
+/* --- Responsive Styles for Mobile --- */
+@media (max-width: 768px) {
+    .manager-layout {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        position: fixed;
+        left: -260px; /* Ẩn sidebar ra ngoài màn hình */
+        top: 0;
+        height: 100%;
+        z-index: 1100; /* Nằm trên cả overlay */
+        width: 260px; /* Luôn mở rộng khi hiện ra */
+    }
+
+    .sidebar.expanded {
+        left: 0; /* Hiện sidebar */
+    }
+
+    .sidebar.expanded .sidebar-header h3,
+    .sidebar.expanded .menu-links li a span {
+        opacity: 1; /* Luôn hiện chữ khi sidebar mở */
+    }
+
+    .content-wrapper {
+        width: 100%;
+    }
+
+    .main-content {
+        padding: 15px;
+    }
+
+    .menu-toggle-btn {
+        display: block; /* Hiện nút hamburger trên mobile */
+    }
+
+    .sidebar-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 1050; /* Nằm dưới sidebar, trên content */
+    }
+}

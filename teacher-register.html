@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký sử dụng TBDH</title>
+    <link rel="stylesheet" href="css/shared-layout.css"> <!-- Thêm CSS chung -->
+    <link rel="stylesheet" href="css/teacher-layout.css">
+    <link rel="stylesheet" href="css/teacher-register.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+    <div class="teacher-layout">
+        <!-- Sidebar Menu -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h3>Giáo viên</h3>
+            </div>
+            <ul class="menu-links">
+                <li><a href="teacher.html" class="nav-link"><i class="fas fa-home"></i><span>Tổng quan</span></a></li>
+                <li><a href="teacher-register.html" class="nav-link active"><i class="fas fa-edit"></i><span>Đăng ký SD TBDH</span></a></li>
+                <li><a href="teacher-tracking.html" class="nav-link"><i class="fas fa-chart-line"></i><span>Theo dõi & Tổng hợp</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Wrapper -->
+        <div class="content-wrapper">
+            <div class="top-bar">
+                <button id="menu-toggle-btn" class="icon-button menu-toggle-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="user-info">
+                    <span>Chào, <span id="user-name">Giáo viên</span>!</span>
+                </div>
+                <button id="logout-button" class="logout-button">Đăng xuất</button>
+            </div>
+            <main id="main-content" class="main-content">
+                <div class="content-card">
+                    <div class="page-header">
+                        <h1 id="register-header">Đăng ký TBDH - Tổ ...</h1>
+                        <div class="controls-container">
+                            <!-- Bộ chọn tuần mới -->
+                            <div id="week-selector-wrapper" class="week-selector-wrapper">
+                                <div class="week-navigation">
+                                    <button id="prev-week-btn" class="week-nav-btn" title="Tuần trước">&lt;</button>
+                                    <div id="week-display-btn" class="week-display">
+                                        <span id="week-display-text">Tuần ...</span>
+                                        <i class="fas fa-caret-down"></i>
+                                    </div>
+                                    <button id="next-week-btn" class="week-nav-btn" title="Tuần sau">&gt;</button>
+                                </div>
+                                <p id="week-date-range" class="week-date-range">Từ ... đến ...</p>
+                                <div id="week-dropdown" class="week-dropdown" style="display: none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="instruction-text"><i class="fas fa-info-circle"></i> Click vào vị trí muốn đăng ký sử dụng thiết bị dạy học để đăng ký.</p>
+                    <div id="schedule-container" class="schedule-container-weekly">
+                        <!-- Bảng lịch tuần sẽ được chèn vào đây -->
+                        <p>Vui lòng chọn tuần để xem lịch.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Đăng ký/Chỉnh sửa -->
+    <div id="register-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="register-modal-title">Đăng ký sử dụng TBDH</h2>
+            <div class="modal-subtitle-actions">
+                <button id="get-last-reg-btn" type="button" class="btn-link"><i class="fas fa-history"></i> Lấy thông tin từ lần đăng ký trước</button>
+            </div>
+            <form id="register-form">
+                <!-- Thêm bộ chọn tuần (dành cho chế độ chỉnh sửa) -->
+                <div class="form-group" id="reg-week-container" style="display: none;">
+                    <label for="reg-week">Tuần</label>
+                    <select id="reg-week"></select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reg-day">Ngày dạy <span class="required-star">*</span></label>
+                        <select id="reg-day" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-period">Tiết <span class="required-star">*</span></label>
+                        <select id="reg-period" required>
+                            <option value="">-- Chọn tiết --</option>
+                            <!-- Tiết học sẽ được thêm vào đây -->
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reg-subject">Môn học <span class="required-star">*</span></label>
+                        <select id="reg-subject" required>
+                            <option value="">-- Chọn môn học --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-class">Lớp <span class="required-star">*</span></label>
+                        <input type="text" id="reg-class" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reg-lesson-name">Tên bài dạy <span class="required-star">*</span></label>
+                    <input type="text" id="reg-lesson-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-equipment-input">Thiết bị sử dụng (cách nhau bởi dấu phẩy) <span class="required-star">*</span></label>
+                    <textarea id="reg-equipment-input" rows="2" placeholder="Ví dụ: Máy chiếu, Bảng tương tác" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Phương pháp dạy học</label>
+                    <div id="reg-method-container" class="checkbox-group-container">
+                        <!-- Checkboxes sẽ được tự động chèn vào đây -->
+                    </div>
+                </div>
+            </form>
+            <div class="modal-actions">
+                <button id="delete-register-btn" type="button" class="btn-danger" style="display: none;">Xóa</button>
+                <div class="modal-actions-right">
+                    <button id="cancel-register-modal" class="btn-cancel">Hủy</button>
+                    <button id="save-register-btn" class="btn-save">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal xác nhận xóa -->
+    <div id="confirm-delete-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="confirm-delete-title">Xác nhận xóa</h2>
+            <p id="confirm-delete-message">Bạn có chắc chắn muốn xóa mục này không?</p>
+            <div class="modal-actions">
+                <button id="cancel-delete-btn" class="btn-cancel">Hủy</button>
+                <button id="confirm-delete-btn" class="btn-danger">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cảnh báo Trùng lịch -->
+    <div id="conflict-warning-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="conflict-warning-title">Cảnh báo: Lớp đã được đăng ký</h2>
+            <div id="conflict-info-container">
+                <!-- Thông tin trùng lịch sẽ được chèn vào đây -->
+            </div>
+            <div class="modal-actions" style="justify-content: flex-end;">
+                <button id="close-conflict-modal" class="btn-cancel">Đã hiểu</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module" src="js/auth-guard.js"></script>
+    <script type="module" src="js/teacher-nav.js"></script>
+    <script type="module" src="js/toast.js"></script>
+    <script type="module" src="js/teacher-register.js"></script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+/* --- Biến CSS chung --- */
+:root {
+    --primary-color: #1abc9c;
+    --border-color: #e9ecef;
+    --text-dark: #2c3e50;
+    --text-light: #6c757d;
+    --background-light: #f8f9fa;
+    --hover-bg: #f1f5f9;
+}
+
+/* --- Header của trang --- */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #16a085;
+}
+
+/* --- Bảng danh mục thiết bị --- */
+.device-table-container {
+    overflow-x: auto; /* Cho phép cuộn ngang nếu cần */
+}
+
+.device-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.device-table th,
+.device-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+    vertical-align: top;
+}
+
+.device-table thead th {
+    background-color: var(--background-light);
+    font-weight: 600;
+    color: var(--text-dark);
+    position: sticky;
+    top: 0;
+}
+
+.device-table tbody tr:hover {
+    background-color: var(--hover-bg);
+}
+
+/* --- Style cho các dòng phân cấp --- */
+.device-row.is-group {
+    background-color: #e9ecef;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--text-dark);
+}
+
+.device-row.is-parent > td:first-child {
+    font-weight: bold;
+}
+
+.device-row .device-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.group-icon {
+    color: #f39c12; /* Màu vàng cam */
+}
+
+/* Thụt lề cho các cấp con */
+.device-row.level-1 .device-name-cell {
+    padding-left: 30px;
+}
+.device-row.level-2 .device-name-cell {
+    padding-left: 55px;
+}
+.device-row.level-3 .device-name-cell {
+    padding-left: 80px;
+}
+
+/* Căn chỉnh cột */
+.device-table .col-stt { width: 5%; text-align: center; }
+.device-table .col-subject { width: 8%; }
+.device-table .col-category { width: 10%; }
+.device-table .col-code { width: 8%; }
+.device-table .col-name { width: 25%; }
+.device-table .col-description { width: 24%; }
+.device-table .col-grades { width: 5%; text-align: center; }
+.device-table .col-notes { width: 5%; }
+.device-table .col-actions { width: 10%; text-align: right; }
+
+/* --- Nút hành động trong bảng --- */
+.item-actions {
+    display: flex;
+    gap: 5px;
+    justify-content: flex-end;
+}
+
+.item-actions .icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-light);
+    font-size: 1rem;
+    padding: 6px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.item-actions .icon-button:hover {
+    background-color: #e9ecef;
+}
+
+.item-actions .edit-btn:hover { color: #007bff; }
+.item-actions .delete-btn:hover { color: #dc3545; }
+.item-actions .add-child-btn:hover { color: #28a745; }
+
+/* --- Modal --- */
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-group input[type="number"] {
+    width: 80px;
+}
+
+/* --- Inline Add Row Styles --- */
+.inline-add-row td {
+    background-color: #e6f7f4 !important; /* Nền xanh lá cây nhạt */
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.inline-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #b2dfdb; /* Viền xanh nhạt */
+    border-radius: 6px;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+    background-color: #f0f9f8;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.inline-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 5px rgba(26, 188, 156, 0.4);
+    outline: none;
+    background-color: #fff;
+}
+
+.save-inline-btn:hover {
+    color: #28a745; /* Xanh lá */
+}
+.cancel-inline-btn:hover {
+    color: #dc3545; /* Đỏ */
+}
+
+/* --- Cải tiến giao diện cho Modal Thiết bị (đồng bộ với manager-synthetic) --- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#device-modal .modal-content {
+    border-top: 5px solid var(--primary-color); /* Màu xanh lá cây */
+    animation: fadeIn 0.3s ease-out;
+    max-width: 700px; /* Tăng nhẹ chiều rộng cho thoải mái */
+}
+
+#device-modal-title {
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.6rem;
+}
+
+#device-modal-title::before {
+    content: '\f1b2'; /* Font Awesome icon: fa-cube */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 1.8rem;
+    color: var(--primary-color);
+}
+
+/* Cải tiến cho các trường trong modal */
+#device-modal .form-row {
+    background-color: #f0f9f8;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #b2dfdb;
+}

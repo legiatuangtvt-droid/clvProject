@@ -1,0 +1,245 @@
+/* --- Shared Top Bar Styles --- */
+.top-bar {
+    background: #fff;
+    padding: 15px 30px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0; /* Ngăn top-bar bị co lại */
+}
+
+.top-bar h1 {
+    font-size: 1.5rem;
+    margin: 0;
+    color: #343a40;
+}
+
+.top-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-left: auto; /* Đẩy khối action về bên phải */
+}
+
+.user-info {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #495057;
+}
+
+.logout-button {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.logout-button:hover {
+    background-color: #dc3545;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6c757d;
+    font-size: 1.1rem;
+    padding: 5px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.icon-button:hover {
+    background-color: #e9ecef;
+    color: #2c3e50;
+}
+
+/* --- Responsive Top Bar --- */
+@media (max-width: 768px) {
+    .top-bar {
+        padding: 10px 15px;
+        flex-wrap: wrap; /* Cho phép các item xuống dòng nếu cần */
+    }
+
+    .top-bar h1 {
+        font-size: 1.2rem;
+        order: 2; /* Đưa tiêu đề xuống dưới nút menu */
+        width: 100%;
+        text-align: center;
+        margin-top: 5px;
+        display: none; /* Tạm ẩn tiêu đề chính trên mobile để gọn hơn */
+    }
+}
+
+/* --- Toast Notifications --- */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transform: translateX(100%);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    min-width: 300px;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-icon {
+    font-size: 1.2rem;
+    margin-right: 12px;
+}
+
+.toast-success { background-color: #28a745; }
+.toast-error { background-color: #dc3545; }
+.toast-info { background-color: #17a2b8; }
+
+/* --- General Modal Styles --- */
+@keyframes slide-down-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(33, 37, 41, 0.6); /* Màu nền tối hơn, mờ hơn */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 550px; /* Chiều rộng mặc định */
+    max-height: 90vh;
+    overflow-y: auto;
+    border-top: 5px solid var(--primary-color);
+    animation: slide-down-fade-in 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.modal-content.large {
+    max-width: 800px; /* Cho các modal cần không gian rộng hơn */
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.6rem;
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2); /* Sử dụng màu --primary-color với độ mờ */
+    outline: none;
+}
+
+/* --- Modal & Action Buttons --- */
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.modal-actions-right {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-save, .btn-cancel, .btn-danger, .btn-secondary {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid transparent; /* Thêm border để giữ layout ổn định khi hover */
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.btn-save { background-color: #28a745; color: white; }
+.btn-save:hover { background-color: #218838; }
+
+.btn-cancel {
+    background-color: #f8f9fa; /* Màu nền xám rất nhạt */
+    color: #495057; /* Màu chữ tối */
+    border-color: #dee2e6; /* Viền xám nhạt */
+}
+.btn-cancel:hover {
+    background-color: #e9ecef; /* Hơi đậm hơn khi hover */
+    border-color: #ced4da;
+}
+
+.btn-danger { background-color: #dc3545; color: white; }
+.btn-danger:hover { background-color: #c82333; }
+
+.btn-secondary { background-color: #6c757d; color: white; }
+.btn-secondary:hover { background-color: #5a6268; }

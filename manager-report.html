@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo tổng hợp</title>
+    <link rel="stylesheet" href="css/manager-layout.css">
+    <link rel="stylesheet" href="css/shared-layout.css"> <!-- Thêm CSS chung -->
+    <link rel="stylesheet" href="css/manager-report.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Thư viện để xuất PDF và Word -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/html-to-docx@1.8.0/dist/html-to-docx.js"></script>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+    <div class="manager-layout">
+        <!-- Sidebar Menu -->
+        <nav class="sidebar">
+            <ul class="menu-links">
+                <li><a href="manager-main.html" class="nav-link"><i class="fas fa-home"></i><span>Main</span></a></li>
+                <li><a href="manager-setting.html" class="nav-link"><i class="fas fa-calendar-alt"></i><span>Quản lý thông tin năm học</span></a></li>
+                <li><a href="manager-device.html" class="nav-link"><i class="fas fa-desktop"></i><span>Danh sách thiết bị</span></a></li>
+                <li><a href="manager-synthetic.html" class="nav-link"><i class="fas fa-chart-pie"></i><span>Tổng hợp</span></a></li>
+                <li><a href="manager-report.html" class="nav-link"><i class="fas fa-file-alt"></i><span>Báo cáo</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Wrapper -->
+        <div class="content-wrapper">
+            <div class="top-bar">
+                <h1 id="register-header">Báo cáo sử dụng TBDH</h1>
+                <div class="top-bar-actions">
+                    <div class="user-info">
+                        <span>Chào, <span id="user-name">Manager</span>!</span>
+                        <button id="edit-profile-button" class="icon-button" title="Chỉnh sửa thông tin">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                    </div>
+                    <button id="logout-button" class="logout-button">Đăng xuất</button>
+                </div>
+            </div>
+            <main id="main-content" class="main-content">
+                <div class="content-card">
+                    <div class="page-header">                        
+                        <div class="filter-container">
+                            <select id="report-type-select">
+                                <option value="month">Theo Tháng</option>
+                                <option value="semester">Theo Học kỳ</option>
+                                <option value="year">Theo Năm học</option>
+                            </select>
+                            <select id="report-value-select"></select>
+                            <button id="view-report-btn" class="btn-primary"><i class="fas fa-eye"></i> Xem báo cáo</button>
+                        </div>
+                    </div>
+
+                    <div class="report-actions">
+                        <button id="export-word-btn" class="btn-secondary"><i class="fas fa-file-word"></i> Xuất Word</button>
+                        <button id="export-pdf-btn" class="btn-secondary"><i class="fas fa-file-pdf"></i> Xuất PDF</button>
+                    </div>
+
+                    <div class="report-preview-area">
+                        <div id="report-page" class="report-page">
+                            <!-- Nội dung báo cáo sẽ được chèn vào đây -->
+                            <div class="report-placeholder">
+                                <i class="fas fa-file-alt"></i>
+                                <p>Vui lòng chọn loại báo cáo và nhấn "Xem báo cáo"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="js/auth-guard.js"></script>
+    <script type="module" src="js/manager-nav.js"></script>
+    <script type="module" src="js/toast.js"></script>
+    <script type="module" src="js/manager-report.js"></script> 
+</body>
+</html>

@@ -1,0 +1,713 @@
+/* --- Tái sử dụng và mở rộng từ manager-setting.css --- */
+.modal-content.large {
+    max-width: 800px; /* Rộng hơn cho modal nhập hàng loạt */
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.header-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 12px 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #e9ecef;
+}
+
+/* --- Bố cục cột cho trang Tổng hợp --- */
+.synthetic-layout-container {
+    display: grid; /* Chuyển sang Grid để kiểm soát bố cục tốt hơn */
+    grid-template-columns: minmax(0, 320px) 1fr; /* Sidebar tối đa 320px, co lại được; content chiếm phần còn lại */
+    gap: 20px;
+    margin-top: 15px;
+    align-items: flex-start;
+}
+
+.synthetic-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    position: sticky;
+    top: 20px; /* Giữ sidebar cố định khi cuộn */
+    /* Tính toán chiều cao tối đa để sidebar không tràn ra ngoài màn hình */
+    max-height: calc(100vh - 100px); /* 100vh - (chiều cao top-bar + khoảng cách top) */
+    overflow-y: auto; /* Tự động hiển thị thanh cuộn khi nội dung dài hơn */
+    padding-right: 5px; /* Thêm khoảng đệm nhỏ cho thanh cuộn */
+}
+
+.synthetic-main-content {
+    /* Thêm các thuộc tính này để cột chính cũng có thanh cuộn riêng */
+    max-height: calc(100vh - 100px); /* Chiều cao tương tự sidebar */
+    overflow-y: auto; /* Hiển thị thanh cuộn khi nội dung bảng dài */
+}
+
+/* Điều chỉnh các control bên trong sidebar */
+.synthetic-sidebar .header-controls {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 15px;
+    margin-bottom: 0;
+}
+
+.synthetic-sidebar .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+}
+
+.synthetic-sidebar .header-actions {
+    margin-top: 20px;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+}
+
+/* --- Controls & Header & Week Selector --- */
+.controls-container {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0; /* Bỏ margin-bottom để header-controls xử lý */
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.week-selector-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.week-navigation {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+.week-nav-btn {
+    background-color: #f8f9fa;
+    border: none;
+    padding: 0 15px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    align-self: stretch;
+    transition: background-color 0.2s;
+}
+
+.week-nav-btn:hover {
+    background-color: #e9ecef;
+}
+
+.week-display {
+    padding: 10px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+}
+
+.week-date-range {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin: 5px 0 0 0;
+}
+
+.week-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 10;
+    max-height: 250px;
+    overflow-y: auto;
+    width: 300px;
+}
+
+.week-option {
+    padding: 12px 15px;
+    cursor: pointer;
+}
+.week-option:hover { background-color: #f1f5f9; }
+.week-option.highlight {
+    background-color: #e7f7ec;
+    color: #155724;
+    font-weight: bold;
+}
+
+/* --- Filter Controls --- */
+.filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    background-color: #fff;
+    min-width: 180px;
+}
+
+/* --- Color Legend --- */
+#color-legend-container {
+    display: flex;
+    flex-direction: column; /* Sắp xếp các nhóm chú thích theo cột */
+    gap: 15px; /* Khoảng cách giữa các nhóm (Tổ, Môn, GV) */
+    margin-top: 0;
+    padding: 12px 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    background-color: #fcfcfc;
+}
+
+#color-legend-container h4 {
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+    width: 100%; /* Đảm bảo tiêu đề chiếm toàn bộ chiều rộng */
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 10px;
+}
+
+.legend-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.legend-section h5 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.legend-items-wrapper {
+    display: flex;
+    flex-wrap: wrap; /* Cho phép các item xuống dòng nếu không đủ chỗ */
+    gap: 15px; /* Khoảng cách giữa các item chú thích */
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+}
+
+.legend-color-box {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+/* --- Weekly Schedule Table --- */
+.schedule-container-weekly {
+    margin-top: 15px;
+    overflow-x: auto;
+}
+
+.instruction-text {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    margin: 0 0 15px 0;
+}
+
+.weekly-schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* Bắt buộc bảng tuân thủ width: 100% */
+}
+
+.weekly-schedule-table th, .weekly-schedule-table td {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    vertical-align: top;
+    min-height: 60px;
+}
+
+.weekly-schedule-table thead th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    text-align: center;
+    padding: 12px 8px;
+    position: sticky; /* Cố định tiêu đề */
+    top: 0; /* Giữ ở trên cùng của vùng cuộn */
+    z-index: 1; /* Đảm bảo tiêu đề nằm trên nội dung bảng */
+}
+
+.weekly-schedule-table .session-header {
+    width: 30px; /* Độ rộng cố định cho cột Buổi */
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+    background-color: #f8f9fa; /* Đảm bảo có nền để không bị trong suốt */
+    position: sticky; /* Cố định các cột này */
+    z-index: 2; /* Nằm trên nội dung, dưới tiêu đề chính */
+    left: 0;
+}
+.weekly-schedule-table .period-header {
+    width: 45px; /* Độ rộng cố định cho cột Tiết */
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+    background-color: #f8f9fa;
+}
+
+.session-separator td {
+    padding: 0 !important;
+    height: 2px;
+    background-color: #1abc9c;
+    opacity: 0.3;
+    border: none;
+}
+
+.slot {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.slot:hover {
+    background-color: #e7f3ff;
+}
+
+.registration-info {
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    background-color: #f5f5f5;
+    border-left: 4px solid #bdbdbd;
+    color: #424242;
+}
+
+.registration-info:not(:last-child) {
+    margin-bottom: 8px;
+}
+
+.registration-info:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.registration-info p {
+    margin: 0 0 4px 0;
+    font-size: 0.85rem; /* Giảm nhẹ cỡ chữ để vừa vặn hơn */
+    white-space: nowrap; /* Ngăn văn bản xuống dòng */
+    overflow: hidden; /* Ẩn phần văn bản bị tràn */
+    text-overflow: ellipsis; /* Hiển thị dấu "..." */
+}
+
+/* --- Checkbox Group for Methods in Modal --- */
+.checkbox-group-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin-right: 12px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.required-star {
+    color: #dc3545;
+}
+
+/* --- Modal Subtitle Actions --- */
+.modal-subtitle-actions {
+    margin-top: -15px;
+    margin-bottom: 20px;
+    text-align: right;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: #1abc9c;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0;
+    text-decoration: underline;
+}
+.btn-link:hover {
+    color: #16a085;
+}
+/* Thêm vào cuối file public/css/manager-synthetic.css */
+
+.legend-item {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.legend-item:hover {
+    transform: scale(1.05);
+}
+
+.schedule-container-weekly.dimmed .registration-info {
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+}
+
+.schedule-container-weekly.dimmed .registration-info.highlighted {
+    opacity: 1;
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
+    z-index: 10;
+    position: relative;
+}
+
+/* --- Modal Thống kê Thiết bị --- */
+#equipment-stats-container .weekly-plan-table th,
+#equipment-stats-container .weekly-plan-table td {
+    text-align: center;
+}
+
+/* --- Modal Thống kê Thiết bị --- */
+#equipment-stats-container .weekly-plan-table th,
+#equipment-stats-container .weekly-plan-table td {
+    text-align: center;
+}
+
+.form-text-info {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+/* --- Modal Lỗi Nhập hàng loạt --- */
+.error-list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #fff3f3; /* Nền đỏ nhạt */
+    border: 1px solid #f5c6cb; /* Viền đỏ */
+    border-radius: 8px;
+    padding: 15px;
+    color: #721c24; /* Chữ đỏ sẫm */
+}
+
+.error-list-container ul {
+    padding-left: 20px;
+    margin: 0;
+}
+
+.error-list-container li {
+    margin-bottom: 8px;
+}
+
+/* --- Bảng xem trước lỗi nhập hàng loạt --- */
+#bulk-import-preview-container {
+    margin-top: 15px;
+    max-height: 350px;
+    overflow: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+
+.preview-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.preview-table th, .preview-table td {
+    padding: 8px 12px;
+    border: 1px solid #e9ecef;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.preview-table thead th {
+    background-color: #f8f9fa;
+    position: sticky;
+    top: 0;
+}
+
+.preview-table tr.has-error td {
+    background-color: #fddede; /* Nền đỏ nhạt cho dòng lỗi */
+}
+
+.preview-table tr.is-valid td {
+    background-color: #e7f7ec; /* Nền xanh lá nhạt cho dòng hợp lệ */
+}
+
+.preview-table td[contenteditable="true"] {
+    background-color: #fff;
+    outline: 2px solid transparent;
+    transition: outline 0.2s;
+}
+.preview-table td[contenteditable="true"]:focus {
+    outline-color: var(--primary-color);
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Căn chỉnh cho modal nhập hàng loạt */
+#bulk-import-modal .form-row .form-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#bulk-import-modal .form-row .form-group label {
+    margin-bottom: 0; /* Bỏ margin dưới của label */
+    flex-shrink: 0; /* Ngăn label bị co lại */
+}
+
+/* Cải tiến cho khu vực chọn ngày và buổi */
+#bulk-import-modal .form-row {
+    background-color: #e6f7f4;
+    /* Dòng này xác định vùng đệm (khoảng trống bên trong) cho toàn bộ khu vực chọn ngày và buổi */
+    padding: 5px;
+    align-items: center;
+    border-radius: 8px;
+    border: 1px solid #b2dfdb;
+    margin-bottom: 20px;
+}
+
+#bulk-import-modal .form-row .form-group label {
+    color: #00695c; /* Màu chữ xanh đậm hơn */
+    font-weight: 600;
+    margin-bottom: 0; /* Ghi đè margin-bottom mặc định từ layout.css */
+}
+
+/* --- Bộ chọn ngày với nút điều hướng --- */
+.day-selector-with-nav {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+.day-selector-with-nav select, #bulk-import-session {
+    font-weight: 500;
+    padding: 8px 12px; /* Thêm padding đồng bộ */
+    box-sizing: border-box; /* Đảm bảo tính toán kích thước chính xác */
+}
+
+.day-selector-with-nav select {
+    flex-grow: 1;
+    border-radius: 0; /* Bỏ bo góc để ghép với nút */
+    border-left: none; /* Bỏ viền trái để liền mạch với nút */
+    border-right: none; /* Bỏ viền phải để liền mạch với nút */
+}
+
+.day-nav-btn {
+    background-color: #b2dfdb; /* Nền xanh cho nút */
+    border: 1px solid #80cbc4; /* Viền xanh đậm hơn */
+    cursor: pointer;
+    padding: 10px 12px; /* Đồng bộ padding với select */
+    font-size: 1rem;
+    transition: background-color 0.2s, color 0.2s;
+    flex-shrink: 0;
+    color: #004d40; /* Chữ xanh rất đậm */
+}
+
+.day-nav-btn:hover { background-color: #80cbc4; }
+
+#prev-day-bulk-import { border-radius: 8px 0 0 8px; }
+#next-day-bulk-import { border-radius: 0 8px 8px 0; }
+
+/* --- Cải tiến giao diện cho Modal Nhập hàng loạt --- */
+#bulk-import-modal .modal-content {
+    border-top: 5px solid #1abc9c;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#bulk-import-modal-title {
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.6rem;
+}
+
+#bulk-import-modal-title::before {
+    content: '\f56f'; /* Font Awesome icon: file-import */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 1.8rem;
+    color: #1abc9c;
+}
+
+#bulk-import-modal p {
+    background-color: #f0f9f8;
+    border-left: 4px solid #1abc9c;
+    padding: 12px 15px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #34495e;
+}
+
+#bulk-import-input {
+    font-family: inherit; /* Đồng bộ font chữ với toàn trang */
+    font-size: 0.95rem;
+    border-color: #ced4da;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#bulk-import-input:focus {
+    border-color: #1abc9c;
+    box-shadow: 0 0 8px rgba(26, 188, 156, 0.3);
+}
+
+/* --- Cải tiến giao diện cho Modal Thống kê --- */
+#equipment-stats-modal .modal-content {
+    border-top: 5px solid #3498db; /* Màu xanh dương cho thống kê */
+    animation: fadeIn 0.3s ease-out;
+    max-width: 900px; /* Rộng hơn để chứa bảng */
+}
+
+#equipment-stats-modal-title {
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.6rem;
+}
+
+#equipment-stats-modal-title::before {
+    content: '\f080'; /* Font Awesome icon: fa-chart-bar */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 1.8rem;
+    color: #3498db; /* Màu xanh dương */
+}
+
+#equipment-stats-week-info {
+    background-color: #eaf5fc; /* Nền xanh dương nhạt */
+    border-left: 4px solid #3498db; /* Viền xanh dương */
+    padding: 12px 15px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #2980b9; /* Chữ xanh đậm hơn */
+    margin-bottom: 20px; /* Thêm khoảng cách dưới */
+}
+
+/* Cải tiến bảng thống kê */
+#equipment-stats-container .weekly-plan-table {
+    margin-top: 0; /* Bỏ margin top mặc định */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border-radius: 8px;
+    overflow: hidden; /* Để bo góc cho thead */
+    border: 1px solid #dee2e6;
+}
+
+/* --- Mobile Schedule (Card View) --- */
+.mobile-schedule {
+    display: none; /* Ẩn trên desktop */
+}
+
+/* --- Responsive Styles --- */
+@media (max-width: 1200px) { /* Kích hoạt chế độ mobile sớm hơn để tránh cuộn ngang */
+    .synthetic-layout-container {
+        flex-direction: column;
+    }
+
+    .synthetic-sidebar {
+        position: static;
+        max-width: 100%;
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    .synthetic-main-content {
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    .schedule-container-weekly .desktop-schedule {
+        display: none; /* Ẩn bảng trên mobile */
+    }
+
+    .mobile-schedule {
+        display: flex; /* Hiện layout card trên mobile */
+        flex-direction: column;
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    /* Tái sử dụng các style từ teacher-register.css cho card mobile */
+    .mobile-day-card { background-color: #fff; border: 1px solid #e9ecef; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }
+    .mobile-day-header { padding: 12px 15px; background-color: #f8f9fa; font-weight: 600; border-bottom: 1px solid #e9ecef; }
+    .mobile-day-body { padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+    .mobile-slot { display: flex; align-items: flex-start; gap: 10px; }
+    .mobile-period-info { background-color: #f1f5f9; padding: 5px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; color: #6c757d; white-space: nowrap; }
+    .mobile-slot .registration-info { flex-grow: 1; }
+    .no-registrations-mobile { text-align: center; color: #999; font-style: italic; padding: 10px 0; }
+    .mobile-day-footer { padding: 10px 15px; border-top: 1px solid #e9ecef; background-color: #fcfcfc; }
+    .add-registration-mobile-btn { width: 100%; padding: 10px; background-color: #e7f3ff; border: 1px dashed #b8d9ff; color: #007bff; font-weight: 600; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+    .registration-info p {
+        font-size: 0.9rem;
+    }
+}
+
+#equipment-stats-container .weekly-plan-table thead th {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+#equipment-stats-container .weekly-plan-table .total-row {
+    background-color: #e2e8f0;
+    color: #1e293b;
+}

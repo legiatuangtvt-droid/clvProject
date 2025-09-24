@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo - Giám sát</title>
+    <link rel="stylesheet" href="css/manager-layout.css">
+    <link rel="stylesheet" href="css/shared-layout.css">
+    <link rel="stylesheet" href="css/manager-report.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+    <div class="manager-layout">
+        <!-- Sidebar Menu -->
+        <nav class="sidebar">
+            <ul class="menu-links">
+                <li><a href="supervisory-main.html" class="nav-link"><i class="fas fa-home"></i><span>Tổng quan</span></a></li>
+                <li><a href="supervisory-synthetic.html" class="nav-link"><i class="fas fa-calendar-alt"></i><span>Lịch tổng hợp</span></a></li>
+                <li><a href="supervisory-report.html" class="nav-link active"><i class="fas fa-file-alt"></i><span>Báo cáo</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Wrapper -->
+        <div class="content-wrapper">
+            <div class="top-bar">
+                <h1>Báo cáo và Thống kê</h1>
+                <div class="top-bar-actions">
+                    <div class="user-info">
+                        <span>Chào, <span id="user-name">Ban Giám hiệu</span>!</span>
+                    </div>
+                    <button id="logout-button" class="logout-button">Đăng xuất</button>
+                </div>
+            </div>
+            <main id="main-content" class="main-content">
+                <div class="content-card">
+                    <div class="report-controls">
+                        <div class="filter-group">
+                            <label for="report-type-select">Xem báo cáo theo:</label>
+                            <select id="report-type-select" class="filter-select">
+                                <option value="month">Tháng</option>
+                                <option value="semester">Học kỳ</option>
+                                <option value="year">Năm học</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="report-value-select">Chọn:</label>
+                            <select id="report-value-select" class="filter-select"></select>
+                        </div>
+                        <button id="view-report-btn" class="btn-primary"><i class="fas fa-eye"></i> Xem báo cáo</button>
+                        <div class="export-buttons">
+                            <button id="export-word-btn" class="btn-secondary"><i class="fas fa-file-word"></i> Xuất Word</button>
+                            <button id="export-pdf-btn" class="btn-secondary"><i class="fas fa-file-pdf"></i> Xuất PDF</button>
+                        </div>
+                    </div>
+                    <div id="report-page" class="report-content-area">
+                        <!-- Nội dung báo cáo sẽ được chèn vào đây -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module" src="js/auth-guard.js"></script>
+    <script type="module" src="js/supervisory-nav.js"></script>
+    <script type="module" src="js/toast.js"></script>
+    <script type="module" src="js/supervisory-report.js"></script>
+</body>
+</html>

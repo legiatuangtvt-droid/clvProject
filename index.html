@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Hệ thống quản lý TBDH</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/login-effects.css">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+    <div class="nature-background">
+        <div class="floating-leaf leaf-1"></div>
+        <div class="floating-leaf leaf-2"></div>
+        <div class="floating-leaf leaf-3"></div>
+        <div class="floating-leaf leaf-4"></div>
+        <div class="floating-leaf leaf-5"></div>
+    </div>
+
+    <div class="login-container">
+        <div class="wellness-card">
+            <div class="organic-border"></div>
+            
+            <div class="mindful-header">
+                <div class="zen-logo">
+                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+                        <circle cx="28" cy="28" r="26" stroke="currentColor" stroke-width="2" fill="none" opacity="0.6"/>
+                        <circle cx="28" cy="28" r="18" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.8"/>
+                        <circle cx="28" cy="28" r="10" fill="currentColor" opacity="0.9"/>
+                    </svg>
+                    <div class="zen-glow"></div>
+                </div>
+                <h1>Hệ thống Quản lý Thiết bị dạy học</h1>
+                <p>Trường THPT Chế Lan Viên</p>
+            </div>
+            
+            <form class="harmony-form" id="login-form" novalidate>
+                <div class="organic-field">
+                    <input type="email" id="email" name="email" required autocomplete="email">
+                    <label for="email">Email đăng nhập</label>
+                    <span class="gentle-error" id="email-error"></span>
+                </div>
+
+                <div class="organic-field">
+                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                    <label for="password">Mật khẩu</label>
+                    <button type="button" class="nature-toggle" id="show-password" title="Hiển thị mật khẩu">
+                        <svg class="eye-visible" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 4C4.48 4 0 10 0 10s4.48 6 10 6 10-6 10-6-4.48-6-10-6zm0 10a4 4 0 110-8 4 4 0 010 8zm0-6a2 2 0 100 4 2 2 0 000-4z"/>
+                        </svg>
+                        <svg class="eye-hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2.5 2.5l15 15M11.31 11.31A4.002 4.002 0 015.5 10a4.002 4.002 0 015.81-1.19M1 10s3.48-6 9-6c1.85 0 3.58.65 5 1.74M14.5 14.5c-1.42 1.09-3.15 1.74-5 1.74-5.52 0-9-4-9-4s1.52-2.69 4-3.7"/>
+                        </svg>
+                    </button>
+                    <span class="gentle-error" id="password-error"></span>
+                </div>
+
+                <div class="mindful-options">
+                    <label class="zen-checkbox">
+                        <input type="checkbox" id="remember" name="remember">
+                        <span class="checkbox-leaf">
+                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                                <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <span class="checkbox-text">Ghi nhớ đăng nhập</span>
+                    </label>
+                    <a href="#" class="healing-link" id="forgot-password-link">Quên mật khẩu?</a>
+                </div>
+
+                <button type="submit" class="harmony-button">
+                    <span class="button-spinner"></span>
+                    <span class="button-text">Đăng nhập</span>
+                    <div class="button-growth">
+                        <div class="growing-circle circle-1"></div>
+                        <div class="growing-circle circle-2"></div>
+                        <div class="growing-circle circle-3"></div>
+                    </div>
+                </button>
+                <div id="status" class="status-message"></div>
+            </form>
+
+            <div class="harmony-success" id="successMessage">
+                <div class="success-mandala">
+                    <div class="mandala-ring ring-1"></div>
+                    <div class="mandala-ring ring-2"></div>
+                    <div class="mandala-ring ring-3"></div>
+                    <div class="mandala-center">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                            <path d="M8 14l6 6 12-12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+                <h3>Đăng nhập thành công</h3>
+                <p>Đang chuyển hướng...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

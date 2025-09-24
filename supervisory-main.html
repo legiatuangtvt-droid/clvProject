@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Giám sát</title>
+    <!-- Nạp CSS layout chung -->
+    <link rel="stylesheet" href="css/manager-layout.css">
+    <link rel="stylesheet" href="css/shared-layout.css">
+    <!-- Nạp CSS riêng cho trang này -->
+    <link rel="stylesheet" href="css/manager-main.css"> <!-- Tái sử dụng CSS của manager -->
+    <!-- Nạp Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+    <div class="manager-layout">
+        <!-- Sidebar Menu -->
+        <nav class="sidebar">
+            <ul class="menu-links">
+                <li><a href="supervisory-main.html" class="nav-link active"><i class="fas fa-home"></i><span>Tổng quan</span></a></li>
+                <li><a href="supervisory-synthetic.html" class="nav-link"><i class="fas fa-calendar-alt"></i><span>Lịch tổng hợp</span></a></li>
+                <li><a href="supervisory-report.html" class="nav-link"><i class="fas fa-file-alt"></i><span>Báo cáo</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Wrapper -->
+        <div class="content-wrapper">
+            <div class="top-bar">
+                <h1>Tổng quan giám sát</h1>
+                <div class="top-bar-actions">
+                    <div class="user-info">
+                        <span>Chào, <span id="user-name">Ban Giám hiệu</span>!</span>
+                    </div>
+                    <button id="logout-button" class="logout-button">Đăng xuất</button>
+                </div>
+            </div>
+            <main id="main-content" class="main-content">
+                <!-- Nội dung chính của trang main -->
+                <div class="content-card">
+                    <div class="page-header">                        
+                        <h2 id="dashboard-school-year">Năm học: Đang tải...</h2>
+                    </div>
+                    <div id="dashboard-container" class="dashboard-grid">
+                        <div class="dashboard-card">
+                            <div class="card-icon"><i class="fas fa-users-cog"></i></div>
+                            <div class="card-content">
+                                <h3 id="group-count">...</h3>
+                                <p>Tổ chuyên môn</p>
+                            </div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="card-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                            <div class="card-content">
+                                <h3 id="teacher-count">...</h3>
+                                <p>Giáo viên</p>
+                            </div>
+                        </div>
+                        <!-- Thêm các thẻ khác nếu cần -->
+                    </div>
+                </div>
+
+                <!-- Thẻ mới cho Tình hình đăng ký hôm nay -->
+                <div class="content-card">
+                    <div class="page-header">
+                        <h2><i class="fas fa-calendar-day"></i> Tình hình đăng ký hôm nay (<span id="today-date"></span>)</h2>
+                    </div>
+                    <div id="today-registrations-container">
+                        <p>Đang tải dữ liệu...</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <!-- Nạp các script cần thiết -->
+    <script type="module" src="js/auth-guard.js"></script>
+    <script type="module" src="js/supervisory-nav.js"></script>
+    <script type="module" src="js/toast.js"></script>
+    <script type="module" src="js/supervisory-main.js"></script>
+</body>
+</html>

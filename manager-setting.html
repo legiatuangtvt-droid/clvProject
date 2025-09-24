@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Cài đặt</title>
+    <!-- Nạp CSS layout chung -->
+    <link rel="stylesheet" href="css/manager-layout.css">
+    <link rel="stylesheet" href="css/shared-layout.css"> <!-- Thêm CSS chung -->
+    <!-- Nạp Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Nạp CSS riêng cho trang này -->
+    <link rel="stylesheet" href="css/manager-setting.css">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+    <div class="manager-layout">
+        <!-- Sidebar Menu (Copy từ manager.html) -->
+        <nav class="sidebar">
+            <ul class="menu-links">
+                <li><a href="manager-main.html" class="nav-link"><i class="fas fa-home"></i><span>Main</span></a></li>
+                <li><a href="manager-setting.html" class="nav-link active"><i class="fas fa-calendar-alt"></i><span>Quản lý thông tin năm học</span></a></li>
+                <li><a href="manager-device.html" class="nav-link"><i class="fas fa-desktop"></i><span>Danh mục thiết bị</span></a></li>
+                <li><a href="manager-synthetic.html" class="nav-link"><i class="fas fa-chart-pie"></i><span>Tổng hợp</span></a></li>
+                <li><a href="manager-report.html" class="nav-link"><i class="fas fa-file-alt"></i><span>Báo cáo</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Wrapper (Copy từ manager.html) -->
+        <div class="content-wrapper">
+            <div class="top-bar">
+                <h1 id="page-title">Quản lý thông tin năm học</h1>
+                <div class="top-bar-actions">
+                    <div class="user-info">
+                        <span>Chào, <span id="user-name">Manager</span>!</span>
+                        <button id="edit-profile-button" class="icon-button" title="Chỉnh sửa thông tin">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                    </div>
+                    <button id="logout-button" class="logout-button">Đăng xuất</button>
+                </div>
+            </div>
+            <main id="main-content" class="main-content">
+                <!-- Nội dung chính của trang cài đặt -->
+                <div class="content-card" id="setting-management-content">
+                    <div class="school-year-selector-header">
+                        <div class="selector-container">
+                            <select id="school-year-select"></select>
+                            <button id="add-school-year-btn" class="btn-secondary"><i class="fas fa-plus"></i> Năm học mới</button>
+                        </div>
+                    </div>
+
+                    <div class="tab-nav">
+                        <button class="tab-link active" data-tab="groups-teachers">Tổ chuyên môn & Giáo viên</button>
+                        <button class="tab-link" data-tab="teaching-methods">Phương pháp dạy học</button>
+                        <button class="tab-link" data-tab="data-repair-content">Sửa lỗi dữ liệu</button>
+                        <button class="tab-link" data-tab="time-plan">Kế hoạch thời gian năm học</button>
+                    </div>
+
+                    <div id="tab-content-container">
+                        <div id="groups-teachers" class="tab-content active">
+                            <div class="page-header">
+                                <h2>Tổ chuyên môn & Giáo viên</h2>
+                                <button id="add-group-btn" class="btn-primary"><i class="fas fa-plus"></i> Thêm Tổ</button>
+                            </div>
+                            <div id="groups-container"><p>Vui lòng chọn một năm học để xem dữ liệu.</p></div>
+                        </div>
+                        <div id="teaching-methods" class="tab-content">
+                            <div class="page-header">
+                                <h2>Phương pháp dạy học</h2>
+                                <button id="add-method-btn" class="btn-primary"><i class="fas fa-plus"></i> Thêm Phương pháp</button>
+                            </div>
+                            <div id="methods-container"><p>Vui lòng chọn một năm học để xem dữ liệu.</p></div>
+                        </div>
+                        
+                        <!-- Tab Sửa lỗi dữ liệu -->
+                        <div id="data-repair-content" class="tab-content">
+                            <div class="content-header">
+                                <h2>Sửa lỗi Teacher ID cho các lượt đăng ký</h2>
+                                <button id="find-orphaned-regs-btn" class="btn-primary"><i class="fas fa-search"></i> Bắt đầu quét và sửa lỗi</button>
+                            </div>
+                            <div class="instruction-text">
+                                <p><i class="fas fa-info-circle"></i> Chức năng này sẽ quét toàn bộ các lượt đăng ký để tìm những đăng ký có `teacherId` không còn tồn tại trong danh sách giáo viên hiện tại (do tài khoản giáo viên đã bị xóa và tạo lại).</p>
+                                <p>Sau khi quét, bạn có thể chọn giáo viên mới để gán lại cho các lượt đăng ký bị "mồ côi" này.</p>
+                            </div>
+                            <div id="data-repair-results-container">
+                                <!-- Kết quả quét sẽ được hiển thị ở đây -->
+                            </div>
+                        </div>
+
+                        <div id="time-plan" class="tab-content">
+                            <div class="page-header">
+                                <h2>Kế hoạch thời gian năm học</h2>
+                            </div>
+                            <div id="time-plan-setup" class="time-plan-setup-card">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="school-year-start-date">Ngày bắt đầu năm học (Thứ 2)</label>
+                                        <input type="date" id="school-year-start-date">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="report-day-input">Ngày chốt báo cáo tháng</label>
+                                        <input type="number" id="report-day-input" value="23" min="1" max="28">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="semester-end-week-input">Tuần kết thúc Học kỳ I</label>
+                                        <input type="number" id="semester-end-week-input" value="19" min="1" max="36">
+                                    </div>
+                                </div>
+                                <button id="generate-plan-btn" class="btn-primary"><i class="fas fa-cogs"></i> Tạo kế hoạch</button>
+                                <p class="form-note">Chọn ngày bắt đầu là thứ Hai của tuần đầu tiên. Hệ thống sẽ tự động tạo kế hoạch cho 37 tuần học. Nếu kế hoạch đã tồn tại, nó sẽ được tải.</p>
+                            </div>
+                            <div id="weekly-plan-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal cho Tổ chuyên môn -->
+    <div id="group-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="group-modal-title">Thêm Tổ chuyên môn</h2>
+            <div class="form-group">
+                <label for="group-name-input">Tên tổ</label>
+                <input type="text" id="group-name-input" placeholder="Ví dụ: Tổ Toán - Tin">
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-group-modal" class="btn-cancel">Hủy</button>
+                <button id="save-group-btn" class="btn-save">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal cho Phương pháp dạy học -->
+    <div id="method-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="method-modal-title">Thêm Phương pháp dạy học</h2>
+            <div class="form-group">
+                <label for="method-name-input">Tên phương pháp</p>
+                <input type="text" id="method-name-input" placeholder="Ví dụ: Dạy học theo dự án">
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-method-modal" class="btn-cancel">Hủy</button>
+                <button id="save-method-btn" class="btn-save">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal cho Năm học -->
+    <div id="school-year-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Thêm năm học mới</h2>
+            <div class="form-group">
+                <label for="school-year-name-input">Tên năm học</label>
+                <input type="text" id="school-year-name-input" placeholder="Ví dụ: 2024-2025">
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-school-year-modal" class="btn-cancel">Hủy</button>
+                <button id="save-school-year-btn" class="btn-save">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal cho Giáo viên -->
+    <div id="teacher-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <form id="teacher-form">
+                <h2 id="teacher-modal-title">Thêm Giáo viên</h2>
+                <div class="form-group">
+                    <label for="teacher-names-input">Tên giáo viên</label>
+                    <textarea id="teacher-names-input" placeholder="Nhập mỗi giáo viên trên một dòng..." rows="5"></textarea>
+                </div>
+                <div class="form-group" id="teacher-subject-group" style="display: none;">
+                    <label for="teacher-subject-input">Môn học chính</label>
+                    <select id="teacher-subject-input"></select>
+                    <p class="form-note">Chỉ cần chọn khi giáo viên thuộc tổ chuyên môn ghép.</p>
+                </div>
+                <div class="form-group" style="display: none;">
+                    <label for="teacher-phone-input">Số điện thoại</label>
+                    <input type="tel" id="teacher-phone-input" placeholder="Nhập số điện thoại (không bắt buộc)">
+                </div>
+            </form>
+            <div class="modal-actions">
+                <button id="cancel-teacher-modal" class="btn-cancel">Hủy</button>
+                <button id="save-teacher-btn" class="btn-save">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal cho Chỉnh sửa Tuần -->
+    <div id="week-edit-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="week-edit-modal-title">Chỉnh sửa Tuần <span id="week-edit-number"></span></h2>
+            <div class="form-group">
+                <label for="week-start-date-input">Ngày bắt đầu</label>
+                <input type="date" id="week-start-date-input" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="week-end-date-input">Ngày kết thúc</label>
+                <input type="date" id="week-end-date-input" class="form-control">
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-week-edit-modal" class="btn-cancel">Hủy</button>
+                <button id="save-week-btn" class="btn-save">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal xác nhận xóa -->
+    <div id="confirm-delete-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="confirm-delete-message">Xác nhận xóa</h2>
+            <p id="confirm-delete-message">Bạn có chắc chắn muốn xóa mục này không? Hành động này không thể hoàn tác.</p>
+            <div class="modal-actions">
+                <button id="cancel-delete-btn" class="btn-cancel">Hủy</button>
+                <button id="confirm-delete-btn" class="btn-danger">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <!-- Modal chỉnh sửa thông tin (Copy từ manager.html) -->
+    <!-- Bạn cũng cần copy modal 'profile-modal' từ file manager.html vào đây nếu muốn chức năng "Chỉnh sửa thông tin" hoạt động trên trang này -->
+
+    <!-- Nạp các script cần thiết -->
+        <!-- Thêm thư viện SortableJS cho chức năng kéo-thả -->
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+        <script type="module" src="js/auth-guard.js"></script>
+        <script type="module" src="js/manager-nav.js"></script>
+        <script type="module" src="js/toast.js"></script>
+        <script type="module" src="js/manager-setting.js"></script>
+</body>
+</html>

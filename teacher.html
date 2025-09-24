@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Giáo viên</title>
+    <!-- Nạp CSS layout chung -->
+    <link rel="stylesheet" href="css/teacher-layout.css">
+    <link rel="stylesheet" href="css/shared-layout.css"> <!-- Thêm CSS chung -->
+    <!-- Nạp CSS riêng cho trang tổng quan -->
+    <link rel="stylesheet" href="css/teacher-main.css">
+    <!-- Nạp Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+    <div class="teacher-layout">
+        <!-- Sidebar Menu -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h3>Giáo viên</h3>
+            </div>
+            <ul class="menu-links">
+                <li><a href="teacher.html" class="nav-link active"><i class="fas fa-home"></i><span>Tổng quan</span></a></li>
+                <li><a href="teacher-register.html" class="nav-link"><i class="fas fa-edit"></i><span>Đăng ký SD TBDH</span></a></li>
+                <li><a href="teacher-tracking.html" class="nav-link"><i class="fas fa-chart-line"></i><span>Theo dõi & Tổng hợp</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Wrapper -->
+        <div class="content-wrapper">
+            <div class="top-bar">
+                <h1 id="page-title">Tổng quan</h1> <!-- Thêm tiêu đề trang -->
+                <div class="top-bar-actions">
+                    <div class="user-info">
+                        <span>Chào, <span id="user-name">Giáo viên</span>!</span>
+                    </div>
+                    <button id="logout-button" class="logout-button"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+                </div>
+            </div>
+            <main id="main-content" class="main-content">
+
+                <!-- Lịch dạy tuần này -->
+                <div class="content-card">
+                    <div class="synthetic-layout-container">
+                        <aside class="synthetic-sidebar">
+                            <div class="sidebar-title-container">
+                                <h2 class="sidebar-main-title">LỊCH DẠY</h2>
+                                <p id="sidebar-group-name" class="sidebar-subtitle">Tổ ...</p>
+                            </div>
+                            <div id="week-selector-wrapper" class="week-selector-wrapper">
+                                <div class="week-navigation">
+                                    <button id="prev-week-btn" class="week-nav-btn" title="Tuần trước">&lt;</button>
+                                    <div id="week-display-btn" class="week-display">
+                                        <span id="week-display-text">Tuần ...</span>
+                                        <i class="fas fa-caret-down"></i>
+                                    </div>
+                                    <button id="next-week-btn" class="week-nav-btn" title="Tuần sau">&gt;</button>
+                                </div>
+                                <p id="week-date-range" class="week-date-range">Từ ... đến ...</p>
+                                <div id="week-dropdown" class="week-dropdown" style="display: none;"></div>
+                            </div>
+                            <div class="filter-controls">
+                                <div class="filter-group">
+                                    <label for="filter-subject-select">Môn học:</label>
+                                    <select id="filter-subject-select" class="filter-select"><option value="all">Tất cả môn</option></select>
+                                </div>
+                                <div class="filter-group">
+                                    <label for="filter-teacher-select">Giáo viên:</label>
+                                    <select id="filter-teacher-select" class="filter-select"><option value="all">Tất cả GV</option></select>
+                                </div>
+                            </div>
+                            <h3 id="dashboard-school-year">Năm học: Đang tải...</h3>
+                            <div id="color-legend-container"></div>
+                        </aside>
+                        <div id="weekly-schedule-container" class="synthetic-main-content schedule-container-weekly"><p>Đang tải lịch dạy...</p></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module" src="js/auth-guard.js"></script>
+    <script type="module" src="js/teacher-nav.js"></script>
+    <script type="module" src="js/toast.js"></script>
+    <script type="module" src="js/teacher-main.js"></script>
+</body>
+</html>

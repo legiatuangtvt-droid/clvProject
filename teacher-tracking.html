@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theo dõi & Tổng hợp</title>
+    <link rel="stylesheet" href="css/teacher-layout.css">
+    <link rel="stylesheet" href="css/teacher-tracking.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Thêm thư viện Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+    <div class="teacher-layout">
+        <!-- Sidebar Menu -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h3>Giáo viên</h3>
+            </div>
+            <ul class="menu-links">
+                <li><a href="teacher.html" class="nav-link"><i class="fas fa-home"></i><span>Tổng quan</span></a></li>
+                <li><a href="teacher-register.html" class="nav-link"><i class="fas fa-edit"></i><span>Đăng ký SD TBDH</span></a></li>
+                <li><a href="teacher-tracking.html" class="nav-link active"><i class="fas fa-chart-line"></i><span>Theo dõi & Tổng hợp</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Wrapper -->
+        <div class="content-wrapper">
+            <div class="top-bar">
+                <button id="menu-toggle-btn" class="icon-button menu-toggle-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="user-info">
+                    <span>Chào, <span id="user-name">Giáo viên</span>!</span>
+                </div>
+                <button id="logout-button" class="logout-button">Đăng xuất</button>
+            </div>
+            <main id="main-content" class="main-content">
+                <div class="content-card">
+                    <div class="page-header">
+                        <h1>Theo dõi & Tổng hợp</h1>
+                        <div class="filter-container">
+                            <select id="time-filter-type">
+                                <option value="week">Theo Tuần</option>
+                                <option value="month">Theo Tháng</option>
+                                <option value="semester">Theo Học kỳ</option>
+                                <option value="year">Theo Năm học</option>
+                            </select>
+                            <select id="time-filter-value"></select>
+                            <button id="view-report-btn" class="btn-primary"><i class="fas fa-eye"></i> Xem</button>
+                        </div>
+                    </div>
+                    <div id="report-container">
+                        <p class="instruction-text"><i class="fas fa-info-circle"></i> Chọn khoảng thời gian và nhấn "Xem" để tạo báo cáo.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="js/auth-guard.js"></script>
+    <script type="module" src="js/teacher-nav.js"></script>
+    <script type="module" src="js/toast.js"></script>
+    <script type="module" src="js/teacher-tracking.js"></script>
+</body>
+</html>

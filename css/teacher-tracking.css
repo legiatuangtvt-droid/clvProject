@@ -1,0 +1,113 @@
+.filter-container {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.filter-container select,
+.filter-container button {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    background-color: #fff;
+}
+
+.filter-container button {
+    cursor: pointer;
+}
+
+/* Tùy chỉnh riêng cho nút "Xem" trên trang này để nổi bật hơn */
+#view-report-btn.btn-primary {
+    background-color: #28a745; /* Màu xanh lá cây */
+    color: white;
+    border-color: #28a745;
+}
+
+#view-report-btn.btn-primary:hover {
+    background-color: #218838; /* Màu xanh lá cây đậm hơn khi hover */
+}
+
+#report-container {
+    margin-top: 25px;
+}
+
+.report-layout {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+.report-table-container {
+    flex: 3; /* Bảng chiếm nhiều không gian hơn */
+    min-width: 350px;
+}
+
+.report-chart-container {
+    flex: 2; /* Biểu đồ chiếm ít không gian hơn */
+    min-width: 300px;
+    position: sticky; /* Giữ biểu đồ cố định khi cuộn */
+    top: 20px;
+}
+
+/* Responsive: trên màn hình nhỏ, xếp chồng lên nhau */
+@media (max-width: 992px) {
+    .report-layout {
+        flex-direction: column;
+    }
+    .report-chart-container {
+        order: -1; /* Đưa biểu đồ lên trên cùng */
+    }
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.report-table th,
+.report-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+.report-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    text-align: center;
+}
+
+.report-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.report-table .total-row {
+    font-weight: bold;
+    background-color: #e9ecef;
+}
+
+.report-table td:nth-child(1) {
+    width: 5%;
+    text-align: center;
+}
+
+.report-table td:nth-child(3),
+.report-table td:nth-child(4) {
+    width: 15%; /* Điều chỉnh độ rộng cho 2 cột cuối */
+    text-align: center;
+}
+
+/* Căn giữa cho ô tổng cộng */
+.report-table .total-row td:nth-child(2),
+.report-table .total-row td:nth-child(3) {
+    text-align: center;
+}
+
+.instruction-text {
+    color: #666;
+    font-style: italic;
+}

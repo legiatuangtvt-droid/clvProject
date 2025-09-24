@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Không tìm thấy trang</title>
+    <!-- Tái sử dụng CSS từ trang đăng nhập -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/login-effects.css">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <style>
+        /* Một vài style tùy chỉnh cho trang 404 */
+        .not-found-content {
+            text-align: center;
+        }
+        .not-found-content h1 {
+            font-size: 6rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--primary-green);
+            line-height: 1;
+            text-shadow: 0 4px 10px var(--shadow-color);
+        }
+        .not-found-content h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 15px 0;
+            color: var(--text-dark);
+        }
+        .not-found-content p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            max-width: 320px;
+            margin: 0 auto 30px auto;
+        }
+        .back-home-button {
+            text-decoration: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Tái sử dụng nền và hiệu ứng lá rơi -->
+    <div class="nature-background">
+        <div class="floating-leaf leaf-1"></div>
+        <div class="floating-leaf leaf-2"></div>
+        <div class="floating-leaf leaf-3"></div>
+        <div class="floating-leaf leaf-4"></div>
+        <div class="floating-leaf leaf-5"></div>
+    </div>
+
+    <!-- Tái sử dụng cấu trúc thẻ thông báo -->
+    <div class="login-container">
+        <div class="wellness-card">
+            <div class="organic-border"></div>
+            
+            <div class="not-found-content">
+                <h1>404</h1>
+                <h2>Không tìm thấy trang</h2>
+                <p>Rất tiếc, trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển.</p>
+                <a href="/" class="harmony-button back-home-button">
+                    <span class="button-text">Quay về trang chủ</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Quản lý</title>
+    <!-- CSS cho layout chung và dashboard card -->
+    <link rel="stylesheet" href="css/manager-layout.css">
+    <link rel="stylesheet" href="css/shared-layout.css"> <!-- Thêm CSS chung -->
+    <!-- Thêm thư viện Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+    <div class="manager-layout">
+        <!-- Sidebar Menu -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h3>Quản lý</h3>
+            </div>
+            <ul class="menu-links">
+                <li><a href="manager-main.html" class="nav-link active"><i class="fas fa-home"></i><span>Main</span></a></li>
+                <li><a href="manager-setting.html" class="nav-link"><i class="fas fa-calendar-alt"></i><span>Quản lý thông tin năm học</span></a></li>
+                <li><a href="manager-device.html" class="nav-link"><i class="fas fa-desktop"></i><span>Danh mục thiết bị</span></a></li>
+                <li><a href="manager-synthetic.html" class="nav-link"><i class="fas fa-chart-pie"></i><span>Tổng hợp</span></a></li>
+                <li><a href="manager-report.html" class="nav-link"><i class="fas fa-file-alt"></i><span>Báo cáo</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Wrapper -->
+        <div class="content-wrapper">
+            <div class="top-bar">
+                <div class="top-bar-actions">
+                    <div class="user-info">
+                        <span>Chào, <span id="user-name">Manager</span>!</span>
+                        <button id="edit-profile-button" class="icon-button" title="Chỉnh sửa thông tin">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                    </div>
+                    <button id="logout-button" class="logout-button">Đăng xuất</button>
+                </div>
+            </div>
+            <main id="main-content" class="main-content">
+                <!-- Nội dung động sẽ được tải vào đây -->
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal chỉnh sửa thông tin -->
+    <div id="profile-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Chỉnh sửa thông tin</h2>
+            <div class="form-group">
+                <label for="name-input">Tên hiển thị</label>
+                <input type="text" id="name-input" placeholder="Nhập tên của bạn">
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-edit-button" class="btn-cancel">Hủy</button>
+                <button id="save-name-button" class="btn-save">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/auth-guard.js"></script>
+    <script type="module" src="js/manager-nav.js"></script>
+</body>
+</html>
