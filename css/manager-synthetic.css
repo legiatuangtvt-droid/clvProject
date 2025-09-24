@@ -70,6 +70,24 @@
     width: 100%;
 }
 
+/* --- Cải tiến cho các nút hành động --- */
+.btn-info {
+    background-color: #3498db; /* Màu xanh dương đồng bộ với modal thống kê */
+    color: white;
+    border: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-info:hover {
+    background-color: #2980b9; /* Màu xanh dương đậm hơn khi hover */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn-info:active {
+    transform: translateY(0);
+}
+
 /* --- Controls & Header & Week Selector --- */
 .controls-container {
     display: flex;
@@ -493,13 +511,13 @@
 }
 
 /* Căn chỉnh cho modal nhập hàng loạt */
-#bulk-import-modal .form-row .form-group {
+.bulk-import-form-row .form-group {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-#bulk-import-modal .form-row .form-group label {
+.bulk-import-form-row .form-group label {
     margin-bottom: 0; /* Bỏ margin dưới của label */
     flex-shrink: 0; /* Ngăn label bị co lại */
 }

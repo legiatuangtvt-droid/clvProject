@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tổng hợp đăng ký</title>
-    <link rel="stylesheet" href="css/manager-layout.css">
-    <link rel="stylesheet" href="css/shared-layout.css"> <!-- Thêm CSS chung -->
+    <link rel="stylesheet" href="css/shared-layout.css"> <!-- Cấp 1: Dùng chung -->
+    <link rel="stylesheet" href="css/manager-layout.css"> <!-- Cấp 2: Layout vai trò -->
     <link rel="stylesheet" href="css/manager-setting.css"> <!-- Tái sử dụng style modal -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="css/manager-synthetic.css">
@@ -170,7 +170,7 @@
         <div class="modal-content large">
             <h2 id="bulk-import-modal-title">Nhập đăng ký hàng loạt</h2>
             <p>Dán dữ liệu từ Excel vào ô bên dưới. Mỗi dòng là một lượt đăng ký. Các cột phải theo đúng thứ tự: <strong>Tên GV - Lớp - Tiết - Tên bài dạy - Thiết bị - PPDH</strong>.</p>
-            <div class="form-row">
+            <div class="form-row bulk-import-form-row">
                 <div class="form-group" style="flex-grow: 2;">
                     <label for="bulk-import-day">Chọn thứ:</label>
                     <div class="day-selector-with-nav">
