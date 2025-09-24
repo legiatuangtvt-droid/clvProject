@@ -31,40 +31,6 @@ header p {
     box-shadow: 0 6px 14px rgba(217, 83, 79, 0.4);
 }
 
-/* Styles for name editing */
-.edit-toggle-button {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #2575fc;
-    background-color: transparent;
-    border: 1px solid #2575fc;
-    border-radius: 8px;
-    padding: 6px 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-bottom: 1.5em;
-}
-
-.edit-toggle-button:hover {
-    background-color: rgba(37, 117, 252, 0.1);
-}
-
-.edit-name-container {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1em;
-}
-
-#name-input {
-    padding: 8px 12px;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    flex-grow: 1;
-}
-
 .btn-save, .btn-cancel {
     padding: 8px 16px;
     font-size: 0.9rem;

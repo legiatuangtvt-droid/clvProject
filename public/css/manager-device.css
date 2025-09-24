@@ -70,28 +70,6 @@
     background-color: var(--hover-bg);
 }
 
-/* --- Style cho các dòng phân cấp --- */
-.device-row.is-group {
-    background-color: #e9ecef;
-    font-weight: bold;
-    font-size: 1.1rem;
-    color: var(--text-dark);
-}
-
-.device-row.is-parent > td:first-child {
-    font-weight: bold;
-}
-
-.device-row .device-name-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.group-icon {
-    color: #f39c12; /* Màu vàng cam */
-}
-
 /* Thụt lề cho các cấp con */
 .device-row.level-1 .device-name-cell {
     padding-left: 30px;
@@ -156,8 +134,9 @@
 }
 
 /* --- Inline Add Row Styles --- */
-.inline-add-row td {
-    background-color: #e6f7f4 !important; /* Nền xanh lá cây nhạt */
+/* Tăng độ đặc hiệu để ghi đè style hover của tr mà không cần !important */
+.device-table .inline-add-row td {
+    background-color: #e6f7f4; /* Nền xanh lá cây nhạt */
     padding-top: 8px;
     padding-bottom: 8px;
 }
@@ -193,13 +172,13 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-#device-modal .modal-content {
+.device-modal .modal-content {
     border-top: 5px solid var(--primary-color); /* Màu xanh lá cây */
     animation: fadeIn 0.3s ease-out;
     max-width: 700px; /* Tăng nhẹ chiều rộng cho thoải mái */
 }
 
-#device-modal-title {
+.device-modal-title {
     color: var(--text-dark);
     display: flex;
     align-items: center;
@@ -207,7 +186,7 @@
     font-size: 1.6rem;
 }
 
-#device-modal-title::before {
+.device-modal-title::before {
     content: '\f1b2'; /* Font Awesome icon: fa-cube */
     font-family: "Font Awesome 6 Free";
     font-weight: 900;
@@ -216,7 +195,7 @@
 }
 
 /* Cải tiến cho các trường trong modal */
-#device-modal .form-row {
+.device-modal .form-row {
     background-color: #f0f9f8;
     padding: 15px;
     border-radius: 8px;

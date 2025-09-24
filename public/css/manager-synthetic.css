@@ -312,13 +312,12 @@
 }
 
 /* Tăng độ đặc hiệu để ghi đè padding mặc định của td mà không cần !important */
-/* Bỏ !important vì selector đã đủ đặc hiệu */
 .weekly-schedule-table .session-separator td {
     padding: 0;
     height: 2px;
     background-color: #1abc9c;
     opacity: 0.3;
-    border: none;
+    border: none !important;
 }
 
 .slot {
@@ -519,7 +518,7 @@
 }
 
 /* Cải tiến cho khu vực chọn ngày và buổi */
-#bulk-import-modal .form-row {
+.bulk-import-modal .form-row {
     background-color: #e6f7f4;
     /* Dòng này xác định vùng đệm (khoảng trống bên trong) cho toàn bộ khu vực chọn ngày và buổi */
     padding: 5px;
@@ -529,7 +528,7 @@
     margin-bottom: 20px;
 }
 
-#bulk-import-modal .form-row .form-group label {
+.bulk-import-modal .form-row .form-group label {
     color: #00695c; /* Màu chữ xanh đậm hơn */
     font-weight: 600;
     margin-bottom: 0; /* Ghi đè margin-bottom mặc định từ layout.css */
@@ -567,11 +566,11 @@
 
 .day-nav-btn:hover { background-color: #80cbc4; }
 
-#prev-day-bulk-import { border-radius: 8px 0 0 8px; }
-#next-day-bulk-import { border-radius: 0 8px 8px 0; }
+.prev-day-bulk-import { border-radius: 8px 0 0 8px; }
+.next-day-bulk-import { border-radius: 0 8px 8px 0; }
 
 /* --- Cải tiến giao diện cho Modal Nhập hàng loạt --- */
-#bulk-import-modal .modal-content {
+.bulk-import-modal .modal-content {
     border-top: 5px solid #1abc9c;
     animation: fadeIn 0.3s ease-out;
 }
@@ -581,7 +580,7 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-#bulk-import-modal-title {
+.bulk-import-modal-title {
     color: #2c3e50;
     display: flex;
     align-items: center;
@@ -713,7 +712,7 @@
 }
 
 /* Đơn giản hóa selector */
-.equipment-stats-container .weekly-plan-table thead th {
+.weekly-plan-table thead th {
     background-color: #f1f5f9;
     color: #475569;
     font-weight: 600;

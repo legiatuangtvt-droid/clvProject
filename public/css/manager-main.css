@@ -48,7 +48,7 @@
 }
 
 /* Khu vực "Tình hình đăng ký hôm nay" */
-#today-registrations-container {
+.today-registrations-container {
     margin-top: 15px;
 }
 

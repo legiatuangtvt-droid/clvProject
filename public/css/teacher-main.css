@@ -326,7 +326,6 @@
     width: 45px; /* Độ rộng tối thiểu, đủ cho số Tiết */
 }
 
-/* Tăng độ đặc hiệu để ghi đè padding mặc định của td mà không cần !important */
 .weekly-schedule-table .session-separator td {
     padding: 0;
     height: 2px;

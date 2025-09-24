@@ -208,8 +208,8 @@
 }
 
 /* Dòng kẻ phân cách giữa buổi sáng và chiều */
-.session-separator td {
-    padding: 0 !important;
+.weekly-schedule-table .session-separator td {
+    padding: 0;
     height: 2px;
     background-color: var(--primary-color);
     opacity: 0.3;

@@ -72,18 +72,18 @@ body {
     border-left: 4px solid transparent;
 }
 
-.menu-links li a span {
+.nav-link span {
     white-space: nowrap;
     opacity: 0; /* Ẩn chữ mặc định */
     transition: opacity 0.2s ease;
 }
 
-.sidebar.expanded .menu-links li a span {
+.sidebar.expanded .nav-link span {
     opacity: 1; /* Hiện chữ khi mở rộng */
     transition-delay: 0.1s;
 }
 
-.menu-links li a .fas {
+.nav-link .fas {
     width: 20px; /* Đặt chiều rộng cố định cho icon để các dòng chữ thẳng hàng */
     text-align: center;
     font-size: 1.1rem; /* Tăng nhẹ kích thước icon */
@@ -173,49 +173,6 @@ body {
     flex: 1;
 }
 
-/* --- Toast Notification Styles --- */
-#toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 2000;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.toast {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 15px 20px;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 0.95rem;
-    font-weight: 500;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    opacity: 0;
-    transform: translateX(100%);
-    transition: all 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
-}
-
-.toast.show {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-.toast-success {
-    background-color: #28a745;
-}
-
-.toast-error {
-    background-color: #dc3545;
-}
-
-.toast-info {
-    background-color: #17a2b8;
-}
-
 /* --- Responsive Styles for Mobile --- */
 @media (max-width: 768px) {
     .manager-layout {
@@ -236,7 +193,7 @@ body {
     }
 
     .sidebar.expanded .sidebar-header h3,
-    .sidebar.expanded .menu-links li a span {
+    .sidebar.expanded .nav-link span {
         opacity: 1; /* Luôn hiện chữ khi sidebar mở */
     }
 

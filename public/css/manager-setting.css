@@ -29,7 +29,7 @@
     align-items: center;
 }
 
-#school-year-select {
+.school-year-select {
     min-width: 150px;
     padding: 8px 12px;
     border-radius: 8px;
@@ -61,7 +61,7 @@
     font-size: 1.8rem;
 }
 
-#dashboard-school-year {
+.dashboard-school-year {
     font-size: 1.2rem;
     color: var(--text-light);
 }
@@ -133,7 +133,7 @@
     margin-bottom: 10px;
 }
 
-#data-repair-results-container {
+.data-repair-results-container {
     margin-top: 25px;
     padding: 20px;
     border: 1px solid var(--border-color);
@@ -200,14 +200,14 @@
 }
 
 /* --- Container chứa các tổ --- */
-#groups-container {
+.groups-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 25px;
 }
 
 /* --- Container và Card chung cho các item đơn giản (như PPDH) --- */
-#methods-container {
+.methods-container {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -625,7 +625,7 @@
     }
 
     /* --- Groups & Teachers Tab --- */
-    #groups-container {
+    .groups-container {
         grid-template-columns: 1fr; /* Một cột trên mobile */
         gap: 15px;
     }
