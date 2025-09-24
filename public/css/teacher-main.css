@@ -177,42 +177,13 @@
     margin-bottom: 15px;
 }
 
-/* --- Filter Controls --- */
-.filter-controls {
-    display: flex;
-    flex-direction: column; /* Chuyển sang cột để dễ nhìn trên mobile */
-    gap: 10px;
-    width: 100%;
-    padding-top: 15px;
-    border-top: 1px solid #dee2e6;
-}
-
-.filter-group {
-    display: flex;
-    flex-direction: row; /* Hiển thị label và select trên cùng một hàng */
-    align-items: center; /* Căn giữa theo chiều dọc */
-    gap: 8px;
-}
-
-.filter-group label {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #495057;
-}
-
-.filter-select {
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid #ced4da;
-    background-color: #fff;
-    width: 100%;
+/* Sắp xếp lại các bộ lọc trên trang giáo viên */
+.synthetic-sidebar .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
 }
 
 /* --- BẢNG LỊCH (Chuyển từ teacher-register.css) --- */
-.schedule-container-weekly {
-    overflow-x: auto;
-}
-
 .weekly-schedule-table {
     width: 100%;
     border-collapse: collapse;

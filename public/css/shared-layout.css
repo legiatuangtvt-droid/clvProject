@@ -330,3 +330,60 @@
     color: white;
     font-weight: bold;
 }
+
+/* --- Cải tiến Bộ lọc (Filters) --- */
+.filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    flex-grow: 1; /* Cho phép nhóm bộ lọc co giãn */
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.filter-group:hover {
+    border-color: #bdc6cf;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.filter-group label {
+    padding: 0 15px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    background-color: #f8f9fa;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    border-right: 1px solid var(--border-color);
+    white-space: nowrap; /* Ngăn label xuống dòng */
+}
+
+.filter-select {
+    padding: 10px 30px 10px 15px; /* Thêm padding phải cho mũi tên */
+    border: none;
+    background-color: transparent;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    width: 100%; /* Thay min-width bằng width 100% để linh hoạt */
+    flex-grow: 1; /* Cho phép select co giãn */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    cursor: pointer;
+}
