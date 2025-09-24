@@ -56,14 +56,17 @@ function checkCssContent(filePath) {
     const fileName = path.basename(filePath);
     if (IGNORE_FILES.includes(fileName)) return;
 
-    const fileContent = fs.readFileSync(filePath, 'utf8');
-    const lines = fileContent.split('\n');
+    let fileContent = fs.readFileSync(filePath, 'utf8');
+    
+    // Loại bỏ tất cả các khối comment (/* ... */) trước khi phân tích
+    const contentWithoutComments = fileContent.replace(/\/\*[\s\S]*?\*\//g, '');
+    const lines = contentWithoutComments.split('\n');
 
     // Trích xuất tất cả các class được định nghĩa trong file này
     // Cải tiến regex: class phải bắt đầu bằng chữ cái, theo sau là chữ, số, gạch dưới, gạch ngang.
     const classRegex = /\.([a-zA-Z][a-zA-Z0-9_-]*)/g;
     let match;
-    while ((match = classRegex.exec(fileContent)) !== null) {
+    while ((match = classRegex.exec(contentWithoutComments)) !== null) {
         const className = match[1];
         // Chỉ thêm nếu class này chưa được định nghĩa ở file khác
         // Điều này giúp xác định file gốc của class

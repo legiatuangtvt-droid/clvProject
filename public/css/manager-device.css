@@ -107,18 +107,6 @@
     min-height: 80px;
 }
 
-.form-group input[type="number"] {
-    width: 80px;
-}
-
-/* --- Inline Add Row Styles --- */
-/* Tăng độ đặc hiệu để ghi đè style hover của tr mà không cần !important */
-.device-table .inline-add-row td {
-    background-color: #e6f7f4; /* Nền xanh lá cây nhạt */
-    padding-top: 8px;
-    padding-bottom: 8px;
-}
-
 .inline-input {
     width: 100%;
     padding: 6px 8px;

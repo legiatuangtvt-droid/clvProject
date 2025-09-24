@@ -311,13 +311,12 @@
     background-color: #f8f9fa;
 }
 
-/* Tăng độ đặc hiệu để ghi đè padding mặc định của td mà không cần !important */
 .weekly-schedule-table .session-separator td {
     padding: 0;
     height: 2px;
     background-color: #1abc9c;
     opacity: 0.3;
-    border: none !important;
+    border: none;
 }
 
 .slot {
