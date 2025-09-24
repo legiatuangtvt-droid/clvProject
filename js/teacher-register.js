@@ -525,7 +525,7 @@ const initializeTeacherRegisterPage = (user) => {
 
             if (conflictDoc) {
                 const conflictData = conflictDoc.data();
-                const conflictInfoContainer = document.getElementById('conflict-info-container');
+                const conflictInfoContainer = conflictWarningModal.querySelector('.conflict-info-container');
                 conflictInfoContainer.innerHTML = `
                     <p>Lớp <strong>${conflictData.className}</strong> đã được đăng ký vào tiết này bởi giáo viên có ID: <strong>${conflictData.teacherId}</strong>.</p>
                     <p>Vui lòng kiểm tra lại trên lịch tổng hợp.</p>

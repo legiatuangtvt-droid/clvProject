@@ -583,7 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (conflictDoc) {
             const conflictData = conflictDoc.data();
-            document.getElementById('conflict-info-container').innerHTML = `
+            conflictWarningModal.querySelector('.conflict-info-container').innerHTML = `
                 <p>Lớp <strong>${conflictData.className}</strong> đã được đăng ký vào tiết này bởi:</p>
                 <p><strong>Giáo viên:</strong> ${teacherMap.get(conflictData.teacherId)?.teacher_name || 'N/A'}</p>
                 <p><strong>Môn học:</strong> ${conflictData.subject}</p>`;

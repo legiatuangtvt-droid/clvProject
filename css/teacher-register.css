@@ -5,25 +5,6 @@
     align-items: center;
 }
 /* Các style đã có trong file teacher-register.css của bạn */
-/* ... */
-
-.control-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-/* Thêm các style mới này vào cuối file */
-
-.control-group label {
-    font-weight: 600;
-    color: var(--text-light);
-}
-.control-group select {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid #ced4da;
-    min-width: 150px;
-}
 
 .page-header {
     align-items: flex-start;
@@ -232,42 +213,15 @@
 }
 
 .session-separator td {
-    padding: 0 !important;
+    padding: 0;
     height: 2px;
     background-color: var(--primary-color);
     opacity: 0.3;
-}
-.no-registrations {
-    text-align: center;
-    color: #999;
-    padding: 20px;
 }
 /* --- Modal Form --- */
 .form-row {
     display: flex;
     gap: 20px;
-}
-
-.form-row .form-group {
-    flex: 1;
-}
-
-/* Style cho select-multiple */
-#reg-equipment {
-    min-height: 100px;
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-}
-
-#reg-equipment option {
-    padding: 5px;
-}
-
-#reg-equipment option:checked {
-    background-color: var(--primary-color);
-    color: white;
 }
 
 .modal-content {
@@ -276,11 +230,6 @@
 
 @media (max-width: 768px) {
     .modal-content { min-width: 90vw; } /* Chiều rộng co dãn trên mobile */
-}
-
-/* Style cho select-multiple của PPDH */
-#reg-method {
-    min-height: 120px;
 }
 
 /* --- Checkbox Group for Methods --- */
@@ -341,11 +290,11 @@
 }
 
 /* --- Conflict Warning Modal --- */
-#conflict-info-container p {
+.conflict-info-container p {
     margin: 10px 0;
     line-height: 1.6;
 }
-#conflict-info-container strong {
+.conflict-info-container strong {
     color: var(--text-dark);
     min-width: 100px;
     display: inline-block;
