@@ -10,12 +10,12 @@ import { auth, firestore } from "./firebase-config.js";
 import { showToast } from "./toast.js";
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!document.getElementById('report-container')) return;
+    if (!document.querySelector('.report-container')) return;
 
     const filterTypeSelect = document.getElementById('time-filter-type');
     const filterValueSelect = document.getElementById('time-filter-value');
-    const viewReportBtn = document.getElementById('view-report-btn');
-    const reportContainer = document.getElementById('report-container');
+    const viewReportBtn = document.querySelector('.view-report-btn');
+    const reportContainer = document.querySelector('.report-container');
 
     let currentSchoolYear = null;
     let timePlan = [];

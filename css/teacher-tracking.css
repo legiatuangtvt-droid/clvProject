@@ -20,17 +20,17 @@
 }
 
 /* Tùy chỉnh riêng cho nút "Xem" trên trang này để nổi bật hơn */
-#view-report-btn.btn-primary {
+.view-report-btn.btn-primary {
     background-color: #28a745; /* Màu xanh lá cây */
     color: white;
     border-color: #28a745;
 }
 
-#view-report-btn.btn-primary:hover {
+.view-report-btn.btn-primary:hover {
     background-color: #218838; /* Màu xanh lá cây đậm hơn khi hover */
 }
 
-#report-container {
+.report-container {
     margin-top: 25px;
 }
 
