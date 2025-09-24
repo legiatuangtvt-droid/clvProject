@@ -205,7 +205,7 @@
 }
 
 /* --- Color Legend --- */
-#color-legend-container {
+.color-legend-container {
     display: flex;
     flex-direction: column; /* Sắp xếp các nhóm chú thích theo cột */
     gap: 15px; /* Khoảng cách giữa các nhóm (Tổ, Môn, GV) */
@@ -216,7 +216,7 @@
     background-color: #fcfcfc;
 }
 
-#color-legend-container h4 {
+.color-legend-container h4 {
     margin: 0 0 5px 0;
     font-size: 1.1rem;
     width: 100%; /* Đảm bảo tiêu đề chiếm toàn bộ chiều rộng */
@@ -311,8 +311,9 @@
     background-color: #f8f9fa;
 }
 
-.session-separator td {
-    padding: 0 !important;
+/* Tăng độ đặc hiệu để ghi đè padding mặc định của td mà không cần !important */
+.weekly-schedule-table .session-separator td {
+    padding: 0;
     height: 2px;
     background-color: #1abc9c;
     opacity: 0.3;

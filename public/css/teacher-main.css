@@ -41,7 +41,7 @@
 }
 
 /* --- Color Legend Styles --- */
-#color-legend-container {
+.color-legend-container {
     display: flex;
     flex-direction: column;
     margin-top: 0;
@@ -52,7 +52,7 @@
     background-color: #fcfcfc;
 }
 
-#color-legend-container h4 {
+.color-legend-container h4 {
     margin: 0 0 5px 0;
     font-size: 1.1rem;
     width: 100%;
@@ -326,8 +326,9 @@
     width: 45px; /* Độ rộng tối thiểu, đủ cho số Tiết */
 }
 
-.session-separator td {
-    padding: 0 !important;
+/* Tăng độ đặc hiệu để ghi đè padding mặc định của td mà không cần !important */
+.weekly-schedule-table .session-separator td {
+    padding: 0;
     height: 2px;
     background-color: var(--primary-color);
     opacity: 0.3;
