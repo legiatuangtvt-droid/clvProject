@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2. Cập nhật danh sách Giáo viên dựa trên Tổ và Môn đã chọn
         const teacherSelect = filterTeacherSelect;
-        const selectedSubject = subjectSelect.value; // Lấy giá trị môn học mới nhất
+        const finalSelectedSubject = subjectSelect.value; // Lấy giá trị môn học mới nhất
         teacherSelect.innerHTML = '<option value="all">Tất cả</option>';
         let teachersToShow = [];
     
@@ -239,14 +239,18 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             teachersToShow = allTeachers.filter(t => t.group_id === selectedGroupId);
         }
-    
+
+        // Lọc thêm theo môn học
+        if (finalSelectedSubject !== 'all') {
+            teachersToShow = teachersToShow.filter(t => t.subject === finalSelectedSubject);
+        }
+
         teachersToShow.forEach(teacher => {
             const option = document.createElement('option');
             option.value = teacher.uid;
             option.textContent = teacher.teacher_name;
             teacherSelect.appendChild(option);
         });
-    
         // Giữ lại lựa chọn giáo viên nếu vẫn tồn tại
         if (teachersToShow.some(t => t.uid === currentTeacher)) {
             teacherSelect.value = currentTeacher;

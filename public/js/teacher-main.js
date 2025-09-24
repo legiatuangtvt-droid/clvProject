@@ -128,21 +128,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateTeacherFilter = () => {
         const selectedSubject = filterSubjectSelect.value;
         const currentTeacher = filterTeacherSelect.value;
-
-        // Tìm các giáo viên đã đăng ký dạy môn được chọn trong tuần này
-        const teachersForSubject = new Set(
-            currentRegistrations
-                .filter(reg => selectedSubject === 'all' || reg.subject === selectedSubject)
-                .map(reg => reg.teacherId)
-        );
-
-        // Lọc danh sách giáo viên trong tổ để chỉ hiển thị những người có liên quan
-        const teachersToShow = teachersInGroup.filter(teacher => selectedSubject === 'all' || teachersForSubject.has(teacher.uid));
-
+    
+        let teachersToShow = teachersInGroup;
+    
+        // Lọc giáo viên dựa trên môn học đã chọn
+        if (selectedSubject !== 'all') {
+            teachersToShow = teachersInGroup.filter(teacher => teacher.subject === selectedSubject);
+        }
+    
         filterTeacherSelect.innerHTML = '<option value="all">Tất cả GV</option>';
         teachersToShow.forEach(teacher => {
             filterTeacherSelect.innerHTML += `<option value="${teacher.uid}">${teacher.teacher_name}</option>`;
         });
+    
+        // Giữ lại lựa chọn giáo viên nếu vẫn tồn tại trong danh sách mới
+        if (teachersToShow.some(t => t.uid === currentTeacher)) {
+            filterTeacherSelect.value = currentTeacher;
+        }
     };
 
     const loadTimePlan = async (schoolYear) => {

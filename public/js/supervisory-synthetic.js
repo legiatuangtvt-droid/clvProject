@@ -154,22 +154,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const teacherSelect = filterTeacherSelect;
+        const finalSelectedSubject = subjectSelect.value; // Lấy giá trị môn học mới nhất
         teacherSelect.innerHTML = '<option value="all">Tất cả</option>';
         let teachersToShow = [];
-    
+
         if (selectedGroupId === 'all') {
             teachersToShow = allTeachers;
         } else {
             teachersToShow = allTeachers.filter(t => t.group_id === selectedGroupId);
         }
-    
+
+        // Lọc thêm theo môn học
+        if (finalSelectedSubject !== 'all') {
+            teachersToShow = teachersToShow.filter(t => t.subject === finalSelectedSubject);
+        }
+
         teachersToShow.forEach(teacher => {
             const option = document.createElement('option');
             option.value = teacher.uid;
             option.textContent = teacher.teacher_name;
             teacherSelect.appendChild(option);
         });
-    
         if (teachersToShow.some(t => t.uid === currentTeacher)) {
             teacherSelect.value = currentTeacher;
         }
