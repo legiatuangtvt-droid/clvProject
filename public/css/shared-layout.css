@@ -91,7 +91,7 @@
 }
 
 /* --- Toast Notifications --- */
-#toast-container {
+.toast-container {
     position: fixed;
     top: 20px;
     right: 20px;
@@ -118,11 +118,6 @@
 .toast.show {
     opacity: 1;
     transform: translateX(0);
-}
-
-.toast-icon {
-    font-size: 1.2rem;
-    margin-right: 12px;
 }
 
 .toast-success { background-color: #28a745; }
@@ -215,7 +210,7 @@
     gap: 10px;
 }
 
-.btn, .btn-save, .btn-cancel, .btn-danger, .btn-secondary, .btn-primary {
+.btn-save, .btn-cancel, .btn-danger, .btn-secondary, .btn-primary {
     padding: 10px 20px;
     font-size: 0.9rem;
     font-weight: 600;
@@ -230,12 +225,12 @@
     text-decoration: none; /* Cho các thẻ <a> */
 }
 
-.btn:hover, .btn-primary:hover, .btn-secondary:hover, .btn-save:hover, .btn-danger:hover, .btn-cancel:hover {
+.btn-primary:hover, .btn-secondary:hover, .btn-save:hover, .btn-danger:hover, .btn-cancel:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.btn:disabled, .btn-primary:disabled, .btn-secondary:disabled, .btn-save:disabled, .btn-danger:disabled, .btn-cancel:disabled {
+.btn-primary:disabled, .btn-secondary:disabled, .btn-save:disabled, .btn-danger:disabled, .btn-cancel:disabled {
     cursor: not-allowed;
     opacity: 0.65;
     transform: none;

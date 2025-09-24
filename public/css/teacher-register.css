@@ -207,8 +207,9 @@
     background-color: #e7f3ff;
 }
 
+/* Dòng kẻ phân cách giữa buổi sáng và chiều */
 .session-separator td {
-    padding: 0;
+    padding: 0 !important;
     height: 2px;
     background-color: var(--primary-color);
     opacity: 0.3;
