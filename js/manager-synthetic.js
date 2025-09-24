@@ -59,6 +59,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let deleteFunction = null;
     let validRegistrationsToCreate = []; // Lưu các đăng ký hợp lệ để chờ xác nhận
 
+    const getSubjectsFromGroupName = (groupName) => {
+        const cleanedName = groupName.replace(/^Tổ\s*/, '');
+        // Xử lý trường hợp đặc biệt cho "Thể dục - QP"
+        if (cleanedName.includes('Thể dục - QP')) {
+            return cleanedName.replace('Thể dục - QP', 'Thể dục--QP--PLACEHOLDER') // Tạm thời thay thế để không bị split
+                              .split(/\s*-\s*/)
+                              .map(s => s.trim().replace('Thể dục--QP--PLACEHOLDER', 'Thể dục - QP'));
+        }
+        return cleanedName.split(/\s*-\s*/).map(s => s.trim());
+    };
+
     // --- INITIALIZATION ---
     const initializePage = async () => {
         try {
@@ -170,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allSubjects.clear();
         groupsSnapshot.forEach(doc => {
             const groupName = doc.data().group_name;
-            groupName.replace(/^Tổ\s*/, '').split(/\s*-\s*/).forEach(sub => allSubjects.add(sub.trim()));
+            getSubjectsFromGroupName(groupName).forEach(sub => allSubjects.add(sub.trim()));
         });
 
         subjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
@@ -204,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             const selectedGroup = allGroups.find(g => g.group_id === selectedGroupId);
             if (selectedGroup) {
-                selectedGroup.group_name.replace(/^Tổ\s*/, '').split(/\s*-\s*/).forEach(sub => availableSubjects.add(sub.trim()));
+                getSubjectsFromGroupName(selectedGroup.group_name).forEach(sub => availableSubjects.add(sub.trim()));
             }
         }
 
@@ -771,7 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Ưu tiên lấy môn học đã gán cho giáo viên, nếu không có thì mới suy luận từ tên tổ
                 const subject = teacher.subject || 
-                                (groupMap.get(teacher.group_id)?.group_name.replace(/^Tổ\s*/, '').split(/\s*-\s*/)[0].trim()) || 
+                                (getSubjectsFromGroupName(groupMap.get(teacher.group_id)?.group_name || '')[0]) || 
                                 'Chưa xác định';
                 const newRegData = { teacherId: teacher.uid, teacherName: teacher.teacher_name, groupId: teacher.group_id, schoolYear: currentSchoolYear, weekNumber: selectedWeek.weekNumber, date: importDate, period: finalPeriod, subject: subject, className: className, lessonName: lesson, equipment: equipmentStr.split(/[,+]/).map(item => item.trim()).filter(Boolean), teachingMethod: teachingMethodStr.split(/[&,;]/).map(item => item.trim()).filter(Boolean), createdAt: serverTimestamp() };
 

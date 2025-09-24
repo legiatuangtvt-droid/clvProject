@@ -31,6 +31,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let teachersInGroup = [];
     let currentRegistrations = []; // Lưu các đăng ký của tuần hiện tại
 
+    const getSubjectsFromGroupName = (groupName) => {
+        const cleanedName = groupName.replace(/^Tổ\s*/, '');
+        // Xử lý trường hợp đặc biệt cho "Thể dục - QP"
+        if (cleanedName.includes('Thể dục - QP')) {
+            return cleanedName.replace('Thể dục - QP', 'Thể dục--QP--PLACEHOLDER') // Tạm thời thay thế để không bị split
+                              .split(/\s*-\s*/)
+                              .map(s => s.trim().replace('Thể dục--QP--PLACEHOLDER', 'Thể dục - QP'));
+        }
+        return cleanedName.split(/\s*-\s*/).map(s => s.trim());
+    };
+
     const loadDashboardData = async () => {
         try {
             // 1. Lấy năm học mới nhất
@@ -92,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Populate subject filter
         const subjects = new Set();
         const groupName = document.getElementById('sidebar-group-name').textContent.replace('Tổ ', '');
-        groupName.split(/\s*-\s*/).forEach(sub => subjects.add(sub.trim()));
+        getSubjectsFromGroupName(groupName).forEach(sub => subjects.add(sub.trim()));
 
         filterSubjectSelect.innerHTML = '<option value="all">Tất cả môn</option>';
         [...subjects].sort().forEach(subject => {
@@ -419,7 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Lấy tất cả môn học từ tên tổ
         const groupName = document.getElementById('sidebar-group-name').textContent.replace('Tổ ', '');
-        const allSubjectsInGroup = groupName.split(/\s*-\s*/).map(s => s.trim());
+        const allSubjectsInGroup = getSubjectsFromGroupName(groupName);
 
         // Lấy tất cả giáo viên trong tổ
         const allTeachersInGroup = teachersInGroup.map(t => t.uid).filter(Boolean);

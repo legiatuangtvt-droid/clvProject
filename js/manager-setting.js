@@ -45,6 +45,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${month}-${day}`;
     };
 
+    const getSubjectsFromGroupName = (groupName) => {
+        const cleanedName = groupName.replace(/^Tổ\s*/, '');
+        // Xử lý trường hợp đặc biệt cho "Thể dục - QP"
+        if (cleanedName.includes('Thể dục - QP')) {
+            return cleanedName.replace('Thể dục - QP', 'Thể dục--QP--PLACEHOLDER') // Tạm thời thay thế để không bị split
+                              .split(/\s*-\s*/)
+                              .map(s => s.trim().replace('Thể dục--QP--PLACEHOLDER', 'Thể dục - QP'));
+        }
+        return cleanedName.split(/\s*-\s*/).map(s => s.trim());
+    };
     // --- DATA REPAIR FUNCTIONS ---
     const findAndRepairOrphanedRegs = async () => {
         dataRepairContainer.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Đang quét dữ liệu, vui lòng chờ...</p>`;
@@ -813,7 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Populate subject dropdown in teacher modal
                 const groupName = groupDocSnap.data().group_name;
-                const subjects = groupName.replace(/^Tổ\s*/, '').split(/\s*-\s*/).map(s => s.trim());
+                const subjects = getSubjectsFromGroupName(groupName);
                 const subjectSelect = document.getElementById('teacher-subject-input');
                 subjectSelect.innerHTML = '<option value="">-- Chọn môn chính --</option>';
                 subjects.forEach(sub => {
@@ -871,7 +881,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const groupRef = doc(firestore, 'groups', groupId);
                     const groupSnap = await getDoc(groupRef);
                     const groupName = groupSnap.exists() ? groupSnap.data().group_name : '';
-                    const subjects = groupName.replace(/^Tổ\s*/, '').split(/\s*-\s*/).map(s => s.trim());
+                    const subjects = getSubjectsFromGroupName(groupName);
                     const subjectSelect = document.getElementById('teacher-subject-input');
                     subjectSelect.innerHTML = '<option value="">-- Chọn môn chính --</option>';
                     subjects.forEach(sub => {

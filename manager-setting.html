@@ -51,16 +51,16 @@
                     </div>
 
                     <div class="tab-nav">
-                        <button class="tab-link active" data-tab="groups-teachers">Tổ chuyên môn & Giáo viên</button>
-                        <button class="tab-link" data-tab="teaching-methods">Phương pháp dạy học</button>
-                        <button class="tab-link" data-tab="data-repair-content">Sửa lỗi dữ liệu</button>
-                        <button class="tab-link" data-tab="time-plan">Kế hoạch thời gian năm học</button>
+                        <button class="tab-link active" data-tab="groups-teachers"><i class="fas fa-users"></i><span class="desktop-text">Tổ chuyên môn & Giáo viên</span><span class="mobile-text">Tổ & GV</span></button>
+                        <button class="tab-link" data-tab="teaching-methods"><i class="fas fa-lightbulb"></i><span class="desktop-text">Phương pháp dạy học</span><span class="mobile-text">PPDH</span></button>
+                        <button class="tab-link" data-tab="data-repair-content"><i class="fas fa-tools"></i><span class="desktop-text">Sửa lỗi dữ liệu</span><span class="mobile-text">Sửa lỗi</span></button>
+                        <button class="tab-link" data-tab="time-plan"><i class="fas fa-calendar-alt"></i><span class="desktop-text">Kế hoạch thời gian</span><span class="mobile-text">Kế hoạch</span></button>
                     </div>
 
                     <div id="tab-content-container">
                         <div id="groups-teachers" class="tab-content active">
                             <div class="page-header">
-                                <h2>Tổ chuyên môn & Giáo viên</h2>
+                                <h2>Danh sách Tổ chuyên môn & Giáo viên</h2>
                                 <button id="add-group-btn" class="btn-primary"><i class="fas fa-plus"></i> Thêm Tổ</button>
                             </div>
                             <div id="groups-container"><p>Vui lòng chọn một năm học để xem dữ liệu.</p></div>
@@ -76,7 +76,7 @@
                         <!-- Tab Sửa lỗi dữ liệu -->
                         <div id="data-repair-content" class="tab-content">
                             <div class="content-header">
-                                <h2>Sửa lỗi Teacher ID cho các lượt đăng ký</h2>
+                                <h2>Sửa lỗi Teacher ID</h2>
                                 <button id="find-orphaned-regs-btn" class="btn-primary"><i class="fas fa-search"></i> Bắt đầu quét và sửa lỗi</button>
                             </div>
                             <div class="instruction-text">
@@ -107,7 +107,7 @@
                                         <input type="number" id="semester-end-week-input" value="19" min="1" max="36">
                                     </div>
                                 </div>
-                                <button id="generate-plan-btn" class="btn-primary"><i class="fas fa-cogs"></i> Tạo kế hoạch</button>
+                                <button id="generate-plan-btn" class="btn-primary"><i class="fas fa-cogs"></i> Tạo / Cập nhật Kế hoạch</button>
                                 <p class="form-note">Chọn ngày bắt đầu là thứ Hai của tuần đầu tiên. Hệ thống sẽ tự động tạo kế hoạch cho 37 tuần học. Nếu kế hoạch đã tồn tại, nó sẽ được tải.</p>
                             </div>
                             <div id="weekly-plan-container"></div>
@@ -127,8 +127,10 @@
                 <input type="text" id="group-name-input" placeholder="Ví dụ: Tổ Toán - Tin">
             </div>
             <div class="modal-actions">
-                <button id="cancel-group-modal" class="btn-cancel">Hủy</button>
-                <button id="save-group-btn" class="btn-save">Lưu</button>
+                <div class="modal-actions-right">
+                    <button id="cancel-group-modal" class="btn-cancel">Hủy</button>
+                    <button id="save-group-btn" class="btn-save">Lưu</button>
+                </div>
             </div>
         </div>
     </div>
@@ -142,8 +144,10 @@
                 <input type="text" id="method-name-input" placeholder="Ví dụ: Dạy học theo dự án">
             </div>
             <div class="modal-actions">
-                <button id="cancel-method-modal" class="btn-cancel">Hủy</button>
-                <button id="save-method-btn" class="btn-save">Lưu</button>
+                <div class="modal-actions-right">
+                    <button id="cancel-method-modal" class="btn-cancel">Hủy</button>
+                    <button id="save-method-btn" class="btn-save">Lưu</button>
+                </div>
             </div>
         </div>
     </div>
@@ -157,8 +161,10 @@
                 <input type="text" id="school-year-name-input" placeholder="Ví dụ: 2024-2025">
             </div>
             <div class="modal-actions">
-                <button id="cancel-school-year-modal" class="btn-cancel">Hủy</button>
-                <button id="save-school-year-btn" class="btn-save">Lưu</button>
+                <div class="modal-actions-right">
+                    <button id="cancel-school-year-modal" class="btn-cancel">Hủy</button>
+                    <button id="save-school-year-btn" class="btn-save">Lưu</button>
+                </div>
             </div>
         </div>
     </div>
@@ -183,8 +189,10 @@
                 </div>
             </form>
             <div class="modal-actions">
-                <button id="cancel-teacher-modal" class="btn-cancel">Hủy</button>
-                <button id="save-teacher-btn" class="btn-save">Lưu</button>
+                <div class="modal-actions-right">
+                    <button id="cancel-teacher-modal" class="btn-cancel">Hủy</button>
+                    <button id="save-teacher-btn" class="btn-save">Lưu</button>
+                </div>
             </div>
         </div>
     </div>
@@ -202,8 +210,10 @@
                 <input type="date" id="week-end-date-input" class="form-control">
             </div>
             <div class="modal-actions">
-                <button id="cancel-week-edit-modal" class="btn-cancel">Hủy</button>
-                <button id="save-week-btn" class="btn-save">Lưu</button>
+                <div class="modal-actions-right">
+                    <button id="cancel-week-edit-modal" class="btn-cancel">Hủy</button>
+                    <button id="save-week-btn" class="btn-save">Lưu</button>
+                </div>
             </div>
         </div>
     </div>
@@ -215,8 +225,10 @@
             <h2 id="confirm-delete-message">Xác nhận xóa</h2>
             <p id="confirm-delete-message">Bạn có chắc chắn muốn xóa mục này không? Hành động này không thể hoàn tác.</p>
             <div class="modal-actions">
-                <button id="cancel-delete-btn" class="btn-cancel">Hủy</button>
-                <button id="confirm-delete-btn" class="btn-danger">Xóa</button>
+                <div class="modal-actions-right">
+                    <button id="cancel-delete-btn" class="btn-cancel">Hủy</button>
+                    <button id="confirm-delete-btn" class="btn-danger">Xóa</button>
+                </div>
             </div>
         </div>
     </div>

@@ -191,25 +191,6 @@ body {
     box-sizing: border-box;
 }
 
-/* Nút chính (Primary Button) */
-.btn-primary {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 10px 18px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: background-color 0.2s;
-}
-
-.btn-primary:hover {
-    background-color: var(--primary-hover);
-}
-
 /* --- Styles for Week Selector (copied from teacher-register.css) --- */
 .page-header {
     display: flex;

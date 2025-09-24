@@ -40,6 +40,16 @@ const initializeTeacherRegisterPage = (user) => {
     let lastUsedSubject = null; // Lưu môn học từ lần đăng ký cuối
     let selectedWeekNumber = null;
 
+    const getSubjectsFromGroupName = (groupName) => {
+        const cleanedName = groupName.replace(/^Tổ\s*/, '');
+        // Xử lý trường hợp đặc biệt cho "Thể dục - QP"
+        if (cleanedName.includes('Thể dục - QP')) {
+            return cleanedName.replace('Thể dục - QP', 'Thể dục--QP--PLACEHOLDER') // Tạm thời thay thế để không bị split
+                              .split(/\s*-\s*/)
+                              .map(s => s.trim().replace('Thể dục--QP--PLACEHOLDER', 'Thể dục - QP'));
+        }
+        return cleanedName.split(/\s*-\s*/).map(s => s.trim());
+    };
     const loadTimePlan = async (user) => {
         const planQuery = query(collection(firestore, 'timePlans'), where("schoolYear", "==", currentSchoolYear));
         const planSnapshot = await getDocs(planQuery);
@@ -149,7 +159,7 @@ const initializeTeacherRegisterPage = (user) => {
             if (currentUserInfo.subject) {
                 subjectSelect.innerHTML += `<option value="${currentUserInfo.subject}" selected>${currentUserInfo.subject}</option>`;
             } else { // Nếu chưa được phân công, hiển thị tất cả các môn trong tổ
-                const subjects = currentUserInfo.group_name.replace(/^Tổ\s*/, '').split(/\s*-\s*/);
+                const subjects = getSubjectsFromGroupName(currentUserInfo.group_name);
                 subjects.forEach(subject => {
                     subjectSelect.innerHTML += `<option value="${subject}">${subject}</option>`;
                 });
