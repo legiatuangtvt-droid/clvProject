@@ -237,3 +237,96 @@
 
 .btn-danger { background-color: #dc3545; color: white; border-color: #dc3545; }
 .btn-danger:hover { background-color: #c82333; border-color: #bd2130; }
+
+/* --- Cải tiến Bộ chọn tuần (Week Selector) --- */
+.week-selector-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 320px; /* Giới hạn chiều rộng tối đa */
+    margin: 0 auto; /* Tự động căn giữa */
+}
+
+.week-navigation {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    width: 100%;
+}
+
+.week-nav-btn {
+    background-color: transparent;
+    border: none;
+    padding: 0 15px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--text-light);
+    align-self: stretch;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.week-nav-btn:hover {
+    background-color: #f1f5f9;
+    color: var(--primary-color);
+}
+
+.week-display {
+    flex-grow: 1;
+    padding: 10px 15px;
+    font-weight: 600;
+    color: var(--text-dark);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+.week-display:hover {
+    background-color: #f8f9fa;
+}
+
+.week-date-range {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-top: 6px;
+}
+
+.week-dropdown {
+    position: absolute;
+    top: calc(100% + 5px); /* Thêm khoảng cách nhỏ */
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    z-index: 1010; /* Cao hơn các element khác */
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 5px;
+}
+
+.week-option {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: background-color 0.2s, color 0.2s;
+}
+.week-option:hover {
+    background-color: #f1f5f9;
+}
+.week-option.highlight {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: bold;
+}
