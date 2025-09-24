@@ -312,6 +312,7 @@
 }
 
 /* Tăng độ đặc hiệu để ghi đè padding mặc định của td mà không cần !important */
+/* Bỏ !important vì selector đã đủ đặc hiệu */
 .weekly-schedule-table .session-separator td {
     padding: 0;
     height: 2px;
@@ -429,21 +430,15 @@
 }
 
 /* --- Modal Thống kê Thiết bị --- */
-#equipment-stats-container .weekly-plan-table th,
-#equipment-stats-container .weekly-plan-table td {
+.equipment-stats-container .weekly-plan-table th,
+.equipment-stats-container .weekly-plan-table td {
     text-align: center;
 }
 
 /* --- Modal Thống kê Thiết bị --- */
-#equipment-stats-container .weekly-plan-table th,
-#equipment-stats-container .weekly-plan-table td {
+.equipment-stats-container .weekly-plan-table th,
+.equipment-stats-container .weekly-plan-table td {
     text-align: center;
-}
-
-.form-text-info {
-    font-size: 0.85rem;
-    color: #6c757d;
-    margin-top: 5px;
 }
 
 /* --- Modal Lỗi Nhập hàng loạt --- */
@@ -467,7 +462,7 @@
 }
 
 /* --- Bảng xem trước lỗi nhập hàng loạt --- */
-#bulk-import-preview-container {
+.bulk-import-preview-container {
     margin-top: 15px;
     max-height: 350px;
     overflow: auto;
@@ -594,7 +589,7 @@
     font-size: 1.6rem;
 }
 
-#bulk-import-modal-title::before {
+.bulk-import-modal-title::before {
     content: '\f56f'; /* Font Awesome icon: file-import */
     font-family: "Font Awesome 6 Free";
     font-weight: 900;
@@ -602,7 +597,7 @@
     color: #1abc9c;
 }
 
-#bulk-import-modal p {
+.bulk-import-modal p {
     background-color: #f0f9f8;
     border-left: 4px solid #1abc9c;
     padding: 12px 15px;
@@ -612,26 +607,26 @@
     color: #34495e;
 }
 
-#bulk-import-input {
+.bulk-import-input {
     font-family: inherit; /* Đồng bộ font chữ với toàn trang */
     font-size: 0.95rem;
     border-color: #ced4da;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-#bulk-import-input:focus {
+.bulk-import-input:focus {
     border-color: #1abc9c;
     box-shadow: 0 0 8px rgba(26, 188, 156, 0.3);
 }
 
 /* --- Cải tiến giao diện cho Modal Thống kê --- */
-#equipment-stats-modal .modal-content {
+.equipment-stats-modal .modal-content {
     border-top: 5px solid #3498db; /* Màu xanh dương cho thống kê */
     animation: fadeIn 0.3s ease-out;
     max-width: 900px; /* Rộng hơn để chứa bảng */
 }
 
-#equipment-stats-modal-title {
+.equipment-stats-modal-title {
     color: #2c3e50;
     display: flex;
     align-items: center;
@@ -639,7 +634,7 @@
     font-size: 1.6rem;
 }
 
-#equipment-stats-modal-title::before {
+.equipment-stats-modal-title::before {
     content: '\f080'; /* Font Awesome icon: fa-chart-bar */
     font-family: "Font Awesome 6 Free";
     font-weight: 900;
@@ -647,7 +642,7 @@
     color: #3498db; /* Màu xanh dương */
 }
 
-#equipment-stats-week-info {
+.equipment-stats-week-info {
     background-color: #eaf5fc; /* Nền xanh dương nhạt */
     border-left: 4px solid #3498db; /* Viền xanh dương */
     padding: 12px 15px;
@@ -659,7 +654,7 @@
 }
 
 /* Cải tiến bảng thống kê */
-#equipment-stats-container .weekly-plan-table {
+.equipment-stats-container .weekly-plan-table {
     margin-top: 0; /* Bỏ margin top mặc định */
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     border-radius: 8px;
@@ -717,7 +712,8 @@
     }
 }
 
-#equipment-stats-container .weekly-plan-table thead th {
+/* Đơn giản hóa selector */
+.equipment-stats-container .weekly-plan-table thead th {
     background-color: #f1f5f9;
     color: #475569;
     font-weight: 600;
@@ -726,7 +722,7 @@
     letter-spacing: 0.5px;
 }
 
-#equipment-stats-container .weekly-plan-table .total-row {
+.equipment-stats-container .weekly-plan-table .total-row {
     background-color: #e2e8f0;
     color: #1e293b;
 }

@@ -167,7 +167,7 @@
 
     <!-- Modal cho Nhập hàng loạt -->
     <div id="bulk-import-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content large">
+        <div class="modal-content large bulk-import-modal">
             <h2 id="bulk-import-modal-title">Nhập đăng ký hàng loạt</h2>
             <p>Dán dữ liệu từ Excel vào ô bên dưới. Mỗi dòng là một lượt đăng ký. Các cột phải theo đúng thứ tự: <strong>Tên GV - Lớp - Tiết - Tên bài dạy - Thiết bị - PPDH</strong>.</p>
             <div class="form-row bulk-import-form-row">
@@ -188,7 +188,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <textarea id="bulk-import-input" placeholder="Ví dụ:&#10;Nguyễn Văn A	10A1	1	Bài 1: Giới thiệu	Máy chiếu, Laptop	Dạy học dự án&#10;Trần Thị B	11B2	2,3	Bài 2: Thực hành	Tivi	CNTT" rows="10"></textarea>
+                <textarea id="bulk-import-input" class="bulk-import-input" placeholder="Ví dụ:&#10;Nguyễn Văn A	10A1	1	Bài 1: Giới thiệu	Máy chiếu, Laptop	Dạy học dự án&#10;Trần Thị B	11B2	2,3	Bài 2: Thực hành	Tivi	CNTT" rows="10"></textarea>
             </div>
             <div class="modal-actions">
                 <button id="cancel-bulk-import-modal" class="btn-cancel">Hủy</button>
@@ -222,10 +222,10 @@
 
     <!-- Modal Thống kê Thiết bị -->
     <div id="equipment-stats-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <h2 id="equipment-stats-modal-title">Thống kê giáo viên</h2>
-            <p id="equipment-stats-week-info">Tuần ... (Từ ... đến ...)</p>
-            <div id="equipment-stats-container">
+        <div class="modal-content equipment-stats-modal">
+            <h2 id="equipment-stats-modal-title" class="equipment-stats-modal-title">Thống kê giáo viên</h2>
+            <p id="equipment-stats-week-info" class="equipment-stats-week-info">Tuần ... (Từ ... đến ...)</p>
+            <div id="equipment-stats-container" class="equipment-stats-container">
                 <!-- Bảng thống kê sẽ được chèn vào đây -->
             </div>
             <div class="modal-actions" style="justify-content: flex-end;">
@@ -236,14 +236,14 @@
 
     <!-- Modal Xem trước & Lỗi Nhập hàng loạt -->
     <div id="bulk-import-preview-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content large">
-            <h2 id="bulk-import-preview-title">Xem trước dữ liệu nhập hàng loạt</h2>
+        <div class="modal-content large bulk-import-modal">
+            <h2 id="bulk-import-preview-title" class="bulk-import-modal-title">Xem trước dữ liệu nhập hàng loạt</h2>
             <p id="bulk-import-preview-desc">Vui lòng kiểm tra dữ liệu đã được phân tích. Các dòng có lỗi sẽ được tô đỏ.</p>
             <div id="bulk-import-error-section" class="error-list-container" style="display: none;">
                 <!-- Danh sách lỗi sẽ được chèn vào đây -->
             </div>
             <h4 id="bulk-import-preview-table-header">Bảng xem trước dữ liệu</h4>
-            <div id="bulk-import-preview-container">
+            <div id="bulk-import-preview-container" class="bulk-import-preview-container">
                 <!-- Bảng xem trước sẽ được chèn vào đây -->
             </div>
             <div class="modal-actions" style="justify-content: flex-end;">
