@@ -76,8 +76,8 @@
                         <!-- Tab Sửa lỗi dữ liệu -->
                         <div id="data-repair-content" class="tab-content">
                             <div class="content-header">
-                                <h2>Sửa lỗi Teacher ID</h2>
-                                <button id="find-orphaned-regs-btn" class="btn-primary"><i class="fas fa-search"></i> Bắt đầu quét và sửa lỗi</button>
+                                <h2>Sửa lỗi Teacher ID (Tài khoản bị xóa)</h2>
+                                <button id="find-orphaned-regs-btn" class="btn-primary"><i class="fas fa-user-slash"></i> Quét ID giáo viên mồ côi</button>
                             </div>
                             <div class="instruction-text">
                                 <p><i class="fas fa-info-circle"></i> Chức năng này sẽ quét toàn bộ các lượt đăng ký để tìm những đăng ký có `teacherId` không còn tồn tại trong danh sách giáo viên hiện tại (do tài khoản giáo viên đã bị xóa và tạo lại).</p>
@@ -85,6 +85,18 @@
                             </div>
                             <div id="data-repair-results-container">
                                 <!-- Kết quả quét sẽ được hiển thị ở đây -->
+                            </div>
+
+                            <div class="content-header" style="margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 25px;">
+                                <h2>Sửa lỗi sai môn học</h2>
+                                <button id="find-subject-mismatch-btn" class="btn-primary"><i class="fas fa-book"></i> Quét môn học không khớp</button>
+                            </div>
+                            <div class="instruction-text">
+                                <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tìm các lượt đăng ký có môn học không khớp với môn học chính của giáo viên. Bạn có thể tự động sửa tất cả các lỗi này về đúng môn học đã được phân công.</p>
+                                <p><strong>Ngoại lệ:</strong> GV môn <strong>Sinh học</strong> được phép dạy <strong>Công nghệ nông nghiệp</strong>. GV môn <strong>Vật lí</strong> được phép dạy <strong>Công nghệ công nghiệp</strong>.</p>
+                            </div>
+                            <div id="subject-repair-results-container">
+                                <!-- Kết quả quét lỗi môn học sẽ hiển thị ở đây -->
                             </div>
                         </div>
 

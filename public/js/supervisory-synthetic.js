@@ -224,14 +224,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const colorMap = new Map();
     const generateColor = (str) => {
-        if (colorMap.has(str)) return colorMap.get(str);
+        if (colorMap.has(str)) {
+            return colorMap.get(str);
+        }
+        // Cải tiến thuật toán sinh màu để các màu khác biệt hơn
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
             hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            hash = hash & hash; // Đảm bảo hash là số nguyên 32-bit
         }
-        const h = hash % 360;
-        const color = `hsl(${h}, 70%, 85%)`;
-        const borderColor = `hsl(${h}, 60%, 60%)`;
+        const hue = Math.abs(hash * 137.508) % 360;
+        const color = `hsl(${hue}, 70%, 92%)`; // Màu nền nhạt hơn
+        const borderColor = `hsl(${hue}, 60%, 60%)`; // Giữ nguyên màu viền
         const result = { bg: color, border: borderColor };
         colorMap.set(str, result);
         return result;
@@ -508,4 +512,3 @@ d+            document.querySelectorAll('.registration-info.highlighted').forEac
     setupStatsModalListeners();
     setupLegendHighlighting();
 });
-

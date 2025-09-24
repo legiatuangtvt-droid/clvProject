@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const findOrphanedRegsBtn = document.getElementById('find-orphaned-regs-btn');
     const dataRepairContainer = document.getElementById('data-repair-results-container');
+    // Thêm các element mới
+    const findSubjectMismatchBtn = document.getElementById('find-subject-mismatch-btn');
+    const subjectRepairContainer = document.getElementById('subject-repair-results-container');
 
     let currentSchoolYear = null; // Chuỗi năm học đang được chọn (VD: "2024-2025")
     let currentGroupId = null; // Dùng để biết đang thêm/sửa giáo viên cho tổ nào
@@ -169,6 +172,102 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Lỗi khi thực hiện sửa lỗi hàng loạt:", error);
             showToast('Đã có lỗi xảy ra khi lưu thay đổi.', 'error');
         }
+    };
+
+    // --- SUBJECT MISMATCH REPAIR FUNCTIONS ---
+    const findAndRepairSubjectMismatches = async () => {
+        subjectRepairContainer.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Đang quét dữ liệu môn học, vui lòng chờ...</p>`;
+
+        try {
+            // 1. Lấy tất cả giáo viên và tạo map UID -> teacherData
+            const teachersQuery = query(collection(firestore, 'teachers'));
+            const teachersSnapshot = await getDocs(teachersQuery);
+            const teacherMap = new Map();
+            teachersSnapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.uid) { // Chỉ xử lý giáo viên đã có tài khoản
+                    teacherMap.set(data.uid, data);
+                }
+            });
+
+            // 2. Lấy tất cả lượt đăng ký
+            const regsQuery = query(collection(firestore, 'registrations'));
+            const regsSnapshot = await getDocs(regsQuery);
+
+            // 3. Tìm các lượt đăng ký có môn học không khớp
+            const mismatches = [];
+            regsSnapshot.forEach(doc => {
+                const regData = doc.data();
+                const regId = doc.id;
+                const teacher = teacherMap.get(regData.teacherId);
+
+                // Chỉ kiểm tra nếu tìm thấy giáo viên và giáo viên đó có môn học chính được gán
+                if (teacher && teacher.subject && regData.subject !== teacher.subject) {
+                    // Kiểm tra các trường hợp ngoại lệ
+                    const isBioException = teacher.subject === 'Sinh học' && regData.subject === 'Công nghệ nông nghiệp';
+                    const isPhysicsException = teacher.subject === 'Vật lí' && regData.subject === 'Công nghệ công nghiệp';
+
+                    if (!isBioException && !isPhysicsException) {
+                        mismatches.push({
+                            regId,
+                            teacherName: teacher.teacher_name,
+                            date: regData.date,
+                            period: regData.period,
+                            className: regData.className,
+                            wrongSubject: regData.subject,
+                            correctSubject: teacher.subject
+                        });
+                    }
+                }
+            });
+
+            renderSubjectMismatchUI(mismatches);
+
+        } catch (error) {
+            console.error("Lỗi khi quét lỗi môn học:", error);
+            subjectRepairContainer.innerHTML = `<p class="error-message">Đã có lỗi xảy ra trong quá trình quét. Vui lòng thử lại.</p>`;
+            showToast('Quét dữ liệu thất bại!', 'error');
+        }
+    };
+
+    const renderSubjectMismatchUI = (mismatches) => {
+        if (mismatches.length === 0) {
+            subjectRepairContainer.innerHTML = `<p class="success-message"><i class="fas fa-check-circle"></i> Không tìm thấy lượt đăng ký nào có môn học không khớp. Dữ liệu của bạn đã nhất quán!</p>`;
+            return;
+        }
+
+        let tableRows = mismatches.map(m => `
+            <tr>
+                <td>${m.teacherName}</td>
+                <td>${formatDate(m.date)}</td>
+                <td style="text-align: center;">${m.period}</td>
+                <td style="text-align: center;">${m.className}</td>
+                <td style="color: red;">${m.wrongSubject}</td>
+                <td style="color: green;">${m.correctSubject}</td>
+            </tr>
+        `).join('');
+
+        subjectRepairContainer.innerHTML = `
+            <div class="repair-header">
+                <h4>Tìm thấy ${mismatches.length} lượt đăng ký có môn học không khớp:</h4>
+                <button id="execute-subject-repair-btn" class="btn-danger"><i class="fas fa-check-double"></i> Sửa tất cả</button>
+            </div>
+            <table class="weekly-plan-table" style="margin-top: 15px;">
+                <thead><tr><th>Giáo viên</th><th>Ngày</th><th>Tiết</th><th>Lớp</th><th>Môn học sai</th><th>Môn học đúng</th></tr></thead>
+                <tbody>${tableRows}</tbody>
+            </table>
+        `;
+
+        document.getElementById('execute-subject-repair-btn').addEventListener('click', async () => {
+            const batch = writeBatch(firestore);
+            mismatches.forEach(m => {
+                const regRef = doc(firestore, 'registrations', m.regId);
+                batch.update(regRef, { subject: m.correctSubject });
+            });
+            await batch.commit();
+            showToast(`Đã sửa thành công ${mismatches.length} lượt đăng ký.`, 'success');
+            subjectRepairContainer.innerHTML = `<p class="success-message">Đã hoàn tất việc sửa lỗi. Bạn có thể quét lại để kiểm tra.</p>`;
+        });
     };
 
     // --- Hàm render ---
@@ -790,6 +889,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Sửa lỗi dữ liệu ---
     findOrphanedRegsBtn.addEventListener('click', findAndRepairOrphanedRegs);
+
+    // --- Sửa lỗi môn học ---
+    findSubjectMismatchBtn.addEventListener('click', findAndRepairSubjectMismatches);
 
     // Xử lý click trong container của các tổ (delegation)
     groupsContainer.addEventListener('click', async (e) => {

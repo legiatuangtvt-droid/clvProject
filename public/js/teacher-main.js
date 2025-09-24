@@ -234,13 +234,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (colorMap.has(str)) {
             return colorMap.get(str);
         }
+        // Cải tiến thuật toán sinh màu để các màu khác biệt hơn
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
             hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            hash = hash & hash; // Đảm bảo hash là số nguyên 32-bit
         }
-        const h = hash % 360;
-        const color = `hsl(${h}, 70%, 85%)`; // Pastel colors
-        const borderColor = `hsl(${h}, 60%, 60%)`;
+
+        // Sử dụng "góc vàng" để tạo ra các màu sắc phân bổ đều và khác biệt hơn
+        const hue = Math.abs(hash * 137.508) % 360;
+        const color = `hsl(${hue}, 70%, 92%)`; // Màu nền nhạt hơn
+        const borderColor = `hsl(${hue}, 60%, 60%)`;
         const result = { bg: color, border: borderColor };
         colorMap.set(str, result);
         return result;
