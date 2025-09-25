@@ -41,21 +41,31 @@ document.addEventListener('DOMContentLoaded', () => {
             const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
             todayDateEl.textContent = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
 
+            // Tối ưu hóa: Tải các tổ trước, sau đó dùng group_id để tải giáo viên liên quan.
             const groupsQuery = query(collection(firestore, 'groups'), where('schoolYear', '==', currentSchoolYear));
-            const teachersQuery = query(collection(firestore, 'teachers'));
             const todayRegsQuery = query(collection(firestore, 'registrations'), where('date', '==', todayString), orderBy('period'));
 
-            const [groupsSnapshot, teachersSnapshot, todayRegsSnapshot] = await Promise.all([
+            // Tải tổ và đăng ký hôm nay song song
+            const [groupsSnapshot, todayRegsSnapshot] = await Promise.all([
                 getDocs(groupsQuery),
-                getDocs(teachersQuery),
                 getDocs(todayRegsQuery)
             ]);
 
-            // 3. Cập nhật các thẻ đếm
+            // Cập nhật số lượng tổ
             groupCountEl.textContent = groupsSnapshot.size;
-            teacherCountEl.textContent = teachersSnapshot.size;
 
-            // 4. Hiển thị các lượt đăng ký hôm nay
+            // Lấy danh sách group_id để truy vấn giáo viên
+            const groupIds = groupsSnapshot.docs.map(doc => doc.data().group_id).filter(Boolean);
+            let teachersSnapshot;
+            if (groupIds.length > 0) {
+                const teachersQuery = query(collection(firestore, 'teachers'), where('group_id', 'in', groupIds));
+                teachersSnapshot = await getDocs(teachersQuery);
+            } else {
+                teachersSnapshot = { size: 0, docs: [] }; // Trả về snapshot rỗng nếu không có tổ nào
+            }
+
+            // 3. Cập nhật các thẻ đếm và hiển thị dữ liệu
+            teacherCountEl.textContent = teachersSnapshot.size;
             renderTodayRegistrations(todayRegsSnapshot, teachersSnapshot);
 
         } catch (error) {
@@ -63,6 +73,27 @@ document.addEventListener('DOMContentLoaded', () => {
             schoolYearEl.textContent = 'Lỗi tải dữ liệu';
             todayRegsContainer.innerHTML = '<p class="error-message">Không thể tải dữ liệu đăng ký hôm nay.</p>';
         }
+    };
+
+    // Hàm xác định tiết học hiện tại dựa trên thời gian thực
+    const getCurrentTeachingPeriod = () => {
+        const now = new Date();
+        const hour = now.getHours();
+        const minute = now.getMinutes();
+        const currentTime = hour + minute / 60;
+
+        // Giả định thời gian các tiết học
+        if (currentTime >= 7.0 && currentTime < 7.75) return 1;   // 7:00 - 7:45
+        if (currentTime >= 7.83 && currentTime < 8.58) return 2;   // 7:50 - 8:35
+        if (currentTime >= 8.67 && currentTime < 9.42) return 3;   // 8:40 - 9:25
+        if (currentTime >= 9.67 && currentTime < 10.42) return 4;  // 9:40 - 10:25
+        if (currentTime >= 10.5 && currentTime < 11.25) return 5;  // 10:30 - 11:15
+        if (currentTime >= 13.5 && currentTime < 14.25) return 6;  // 13:30 - 14:15
+        if (currentTime >= 14.33 && currentTime < 15.08) return 7; // 14:20 - 15:05
+        if (currentTime >= 15.17 && currentTime < 15.92) return 8; // 15:10 - 15:55
+        if (currentTime >= 16.0 && currentTime < 16.75) return 9;  // 16:00 - 16:45
+        if (currentTime >= 16.83 && currentTime < 17.58) return 10; // 16:50 - 17:35
+        return null; // Ngoài giờ dạy
     };
 
     // Hàm hiển thị danh sách đăng ký của ngày hôm nay
@@ -82,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         let tableHTML = `
-            <table class="today-regs-table">
+            <div class="table-responsive"><table class="today-reg-table">
                 <thead>
                     <tr>
                         <th>Tiết</th>
@@ -96,14 +127,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 <tbody>
         `;
 
+        const currentPeriod = getCurrentTeachingPeriod();
+
         regsSnapshot.forEach(doc => {
             const reg = doc.data();
             const teacherName = teacherMap.get(reg.teacherId) || 'Không xác định';
             const session = reg.period <= 5 ? 'Sáng' : 'Chiều';
             const displayPeriod = reg.period <= 5 ? reg.period : reg.period - 5;
 
+            // Thêm class 'current-period' nếu tiết học đang diễn ra
+            const rowClass = reg.period === currentPeriod ? 'class="current-period"' : '';
+
             tableHTML += `
-                <tr>
+                <tr ${rowClass}>
                     <td class="period-cell">
                         <strong>${displayPeriod}</strong>
                         <small>(${session})</small>
@@ -117,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         });
 
-        tableHTML += `</tbody></table>`;
+        tableHTML += `</tbody></table></div>`;
         todayRegsContainer.innerHTML = tableHTML;
     };
 
