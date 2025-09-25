@@ -121,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <th>Lớp</th>
                         <th>Môn</th>
                         <th>Bài dạy</th>
+                        <th>Phương pháp dạy học</th>
                         <th>Thiết bị</th>
                     </tr>
                 </thead>
@@ -147,7 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${teacherName}</td>
                     <td>${reg.className}</td>
                     <td>${reg.subject}</td>
-                    <td>${reg.lessonName}</td>
+                    <td class="align-left">${reg.lessonName}</td>
+                    <td>${reg.teachingMethod?.join(', ') || ''}</td>
                     <td>${Array.isArray(reg.equipment) ? reg.equipment.join(', ') : ''}</td>
                 </tr>
             `;

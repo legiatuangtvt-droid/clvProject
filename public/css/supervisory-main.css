@@ -1,112 +1,80 @@
-/* Grid cho các thẻ thông tin tổng quan */
+/* --- Dashboard Grid --- */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
     margin-top: 20px;
 }
 
-/* Thẻ thông tin tổng quan (Tổ, Giáo viên) */
 .dashboard-card {
     background-color: #fff;
-    border-radius: 8px;
-    padding: 20px;
+    padding: 25px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     gap: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef;
 }
 
-.dashboard-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.dashboard-card .card-icon {
+.card-icon {
     font-size: 2.5rem;
-    color: #007bff; /* Màu chính */
+    color: #3498db; /* Màu xanh dương đồng bộ */
+    background-color: #eaf5fc;
     width: 60px;
     height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #e7f3ff;
     border-radius: 50%;
 }
 
-.dashboard-card .card-content h3 {
+.card-content h3 {
     margin: 0;
     font-size: 2rem;
-    color: #333;
+    color: #2c3e50;
 }
 
-.dashboard-card .card-content p {
-    margin: 0;
-    color: #666;
-    font-size: 0.9rem;
+.card-content p {
+    margin: 5px 0 0 0;
+    color: #6c757d;
 }
 
-/* Khu vực "Tình hình đăng ký hôm nay" */
-.today-registrations-container {
-    margin-top: 15px;
-}
-
-/* Table for today's registrations */
+/* --- Today's Registrations Table --- */
 .table-responsive {
     overflow-x: auto;
-    width: 100%;
 }
 
 .today-reg-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9rem;
-    min-width: 800px; /* Đảm bảo bảng không bị vỡ trên màn hình nhỏ */
+    margin-top: 20px;
 }
 
 .today-reg-table th,
 .today-reg-table td {
-    padding: 10px 12px;
-    border: 1px solid #e9ecef;
-    text-align: left;
-    vertical-align: middle;
+    border: 1px solid #dee2e6;
+    padding: 12px 15px;
+    text-align: center; /* Căn giữa nội dung tất cả các ô làm mặc định */
+    vertical-align: middle; /* Căn giữa theo chiều dọc */
 }
 
 .today-reg-table thead th {
     background-color: #f8f9fa;
-    font-weight: bold;
-    color: #343a40;
-    text-align: center; /* Căn giữa tất cả tiêu đề cột */
+    font-weight: 600;
+    /* Tiêu đề đã được căn giữa bởi quy tắc ở trên */
 }
 
 .today-reg-table tbody tr:nth-child(even) {
-    background-color: #fcfdff;
+    background-color: #f9f9f9;
 }
 
-.today-reg-table tbody tr:hover {
-    background-color: #e7f3ff;
-}
-
-/* Style cho dòng tiết học hiện tại */
-.today-reg-table tbody tr.current-period {
-    background-color: #d4edda; /* Màu xanh lá cây nhạt */
-    border-left: 4px solid #155724;
-    border-right: 4px solid #155724;
+.current-period {
+    background-color: #e7f7ec !important; /* Màu xanh lá nhạt cho tiết đang diễn ra */
     font-weight: bold;
-    color: #155724;
 }
 
-/* Căn chỉnh cho cột Tiết */
-.today-reg-table .period-cell {
-    text-align: center;
-    font-weight: bold;
-    width: 80px;
-}
-
-.today-reg-table .period-cell small {
-    display: block;
-    font-weight: normal;
-    color: #6c757d;
-    font-size: 0.8rem;
+/* Tăng độ ưu tiên để ghi đè quy tắc căn giữa mặc định */
+.today-reg-table .align-left {
+    text-align: left;
 }
