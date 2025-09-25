@@ -42,14 +42,12 @@ const initializeTeacherRegisterPage = (user) => {
     let selectedWeekNumber = null;
 
     const getSubjectsFromGroupName = (groupName) => {
-        const cleanedName = groupName.replace(/^Tổ\s*/, '');
-        // Xử lý trường hợp đặc biệt cho "Thể dục - QP"
-        if (cleanedName.includes('Thể dục - QP')) {
-            return cleanedName.replace('Thể dục - QP', 'Thể dục--QP--PLACEHOLDER') // Tạm thời thay thế để không bị split
-                              .split(/\s*-\s*/)
-                              .map(s => s.trim().replace('Thể dục--QP--PLACEHOLDER', 'Thể dục - QP'));
-        }
-        return cleanedName.split(/\s*-\s*/).map(s => s.trim());
+        const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
+        // Tạm thời thay thế "Thể dục - QP" để không bị split sai
+        const placeholder = 'TDQP_PLACEHOLDER';
+        return cleanedName.replace('Thể dục - QP', placeholder)
+                          .split(/\s*-\s*/)
+                          .map(s => s.trim().replace(placeholder, 'Thể dục - QP'));
     };
 
     const loadRegistrationRule = async () => {

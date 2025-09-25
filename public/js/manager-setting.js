@@ -62,14 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getSubjectsFromGroupName = (groupName) => {
-        const cleanedName = groupName.replace(/^Tổ\s*/, '');
-        // Xử lý trường hợp đặc biệt cho "Thể dục - QP"
-        if (cleanedName.includes('Thể dục - QP')) {
-            return cleanedName.replace('Thể dục - QP', 'Thể dục--QP--PLACEHOLDER') // Tạm thời thay thế để không bị split
-                              .split(/\s*-\s*/)
-                              .map(s => s.trim().replace('Thể dục--QP--PLACEHOLDER', 'Thể dục - QP'));
-        }
-        return cleanedName.split(/\s*-\s*/).map(s => s.trim());
+        const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
+        // Tạm thời thay thế "Thể dục - QP" để không bị split sai
+        const placeholder = 'TDQP_PLACEHOLDER';
+        return cleanedName.replace('Thể dục - QP', placeholder)
+                          .split(/\s*-\s*/)
+                          .map(s => s.trim().replace(placeholder, 'Thể dục - QP'));
     };
     // --- DATA REPAIR FUNCTIONS ---
     const findAndRepairOrphanedRegs = async () => {
@@ -946,14 +944,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Xử lý chuyển tab
     document.querySelector('.tab-nav').addEventListener('click', (e) => {
-        if (e.target.classList.contains('tab-link')) {
+        const tabLink = e.target.closest('.tab-link');
+        if (tabLink) {
             // Xóa active class khỏi tất cả các link và content
             document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
             // Thêm active class cho link và content được click
-            const tabId = e.target.dataset.tab;
-            e.target.classList.add('active');
+            const tabId = tabLink.dataset.tab;
+            tabLink.classList.add('active');
             document.getElementById(tabId).classList.add('active');
         }
     });
