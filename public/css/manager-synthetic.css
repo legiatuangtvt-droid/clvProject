@@ -241,6 +241,7 @@
     transition: box-shadow 0.2s;
     background-color: #f5f5f5;
     border-left: 4px solid #bdbdbd;
+    border-right: 4px solid transparent; /* Thêm viền phải trong suốt để giữ layout */
     color: #424242;
 }
 
@@ -320,11 +321,15 @@
     transform: scale(1.05);
 }
 
+/* Tối ưu hóa: Thay vì dùng JS để thêm class 'highlighted' cho từng element,
+   chúng ta dùng CSS selector để trình duyệt tự xử lý, giúp mượt mà hơn. */
 .schedule-container-weekly.dimmed .registration-info {
     opacity: 0.3;
     transition: opacity 0.3s ease;
 }
 
+/* Khi container có data-highlight-type và data-highlight-value,
+   chỉ những registration-info có data-attribute tương ứng mới được làm nổi bật. */
 .schedule-container-weekly.dimmed .registration-info.highlighted {
     opacity: 1;
     transform: scale(1.05);

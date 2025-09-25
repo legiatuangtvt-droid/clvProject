@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterGroupSelect = document.getElementById('filter-group-select');
     const filterSubjectSelect = document.getElementById('filter-subject-select');
     const filterTeacherSelect = document.getElementById('filter-teacher-select');
+    const filterMethodSelect = document.getElementById('filter-method-select');
     const bulkImportModal = document.getElementById('bulk-import-modal');
     const bulkImportBtn = document.getElementById('bulk-import-btn');
     const processBulkImportBtn = document.getElementById('process-bulk-import-btn');
@@ -52,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let allGroups = [];
     let groupMap = new Map(); // Map: group_id -> group data
     let timePlan = [];
+    let allMethods = new Set();
     let allSubjects = new Set();
     let allRegistrations = [];
     let selectedWeekNumber = null;
@@ -82,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await Promise.all([
                 loadAllTeachers(),
                 loadAllGroups(),
+                loadAllMethods(),
                 loadTimePlan(),
                 populateModalSelectors()
             ]);
@@ -129,6 +132,15 @@ document.addEventListener('DOMContentLoaded', () => {
         groupMap.clear();
         allGroups.forEach(group => {
             groupMap.set(group.group_id, group);
+        });
+    };
+
+    const loadAllMethods = async () => {
+        const methodsQuery = query(collection(firestore, 'teachingMethods'), where('schoolYear', '==', currentSchoolYear), orderBy('method'));
+        const methodsSnapshot = await getDocs(methodsQuery);
+        allMethods.clear();
+        methodsSnapshot.forEach(doc => {
+            allMethods.add(doc.data().method);
         });
     };
 
@@ -195,6 +207,10 @@ document.addEventListener('DOMContentLoaded', () => {
         filterSubjectSelect.innerHTML = '<option value="all">Tất cả</option>';
         [...allSubjects].sort().forEach(subject => {
             filterSubjectSelect.innerHTML += `<option value="${subject}">${subject}</option>`;
+        });
+        filterMethodSelect.innerHTML = '<option value="all">Tất cả</option>';
+        [...allMethods].sort().forEach(method => {
+            filterMethodSelect.innerHTML += `<option value="${method}">${method}</option>`;
         });
     };
 
@@ -294,12 +310,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedGroup = filterGroupSelect.value;
         const selectedSubject = filterSubjectSelect.value;
         const selectedTeacher = filterTeacherSelect.value;
+        const selectedMethod = filterMethodSelect.value;
 
         return allRegistrations.filter(reg => {
             const groupMatch = selectedGroup === 'all' || reg.groupId === selectedGroup;
             const subjectMatch = selectedSubject === 'all' || reg.subject === selectedSubject;
             const teacherMatch = selectedTeacher === 'all' || reg.teacherId === selectedTeacher;
-            return groupMatch && subjectMatch && teacherMatch;
+            // Kiểm tra xem mảng PPDH của lượt đăng ký có chứa PPDH đã chọn không
+            const methodMatch = selectedMethod === 'all' || (Array.isArray(reg.teachingMethod) && reg.teachingMethod.includes(selectedMethod));
+            return groupMatch && subjectMatch && teacherMatch && methodMatch;
         });
     };
 
@@ -348,6 +367,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const groupColor = generateColor(reg.groupName);
             const subjectColor = generateColor(reg.subject);
             const teacherColor = generateColor(teacherName);
+            // Chỉ lấy PPDH đầu tiên để tô màu, tránh việc phải sinh quá nhiều màu cho các tổ hợp
+            const firstMethod = Array.isArray(reg.teachingMethod) && reg.teachingMethod.length > 0 ? reg.teachingMethod[0] : 'Không có PPDH';
+            const methodColor = generateColor(firstMethod);
 
             const tooltipText = [
                 `Giáo viên: ${teacherName}`, `Lớp: ${reg.className}`, `Môn: ${reg.subject}`, `Bài dạy: ${reg.lessonName}`,
@@ -356,8 +378,14 @@ document.addEventListener('DOMContentLoaded', () => {
             ].filter(Boolean).join('\n');
 
             return `
-                <div class="registration-info" data-reg-id="${reg.id}" title="${tooltipText}" 
-                     style="background-color: ${groupColor.bg}; border-left-color: ${subjectColor.border};">
+                <div class="registration-info" 
+                     data-reg-id="${reg.id}" 
+                     data-group-name="${reg.groupName}"
+                     data-subject="${reg.subject}"
+                     data-teacher-name="${teacherName}"
+                     data-method="${firstMethod}"
+                     title="${tooltipText}" 
+                     style="background-color: ${methodColor.bg}; border-left-color: ${subjectColor.border}; border-right-color: ${groupColor.border};">
                     <p><i class="fas fa-user" style="color: ${teacherColor.border};"></i> ${teacherName} - Lớp ${reg.className}</p>
                 </div>`;
         };
@@ -409,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const uniqueValues = [...new Set(filteredRegs.map(getValue))].sort();
 
             uniqueValues.forEach(value => {
-                if (!value || value === 'Không xác định') return;
+                if (!value || value === 'Không xác định' || value === 'Không có PPDH') return;
                 const colors = generateColor(value);
                 const legendItem = document.createElement('div');
                 legendItem.className = 'legend-item';
@@ -428,9 +456,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        createLegendSection('Tổ chuyên môn (Màu nền)', reg => reg.groupName, 'bg', 'group');
+        const getFirstMethod = reg => Array.isArray(reg.teachingMethod) && reg.teachingMethod.length > 0 ? reg.teachingMethod[0] : 'Không có PPDH';
+        createLegendSection('PPDH (Màu nền)', getFirstMethod, 'bg', 'method');
         createLegendSection('Môn học (Viền trái)', reg => reg.subject, 'border', 'subject');
-        // Thay đổi getValue để lấy teacherName từ teacherMap
+        createLegendSection('Tổ chuyên môn (Viền phải)', reg => reg.groupName, 'border', 'group');
+        // Lấy teacherName từ teacherMap
         createLegendSection('Giáo viên (Icon)', reg => teacherMap.get(reg.teacherId)?.teacher_name, 'border', 'teacher');
     };
 
@@ -958,12 +988,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Filter listeners
-        [filterGroupSelect, filterSubjectSelect].forEach(select => {
+        [filterGroupSelect, filterSubjectSelect, filterMethodSelect].forEach(select => {
             select.addEventListener('change', () => {
                 updateDependentFilters();
                 renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber)); // Vẽ lại lịch với bộ lọc mới
             });
         });
+
+
 
         // Listener riêng cho bộ lọc giáo viên để không trigger vòng lặp
         filterTeacherSelect.addEventListener('change', () => {
@@ -1157,41 +1189,44 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const setupLegendHighlighting = () => {
+        // 1. Xử lý khi di chuột VÀO một mục trong bảng chú thích
         legendContainer.addEventListener('mouseover', (e) => {
+            // Tìm phần tử .legend-item cha gần nhất của mục được hover
             const legendItem = e.target.closest('.legend-item');
+            // Nếu không tìm thấy (di chuột vào khoảng trống), thì không làm gì cả
             if (!legendItem) return;
-
+    
+            // Lấy ra loại (type) và giá trị (value) từ data-attributes của mục chú thích
+            // Ví dụ: data-type="subject", data-value="Toán"
             const type = legendItem.dataset.type;
             const value = legendItem.dataset.value;
+            console.log(`[HOVER IN] Type: ${type}, Value: "${value}"`); // Test: In ra loại và giá trị đang hover
 
+            // Nếu không có type hoặc value thì dừng lại
             if (!type || !value) return;
 
+            // 2. Làm chìm tất cả các đăng ký
+            // Thêm class 'dimmed' vào container chính của lịch. CSS sẽ xử lý việc giảm độ mờ của tất cả .registration-info
             scheduleContainer.classList.add('dimmed');
+            console.log("[ACTION] Added 'dimmed' class to schedule container."); // Test: Xác nhận đã thêm class dimmed
 
-            document.querySelectorAll('.registration-info').forEach(regEl => {
-                const regId = regEl.dataset.regId;
-                const registration = allRegistrations.find(r => r.id === regId);
-                if (!registration) return;
-
-                let match = false;
-                switch (type) {
-                    case 'group':   match = registration.groupName === value; break;
-                    case 'subject': match = registration.subject === value; break;
-                    // Luôn tra cứu tên từ teacherMap để so sánh
-                    case 'teacher': match = (teacherMap.get(registration.teacherId)?.teacher_name || '') === value; break;
-                }
-
-                if (match) {
-                    regEl.classList.add('highlighted');
-                }
-            });
+            // 3. Làm nổi bật các đăng ký liên quan
+            // Tạo một CSS selector động để tìm tất cả các .registration-info có data-attribute khớp với giá trị đang được hover
+            const selector = `.registration-info[data-${type}*="${value}"]`;
+            console.log(`[SELECTOR] Using selector: ${selector}`); // Test: In ra selector đang được sử dụng
+            
+            // Lặp qua tất cả các phần tử tìm thấy và thêm class 'highlighted'
+            // CSS sẽ xử lý việc làm các phần tử này nổi bật trở lại (opacity: 1)
+            document.querySelectorAll(selector).forEach(el => el.classList.add('highlighted'));
         });
-
+    
+        // 4. Xử lý khi di chuột RA KHỎI một mục trong bảng chú thích
         legendContainer.addEventListener('mouseout', () => {
+            console.log('[HOVER OUT] Resetting highlights.'); // Test: Xác nhận sự kiện mouseout
+            // Xóa class 'dimmed' để tất cả các mục trở lại độ mờ bình thường
             scheduleContainer.classList.remove('dimmed');
-            document.querySelectorAll('.registration-info.highlighted').forEach(regEl => {
-                regEl.classList.remove('highlighted');
-            });
+            // Tìm và xóa class 'highlighted' khỏi tất cả các mục đã được làm nổi bật
+            document.querySelectorAll('.registration-info.highlighted').forEach(el => el.classList.remove('highlighted'));
         });
     };
 

@@ -24,11 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const legendContainer = document.getElementById('color-legend-container');
     const filterTeacherSelect = document.getElementById('filter-teacher-select');
     const filterSubjectSelect = document.getElementById('filter-subject-select');
+    const filterMethodSelect = document.getElementById('filter-method-select');
 
     // State variables
     let timePlan = [];
     let selectedWeekNumber = null;
     let teachersInGroup = [];
+    let allMethods = new Set();
     let currentRegistrations = []; // Lưu các đăng ký của tuần hiện tại
 
     const getSubjectsFromGroupName = (groupName) => {
@@ -56,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Tải thông tin tổ và các giáo viên trong tổ
             await loadGroupInfo();
+            await loadAllMethods(latestSchoolYear);
 
             // 2. Tải kế hoạch thời gian và thiết lập tuần ban đầu
             await loadTimePlan(latestSchoolYear);
@@ -121,6 +124,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 filterTeacherSelect.appendChild(option);
             }
         });
+
+        // Populate method filter
+        filterMethodSelect.innerHTML = '<option value="all">Tất cả PPDH</option>';
+        [...allMethods].sort().forEach(method => {
+            const option = document.createElement('option');
+            option.value = method;
+            option.textContent = method;
+            filterMethodSelect.appendChild(option);
+        });
     };
 
     const updateTeacherFilter = () => {
@@ -144,6 +156,16 @@ document.addEventListener('DOMContentLoaded', () => {
             filterTeacherSelect.value = currentTeacher;
         }
     };
+
+    const loadAllMethods = async (schoolYear) => {
+        const methodsQuery = query(collection(firestore, 'teachingMethods'), where('schoolYear', '==', schoolYear), orderBy('method'));
+        const methodsSnapshot = await getDocs(methodsQuery);
+        allMethods.clear();
+        methodsSnapshot.forEach(doc => {
+            allMethods.add(doc.data().method);
+        });
+    };
+
 
     const loadTimePlan = async (schoolYear) => {
         const planQuery = query(collection(firestore, 'timePlans'), where("schoolYear", "==", schoolYear), limit(1));
@@ -253,11 +275,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const getFilteredRegistrations = () => {
         const selectedSubject = filterSubjectSelect.value;
         const selectedTeacher = filterTeacherSelect.value;
+        const selectedMethod = filterMethodSelect.value;
 
         return currentRegistrations.filter(reg => {
             const subjectMatch = selectedSubject === 'all' || reg.subject === selectedSubject;
             const teacherMatch = selectedTeacher === 'all' || reg.teacherId === selectedTeacher;
-            return subjectMatch && teacherMatch;
+            const methodMatch = selectedMethod === 'all' || (Array.isArray(reg.teachingMethod) && reg.teachingMethod.includes(selectedMethod));
+            return subjectMatch && teacherMatch && methodMatch;
         });
     };
 
@@ -317,6 +341,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 desktopHTML += `<td>`;
                 regsInSlot.forEach(reg => {
                     const subjectColor = generateColor(reg.subject);
+                    const firstMethod = Array.isArray(reg.teachingMethod) && reg.teachingMethod.length > 0 ? reg.teachingMethod[0] : 'Không có PPDH';
+                    const methodColor = generateColor(firstMethod);
                     const teacherName = teacherNameMap.get(reg.teacherId) || 'GV không xác định';
                     const teacherColor = generateColor(teacherName);
                     const isMyRegistration = currentUser && reg.teacherId === currentUser.uid;
@@ -324,6 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Tạo tooltip chi tiết khi hover
                     const tooltipText = [
                         `Giáo viên: ${teacherName}`,
+                        `Tổ: ${document.getElementById('sidebar-group-name').textContent.replace('Tổ ', '')}`,
                         `Lớp: ${reg.className}`,
                         `Môn: ${reg.subject}`,
                         `Bài dạy: ${reg.lessonName}`,
@@ -333,7 +360,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     ].filter(part => part).join('\n');
 
                     desktopHTML += `
-                        <div class="registration-info ${isMyRegistration ? 'my-registration' : 'other-teacher'}" style="cursor: default; border-left-color: ${subjectColor.border};" title="${tooltipText}" data-reg-id="${reg.id}">
+                        <div class="registration-info ${isMyRegistration ? 'my-registration' : 'other-teacher'}" 
+                             data-reg-id="${reg.id}"
+                             data-method="${firstMethod}"
+                             data-subject="${reg.subject}"
+                             data-teacher-id="${reg.teacherId}"
+                             style="cursor: default; background-color: ${methodColor.bg}; border-left-color: ${subjectColor.border};" 
+                             title="${tooltipText}">
                             <p><i class="fas ${isMyRegistration ? 'fa-chalkboard-teacher' : 'fa-user'}" style="color: ${teacherColor.border};"></i> ${isMyRegistration ? `Lớp ${reg.className}: ${reg.lessonName}` : `${teacherName} - Lớp ${reg.className}`}</p>
                         </div>`;
                 });
@@ -357,6 +390,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 desktopHTML += `<td>`;
                 regsInSlot.forEach(reg => {
                     const subjectColor = generateColor(reg.subject);
+                    const firstMethod = Array.isArray(reg.teachingMethod) && reg.teachingMethod.length > 0 ? reg.teachingMethod[0] : 'Không có PPDH';
+                    const methodColor = generateColor(firstMethod);
                     const teacherName = teacherNameMap.get(reg.teacherId) || 'GV không xác định';
                     const teacherColor = generateColor(teacherName);
                     const isMyRegistration = currentUser && reg.teacherId === currentUser.uid;
@@ -364,6 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Tạo tooltip chi tiết khi hover
                     const tooltipText = [
                         `Giáo viên: ${teacherName}`,
+                        `Tổ: ${document.getElementById('sidebar-group-name').textContent.replace('Tổ ', '')}`,
                         `Lớp: ${reg.className}`,
                         `Môn: ${reg.subject}`,
                         `Bài dạy: ${reg.lessonName}`,
@@ -373,7 +409,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     ].filter(part => part).join('\n');
 
                     desktopHTML += `
-                        <div class="registration-info ${isMyRegistration ? 'my-registration' : 'other-teacher'}" style="cursor: default; border-left-color: ${subjectColor.border};" title="${tooltipText}" data-reg-id="${reg.id}">
+                        <div class="registration-info ${isMyRegistration ? 'my-registration' : 'other-teacher'}" 
+                             data-reg-id="${reg.id}"
+                             data-method="${firstMethod}"
+                             data-subject="${reg.subject}"
+                             data-teacher-id="${reg.teacherId}"
+                             style="cursor: default; background-color: ${methodColor.bg}; border-left-color: ${subjectColor.border};" 
+                             title="${tooltipText}">
                             <p><i class="fas ${isMyRegistration ? 'fa-chalkboard-teacher' : 'fa-user'}" style="color: ${teacherColor.border};"></i> ${isMyRegistration ? `Lớp ${reg.className}: ${reg.lessonName}` : `${teacherName} - Lớp ${reg.className}`}</p>
                         </div>`;
                 });
@@ -439,6 +481,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Lấy tất cả giáo viên trong tổ
         const allTeachersInGroup = teachersInGroup.map(t => t.uid).filter(Boolean);
 
+        // Lấy tất cả PPDH
+        const allAvailableMethods = [...allMethods];
+
+        createLegendSection('PPDH (Màu nền)', allAvailableMethods, 'bg', 'method');
         createLegendSection('Môn học (Viền)', allSubjectsInGroup, 'border', 'subject');
         createLegendSection('Giáo viên (Icon)', allTeachersInGroup, 'border', 'teacher', uid => uid, uid => teacherNameMap.get(uid) || 'N/A');
     };
@@ -519,56 +565,40 @@ document.addEventListener('DOMContentLoaded', () => {
             renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber), currentRegistrations);
         });
 
-        filterTeacherSelect.addEventListener('change', () => {
-            renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber), currentRegistrations);
+        // Gộp listener cho teacher và method
+        [filterTeacherSelect, filterMethodSelect].forEach(select => {
+            select.addEventListener('change', () => {
+                renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber), currentRegistrations);
+            });
         });
+        /* filterTeacherSelect.addEventListener('change', () => {
+            renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber), currentRegistrations);
+        }); */
     };
 
-    const setupLegendHighlighting = () => {
+    const setupLegendHighlighting = () => { // Tối ưu hóa
         legendContainer.addEventListener('mouseover', (e) => {
             const legendItem = e.target.closest('.legend-item');
             if (!legendItem) return;
 
             const type = legendItem.dataset.type;
             const value = legendItem.dataset.value;
-
             if (!type || !value) return;
 
             const mobileScheduleContainer = document.querySelector('.mobile-schedule');
             weeklyScheduleContainer.classList.add('dimmed');
             if (mobileScheduleContainer) mobileScheduleContainer.classList.add('dimmed');
 
-            document.querySelectorAll('.registration-info').forEach(regEl => {
-                const regId = regEl.dataset.regId;
-                const registration = currentRegistrations.find(r => r.id === regId);
-                
-                // Nếu không tìm thấy bằng regId (trường hợp mobile), thử tìm bằng cách khác
-                const finalRegistration = registration || findRegistrationByElement(regEl);
-
-                if (!finalRegistration) return;
-
-                let match = false;
-
-                switch (type) {
-                    case 'subject':
-                        match = finalRegistration.subject === value;
-                        break;
-                    case 'teacher': // value ở đây là teacherId
-                        match = finalRegistration.teacherId === value;
-                        break;
-                }
-
-                if (match) {
-                    regEl.classList.add('highlighted');
-                }
-            });
+            weeklyScheduleContainer.dataset.highlightType = type;
+            weeklyScheduleContainer.dataset.highlightValue = value;
         });
 
         legendContainer.addEventListener('mouseout', () => {
             const mobileScheduleContainer = document.querySelector('.mobile-schedule');
             weeklyScheduleContainer.classList.remove('dimmed');
             if (mobileScheduleContainer) mobileScheduleContainer.classList.remove('dimmed');
-            document.querySelectorAll('.registration-info.highlighted').forEach(regEl => regEl.classList.remove('highlighted'));
+            delete weeklyScheduleContainer.dataset.highlightType;
+            delete weeklyScheduleContainer.dataset.highlightValue;
         });
     };
 
