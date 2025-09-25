@@ -484,14 +484,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
-    const setupLegendHighlighting = () => { // Tối ưu hóa
+    const setupLegendHighlighting = () => {
         legendContainer.addEventListener('mouseover', (e) => {
             const legendItem = e.target.closest('.legend-item');
             if (!legendItem) return;
 
             const type = legendItem.dataset.type;
             const value = legendItem.dataset.value;
-            if (!type || !value) return;
+            if (!type || !value) return;    
 
             scheduleContainer.classList.add('dimmed');
             document.querySelectorAll(`.registration-info[data-${type}*="${value}"]`).forEach(el => el.classList.add('highlighted'));

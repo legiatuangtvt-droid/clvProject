@@ -576,7 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }); */
     };
 
-    const setupLegendHighlighting = () => { // Tối ưu hóa
+    const setupLegendHighlighting = () => {
         legendContainer.addEventListener('mouseover', (e) => {
             const legendItem = e.target.closest('.legend-item');
             if (!legendItem) return;
@@ -585,20 +585,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const value = legendItem.dataset.value;
             if (!type || !value) return;
 
+            // Làm chìm cả giao diện desktop và mobile
             const mobileScheduleContainer = document.querySelector('.mobile-schedule');
             weeklyScheduleContainer.classList.add('dimmed');
             if (mobileScheduleContainer) mobileScheduleContainer.classList.add('dimmed');
 
-            weeklyScheduleContainer.dataset.highlightType = type;
-            weeklyScheduleContainer.dataset.highlightValue = value;
+            // Tìm và làm nổi bật các mục khớp
+            const selector = `.registration-info[data-${type}*="${value}"]`;
+            document.querySelectorAll(selector).forEach(el => el.classList.add('highlighted'));
         });
 
         legendContainer.addEventListener('mouseout', () => {
             const mobileScheduleContainer = document.querySelector('.mobile-schedule');
             weeklyScheduleContainer.classList.remove('dimmed');
             if (mobileScheduleContainer) mobileScheduleContainer.classList.remove('dimmed');
-            delete weeklyScheduleContainer.dataset.highlightType;
-            delete weeklyScheduleContainer.dataset.highlightValue;
+            document.querySelectorAll('.registration-info.highlighted').forEach(el => el.classList.remove('highlighted'));
         });
     };
 

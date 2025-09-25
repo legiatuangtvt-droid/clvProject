@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Hàm trợ giúp ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isManager() {
+      return isSignedIn() && getUserData().rule == 'manager';
+    }
+
+    function isTeacher() {
+      return isSignedIn() && getUserData().rule == 'teacher';
+    }
+
+    function isSupervisory() {
+      return isSignedIn() && getUserData().rule == 'supervisory';
+    }
+
+    // --- Quy tắc cho từng Collection ---
+
+    // Collection 'users' là cốt lõi để phân quyền.
+    match /users/{userId} {
+      // Cho phép người dùng đọc thông tin của chính họ (để các hàm helper hoạt động)
+      // HOẶC cho phép manager đọc thông tin của bất kỳ ai.
+      allow get: if (isSignedIn() && request.auth.uid == userId) || isManager();
+
+      // Chỉ manager mới được liệt kê (list) toàn bộ user.
+      allow list: if isManager();
+
+      // Cho phép người dùng cập nhật thông tin của chính họ, hoặc manager cập nhật.
+      allow update: if (isSignedIn() && request.auth.uid == userId) || isManager();
+
+      // Chỉ manager mới được tạo user.
+      allow create: if isManager();
+
+      // Không cho phép xóa user từ client để đảm bảo an toàn.
+      allow delete: if false;
+    }
+
+    // Manager có toàn quyền. Teacher có thể đọc.
+    match /groups/{groupId} {
+      allow read: if isManager() || isTeacher() || isSupervisory();
+      allow write: if isManager();
+    }
+
+    // Manager có toàn quyền. Teacher có thể đọc.
+    match /teachers/{teacherId} {
+      allow read: if isManager() || isTeacher() || isSupervisory();
+      allow write: if isManager();
+    }
+    
+    // Manager có toàn quyền. Teacher có thể đọc.
+    match /schoolYears/{yearId} {
+      allow read: if isManager() || isTeacher() || isSupervisory();
+      allow write: if isManager();
+    }
+    
+    // Manager có toàn quyền. Teacher có thể đọc.
+    match /teachingMethods/{methodId} {
+      allow read: if isManager() || isTeacher() || isSupervisory();
+      allow write: if isManager();
+    }
+
+    // Kế hoạch thời gian và các tuần con bên trong
+    match /timePlans/{planId} {
+      allow read: if isManager() || isTeacher() || isSupervisory();
+      allow write: if isManager();
+      
+      match /weeks/{weekId} {
+        allow read: if isManager() || isTeacher();
+        allow write: if isManager();
+      }
+    }
+    
+    // Cho phép người dùng đã đăng nhập đọc dữ liệu
+    // Cụ thể, cho phép manager đọc và ghi vào collection 'devices'
+    match /devices/{deviceId=**} {
+      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.rule == 'manager';
+    }
+
+    // Các lượt đăng ký
+    match /registrations/{regId} {
+      // Manager và Teacher đều có thể đọc tất cả các lượt đăng ký (để kiểm tra trùng lịch)
+      allow read: if isManager() || isTeacher() || isSupervisory();
+      
+      // Teacher có thể tạo lượt đăng ký cho chính họ
+      allow create: if isManager() || (isTeacher() && request.resource.data.teacherId == request.auth.uid);
+      
+      // Teacher có thể sửa/xóa lượt đăng ký của chính họ. Manager có thể sửa/xóa bất kỳ.
+      allow update, delete: if isManager() || (isTeacher() && resource.data.teacherId == request.auth.uid);
+    }
+  }
+}
