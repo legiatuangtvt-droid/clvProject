@@ -341,8 +341,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 desktopHTML += `<td>`;
                 regsInSlot.forEach(reg => {
                     const subjectColor = generateColor(reg.subject);
-                    const firstMethod = Array.isArray(reg.teachingMethod) && reg.teachingMethod.length > 0 ? reg.teachingMethod[0] : 'Không có PPDH';
-                    const methodColor = generateColor(firstMethod);
+                    // Lấy tất cả PPDH, nhưng vẫn dùng PPDH đầu tiên để tô màu nền cho nhất quán
+                    const allRegMethods = Array.isArray(reg.teachingMethod) && reg.teachingMethod.length > 0 ? reg.teachingMethod : ['Không có PPDH'];
+                    const methodColor = generateColor(allRegMethods[0]);
+
                     const teacherName = teacherNameMap.get(reg.teacherId) || 'GV không xác định';
                     const teacherColor = generateColor(teacherName);
                     const isMyRegistration = currentUser && reg.teacherId === currentUser.uid;
@@ -362,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     desktopHTML += `
                         <div class="registration-info ${isMyRegistration ? 'my-registration' : 'other-teacher'}" 
                              data-reg-id="${reg.id}"
-                             data-method="${firstMethod}"
+                             data-method="${allRegMethods.join(',')}"
                              data-subject="${reg.subject}"
                              data-teacher-id="${reg.teacherId}"
                              style="cursor: default; background-color: ${methodColor.bg}; border-left-color: ${subjectColor.border};" 
@@ -389,9 +391,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const regsInSlot = filteredRegistrations.filter(r => r.date === date && r.period === period);
                 desktopHTML += `<td>`;
                 regsInSlot.forEach(reg => {
+                    // Lấy tất cả PPDH, nhưng vẫn dùng PPDH đầu tiên để tô màu nền cho nhất quán
+                    const allRegMethods = Array.isArray(reg.teachingMethod) && reg.teachingMethod.length > 0 ? reg.teachingMethod : ['Không có PPDH'];
                     const subjectColor = generateColor(reg.subject);
-                    const firstMethod = Array.isArray(reg.teachingMethod) && reg.teachingMethod.length > 0 ? reg.teachingMethod[0] : 'Không có PPDH';
-                    const methodColor = generateColor(firstMethod);
+                    const methodColor = generateColor(allRegMethods[0]);
                     const teacherName = teacherNameMap.get(reg.teacherId) || 'GV không xác định';
                     const teacherColor = generateColor(teacherName);
                     const isMyRegistration = currentUser && reg.teacherId === currentUser.uid;
@@ -411,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     desktopHTML += `
                         <div class="registration-info ${isMyRegistration ? 'my-registration' : 'other-teacher'}" 
                              data-reg-id="${reg.id}"
-                             data-method="${firstMethod}"
+                             data-method="${allRegMethods.join(',')}"
                              data-subject="${reg.subject}"
                              data-teacher-id="${reg.teacherId}"
                              style="cursor: default; background-color: ${methodColor.bg}; border-left-color: ${subjectColor.border};" 

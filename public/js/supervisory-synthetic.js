@@ -297,8 +297,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const groupColor = generateColor(reg.groupName);
             const subjectColor = generateColor(reg.subject);
             const teacherColor = generateColor(teacherName);
-            const firstMethod = Array.isArray(reg.teachingMethod) && reg.teachingMethod.length > 0 ? reg.teachingMethod[0] : 'Không có PPDH';
-            const methodColor = generateColor(firstMethod);
+            // Lấy tất cả PPDH, nhưng vẫn dùng PPDH đầu tiên để tô màu nền cho nhất quán
+            const allRegMethods = Array.isArray(reg.teachingMethod) && reg.teachingMethod.length > 0 ? reg.teachingMethod : ['Không có PPDH'];
+            const methodColor = generateColor(allRegMethods[0]);
 
             const tooltipText = `Giáo viên: ${teacherName}\nLớp: ${reg.className}\nMôn: ${reg.subject}\nBài dạy: ${reg.lessonName}\nThiết bị: ${Array.isArray(reg.equipment) ? reg.equipment.join(', ') : ''}\nPPDH: ${Array.isArray(reg.teachingMethod) ? reg.teachingMethod.join(', ') : ''}`.trim();
 
@@ -308,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      data-group-name="${reg.groupName}"
                      data-subject="${reg.subject}"
                      data-teacher-name="${teacherName}"
-                     data-method="${firstMethod}"
+                     data-method="${allRegMethods.join(',')}"
                      title="${tooltipText}" 
                      style="background-color: ${methodColor.bg}; border-left-color: ${subjectColor.border}; border-right-color: ${groupColor.border}; cursor: help;">
                     <p><i class="fas fa-user" style="color: ${teacherColor.border};"></i> ${teacherName} - Lớp ${reg.className}</p>
