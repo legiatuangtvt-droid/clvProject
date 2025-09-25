@@ -72,14 +72,21 @@
 
 /* --- Cải tiến cho các nút hành động --- */
 .btn-info {
-    background-color: #3498db; /* Màu xanh dương đồng bộ với modal thống kê */
+    /* Đồng bộ với các nút .btn-primary */
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    /* Màu sắc và hiệu ứng */
+    background-color: #1abc9c; /* Màu xanh lá cây đồng bộ với các nút chính khác */
     color: white;
     border: none;
+    cursor: pointer; /* Thêm con trỏ hình bàn tay khi hover */
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .btn-info:hover {
-    background-color: #2980b9; /* Màu xanh dương đậm hơn khi hover */
+    background-color: #16a085; /* Màu xanh lá cây đậm hơn khi hover */
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
@@ -560,6 +567,11 @@
     border: 1px solid #dee2e6;
 }
 
+/* Thêm hiệu ứng hover cho các dòng trong bảng thống kê và bảng xem trước */
+.equipment-stats-container .weekly-plan-table tbody tr:hover,
+.preview-table tbody tr:hover {
+    background-color: #f1f5f9; /* Màu nền xám nhạt khi hover */
+}
 /* --- Mobile Schedule (Card View) --- */
 .mobile-schedule {
     display: none; /* Ẩn trên desktop */
