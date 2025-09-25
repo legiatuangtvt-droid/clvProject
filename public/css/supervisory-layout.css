@@ -1,0 +1,9 @@
+/* D:\Project\clvProject\public\css\supervisory-layout.css */
+
+/*
+  File này tái sử dụng layout của manager nhưng có thể được tùy chỉnh
+  trong tương lai nếu layout của Ban Giám hiệu cần thay đổi.
+*/
+
+/* Kế thừa các style từ manager-layout để tránh lặp code */
+@import url('manager-layout.css');

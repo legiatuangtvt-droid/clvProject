@@ -1,0 +1,10 @@
+/* D:\Project\clvProject\public\css\supervisory-synthetic.css */
+
+/*
+  File này tái sử dụng các định kiểu của trang tổng hợp của manager
+  vì chúng có giao diện và chức năng tương tự nhau.
+  Điều này giúp giảm thiểu việc lặp lại code CSS.
+*/
+
+/* Kế thừa các style từ manager-synthetic.css */
+@import url('manager-synthetic.css');

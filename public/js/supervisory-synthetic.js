@@ -39,6 +39,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let allRegistrations = [];
     let selectedWeekNumber = null;
 
+    const getSubjectsFromGroupName = (groupName) => {
+        if (!groupName) return [];
+        const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
+        // Tạm thời thay thế "Thể dục - QP" để không bị split sai
+        const placeholder = 'TDQP_PLACEHOLDER';
+        return cleanedName.replace('Thể dục - QP', placeholder)
+                          .split(/\s*-\s*/)
+                          .map(s => s.trim().replace(placeholder, 'Thể dục - QP'));
+    };
+
     // --- INITIALIZATION ---
     const initializePage = async () => {
         try {
@@ -129,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allSubjects.clear();
         groupsSnapshot.forEach(doc => {
             const groupName = doc.data().group_name;
-            groupName.replace(/^Tổ\s*/, '').split(/\s*-\s*/).forEach(sub => allSubjects.add(sub.trim()));
+            getSubjectsFromGroupName(groupName).forEach(sub => allSubjects.add(sub.trim()));
         });
 
         allGroups.forEach(group => {
@@ -159,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             const selectedGroup = allGroups.find(g => g.group_id === selectedGroupId);
             if (selectedGroup) {
-                selectedGroup.group_name.replace(/^Tổ\s*/, '').split(/\s*-\s*/).forEach(sub => availableSubjects.add(sub.trim()));
+                getSubjectsFromGroupName(selectedGroup.group_name).forEach(sub => availableSubjects.add(sub.trim()));
             }
         }
         [...availableSubjects].sort().forEach(subject => {
@@ -208,8 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const regsQuery = query(
                 collection(firestore, 'registrations'),
-                where('date', '>=', selectedWeek.startDate),
-                where('date', '<=', selectedWeek.endDate)
+                where('schoolYear', '==', currentSchoolYear),
+                where('weekNumber', '==', selectedWeekNumber)
             );
             const regsSnapshot = await getDocs(regsQuery);
             allRegistrations = regsSnapshot.docs.map(doc => {

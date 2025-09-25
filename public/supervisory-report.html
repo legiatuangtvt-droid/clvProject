@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Báo cáo - Giám sát</title>
     <link rel="stylesheet" href="css/shared-layout.css"> <!-- Cấp 1: Dùng chung -->
-    <link rel="stylesheet" href="css/manager-layout.css"> <!-- Cấp 2: Layout vai trò (tái sử dụng) -->
-    <link rel="stylesheet" href="css/manager-report.css">
+    <link rel="stylesheet" href="css/supervisory-layout.css"> <!-- Cấp 2: Layout vai trò -->
+    <link rel="stylesheet" href="css/supervisory-report.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -55,8 +55,10 @@
                             <button id="export-pdf-btn" class="btn-secondary"><i class="fas fa-file-pdf"></i> Xuất PDF</button>
                         </div>
                     </div>
-                    <div id="report-page" class="report-content-area">
-                        <!-- Nội dung báo cáo sẽ được chèn vào đây -->
+                    <div class="report-content-area">
+                        <div id="report-page">
+                            <!-- Nội dung báo cáo sẽ được chèn vào đây -->
+                        </div>
                     </div>
                 </div>
             </main>

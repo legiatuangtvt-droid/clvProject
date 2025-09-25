@@ -29,7 +29,7 @@ service cloud.firestore {
     match /users/{userId} {
       // Cho phép người dùng đọc thông tin của chính họ (để các hàm helper hoạt động)
       // HOẶC cho phép manager đọc thông tin của bất kỳ ai.
-      allow get: if (isSignedIn() && request.auth.uid == userId) || isManager();
+      allow get: if (isSignedIn() && request.auth.uid == userId) || isManager() || isSupervisory();
 
       // Chỉ manager mới được liệt kê (list) toàn bộ user.
       allow list: if isManager();
@@ -74,7 +74,7 @@ service cloud.firestore {
       allow write: if isManager();
       
       match /weeks/{weekId} {
-        allow read: if isManager() || isTeacher();
+        allow read: if isManager() || isTeacher() || isSupervisory();
         allow write: if isManager();
       }
     }

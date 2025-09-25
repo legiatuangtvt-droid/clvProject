@@ -294,6 +294,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const [year, month, day] = reportEndDate.split('-');
         const signatureDate = `Hiếu Giang, ngày ${day} tháng ${parseInt(month, 10)} năm ${year}`;
 
+        // Người báo cáo mặc định là "Nguyễn Thị Loan" theo yêu cầu.
+        const signatureName = 'Nguyễn Thị Loan';
+
         const reportHTML = `
             <div class="report-header-nd30">
                 <div class="header-left">
@@ -358,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="signature-date"><i>${signatureDate}</i></p>
                     <p class="signature-title"><b>NGƯỜI LÀM BÁO CÁO</b></p>
                     <br><br><br><br><br><br>
-                    <p class="signature-name"><b>${document.getElementById('user-name')?.textContent || 'Ban Giám hiệu'}</b></p>
+                    <p class="signature-name"><b>${signatureName}</b></p>
                 </div>
             </div>
         `;
