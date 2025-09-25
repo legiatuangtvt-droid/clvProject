@@ -816,10 +816,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Điều chỉnh lại số tiết nếu người dùng chọn buổi chiều
                 const finalPeriod = selectedSession === 'afternoon' ? period + 5 : period;
 
-                // Ưu tiên lấy môn học đã gán cho giáo viên, nếu không có thì mới suy luận từ tên tổ
-                const subject = teacher.subject || 
-                                (getSubjectsFromGroupName(groupMap.get(teacher.group_id)?.group_name || '')[0]) || 
-                                'Chưa xác định';
+                // Logic xác định môn học: Ưu tiên môn học chính của giáo viên.
+                // Nếu không có, mới suy luận từ tên tổ.
+                const subject = teacher.subject 
+                                ? teacher.subject 
+                                : (getSubjectsFromGroupName(groupMap.get(teacher.group_id)?.group_name || '')[0] || 'Chưa xác định');
                 const newRegData = { teacherId: teacher.uid, teacherName: teacher.teacher_name, groupId: teacher.group_id, schoolYear: currentSchoolYear, weekNumber: selectedWeek.weekNumber, date: importDate, period: finalPeriod, subject: subject, className: className, lessonName: lesson, equipment: equipmentStr.split(/[,+]/).map(item => item.trim()).filter(Boolean), teachingMethod: teachingMethodStr.split(/[&,;]/).map(item => item.trim()).filter(Boolean), createdAt: serverTimestamp() };
 
                 // Xử lý thông minh cho PPDH và thiết bị
@@ -1199,21 +1200,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // Lấy ra loại (type) và giá trị (value) từ data-attributes của mục chú thích
             // Ví dụ: data-type="subject", data-value="Toán"
             const type = legendItem.dataset.type;
-            const value = legendItem.dataset.value;
-            console.log(`[HOVER IN] Type: ${type}, Value: "${value}"`); // Test: In ra loại và giá trị đang hover
+            const value = legendItem.dataset.value;           
 
             // Nếu không có type hoặc value thì dừng lại
             if (!type || !value) return;
 
             // 2. Làm chìm tất cả các đăng ký
             // Thêm class 'dimmed' vào container chính của lịch. CSS sẽ xử lý việc giảm độ mờ của tất cả .registration-info
-            scheduleContainer.classList.add('dimmed');
-            console.log("[ACTION] Added 'dimmed' class to schedule container."); // Test: Xác nhận đã thêm class dimmed
+            scheduleContainer.classList.add('dimmed');           
 
             // 3. Làm nổi bật các đăng ký liên quan
             // Tạo một CSS selector động để tìm tất cả các .registration-info có data-attribute khớp với giá trị đang được hover
-            const selector = `.registration-info[data-${type}*="${value}"]`;
-            console.log(`[SELECTOR] Using selector: ${selector}`); // Test: In ra selector đang được sử dụng
+            const selector = `.registration-info[data-${type}*="${value}"]`;            
             
             // Lặp qua tất cả các phần tử tìm thấy và thêm class 'highlighted'
             // CSS sẽ xử lý việc làm các phần tử này nổi bật trở lại (opacity: 1)
@@ -1222,7 +1220,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
         // 4. Xử lý khi di chuột RA KHỎI một mục trong bảng chú thích
         legendContainer.addEventListener('mouseout', () => {
-            console.log('[HOVER OUT] Resetting highlights.'); // Test: Xác nhận sự kiện mouseout
             // Xóa class 'dimmed' để tất cả các mục trở lại độ mờ bình thường
             scheduleContainer.classList.remove('dimmed');
             // Tìm và xóa class 'highlighted' khỏi tất cả các mục đã được làm nổi bật
@@ -1230,8 +1227,50 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    const updateSubjectSelectForTeacher = (teacherId) => {
+        const modalSubjectSelect = document.getElementById('reg-subject');
+        if (!teacherId) {
+            modalSubjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
+            return;
+        }
+
+        const teacher = teacherMap.get(teacherId);
+        console.log('teacherMap:', teacherMap);
+        console.log('teacher:', teacher);
+        if (!teacher || !teacher.subject) {
+            // Nếu không có môn chính, hiển thị tất cả môn của tổ
+            const group = groupMap.get(teacher.group_id);
+            const subjects = group ? getSubjectsFromGroupName(group.group_name) : [];
+            modalSubjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
+            subjects.forEach(sub => modalSubjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`);
+            return;
+        }
+
+        const primarySubject = teacher.subject;
+        const allowedSubjects = [primarySubject];
+
+        // Xử lý các trường hợp ngoại lệ
+        if (primarySubject === 'Vật Lí') {
+            allowedSubjects.push('Công nghệ công nghiệp');
+        } else if (primarySubject === 'Sinh học') {
+            allowedSubjects.push('Công nghệ nông nghiệp');
+        }
+
+        modalSubjectSelect.innerHTML = '';
+        allowedSubjects.forEach(subject => {
+            modalSubjectSelect.innerHTML += `<option value="${subject}">${subject}</option>`;
+        });
+    };
+
     const setupExtraModalFeatures = () => {
         const getLastRegBtn = document.getElementById('get-last-reg-btn');
+        const modalTeacherSelect = document.getElementById('reg-teacher');
+
+        // Thêm sự kiện change cho selector giáo viên trong modal
+        modalTeacherSelect.addEventListener('change', (e) => {
+            updateSubjectSelectForTeacher(e.target.value);
+        });
+
         getLastRegBtn.addEventListener('click', async () => {
             const selectedTeacherId = document.getElementById('reg-teacher').value;
             if (!selectedTeacherId) {
