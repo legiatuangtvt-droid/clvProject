@@ -331,6 +331,40 @@ const initializeTeacherRegisterPage = (user) => {
         scheduleContainer.innerHTML = tableHTML;
     };
 
+    const isSlotEditable = (dateString) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to midnight for accurate date comparison
+        const slotDate = new Date(dateString.replace(/-/g, '/'));
+
+        switch (registrationRule) {
+            case 'none':
+                return true; // No restrictions
+
+            case 'no-past-dates':
+                return slotDate >= today; // Can't register for past dates
+
+            case 'current-month-before-report':
+                // This rule is complex and better enforced on the manager/report side.
+                // For the teacher's view, we'll allow it if it's not in the past.
+                return slotDate >= today;
+
+            case 'next-week-only':
+                // Find the current week based on today's date
+                const currentWeek = timePlan.slice().reverse().find(w => new Date(w.startDate.replace(/-/g, '/')) <= today);
+                if (!currentWeek) return false; // Can't determine current week
+
+                // Find the next week
+                const nextWeek = timePlan.find(w => w.weekNumber === currentWeek.weekNumber + 1);
+                if (!nextWeek) return false; // No next week defined
+
+                // Check if the slot date is within the next week's range
+                return slotDate >= new Date(nextWeek.startDate.replace(/-/g, '/')) && slotDate <= new Date(nextWeek.endDate.replace(/-/g, '/'));
+
+            default:
+                return true; // Default to allowing edits if rule is unknown
+        }
+    };
+
     const renderMobileSchedule = (week, daysOfWeek, weekDates) => {
         let mobileHTML = `<div class="mobile-schedule">`;
 
