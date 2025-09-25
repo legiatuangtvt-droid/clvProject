@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="report-header-nd30">
                 <div class="header-left">
                     <p style="font-size: 13pt; text-transform: uppercase;">SỞ GD&ĐT QUẢNG TRỊ</p>
-                    <p style="font-size: 13pt; font-weight: bold; text-transform: uppercase;"><span class="underline-2-3">TRƯỜNG THPT CHẾ LAN VIÊN</span></p>
+                    <p style="font-size: 13pt; font-weight: bold; text-transform: uppercase; word-break: break-word;"><span class="underline-2-3">TRƯỜNG THPT CHẾ LAN VIÊN</span></p>
                 </div>
                 <div class="header-right">
                     <p style="font-size: 13pt; font-weight: bold;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
@@ -411,31 +411,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     exportPdfBtn.addEventListener('click', async () => {
         showToast('Đang chuẩn bị file PDF...', 'info');
-        const { jsPDF } = window.jspdf;
         const reportContent = document.getElementById('report-page');
 
         if (!reportContent) {
             showToast('Không tìm thấy nội dung báo cáo để xuất.', 'error');
             return;
         }
+        
+        // Sử dụng html2canvas để chụp ảnh chất lượng cao hơn
+        const canvas = await html2canvas(reportContent, {
+            scale: 2, // Tăng độ phân giải để ảnh nét hơn
+            useCORS: true,
+            logging: false,
+        });
 
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+
+        // Khởi tạo jsPDF với định dạng A4
         const pdf = new jsPDF({
             orientation: 'portrait',
-            unit: 'cm',
-            format: 'a4'
+            unit: 'mm',
+            format: 'a4',
         });
 
-        // Sử dụng phương thức .html() để chuyển đổi HTML thành PDF với chất lượng cao
-        await pdf.html(reportContent, {
-            callback: function(doc) {
-                // Lưu file sau khi đã render xong
-                doc.save('bao-cao.pdf');
-                showToast('Đã xuất file PDF thành công!', 'success');
-            },
-            // Đảm bảo nội dung vừa với trang A4
-            width: 21, // Chiều rộng A4
-            windowWidth: reportContent.offsetWidth // Chiều rộng của element để render
-        });
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = imgWidth / imgHeight;
+
+        // Tính toán chiều cao của ảnh trong PDF để giữ đúng tỷ lệ
+        const imgHeightInPdf = pdfWidth / ratio;
+
+        let heightLeft = imgHeightInPdf;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightInPdf);
+        heightLeft -= pdfHeight;
+
+        pdf.save('bao-cao.pdf');
+        showToast('Đã xuất file PDF thành công!', 'success');
     });
 
     // --- Run ---

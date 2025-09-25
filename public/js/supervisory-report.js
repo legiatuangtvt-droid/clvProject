@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="report-header-nd30">
                 <div class="header-left">
                     <p style="font-size: 13pt; text-transform: uppercase;">SỞ GD&ĐT QUẢNG TRỊ</p>
-                    <p style="font-size: 13pt; font-weight: bold; text-transform: uppercase;"><span class="underline-2-3">TRƯỜNG THPT CHẾ LAN VIÊN</span></p>
+                    <p style="font-size: 13pt; font-weight: bold; text-transform: uppercase; word-break: break-word;"><span class="underline-2-3">TRƯỜNG THPT CHẾ LAN VIÊN</span></p>
                 </div>
                 <div class="header-right">
                     <p style="font-size: 13pt; font-weight: bold;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
@@ -393,21 +393,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     exportPdfBtn.addEventListener('click', async () => {
         showToast('Đang chuẩn bị file PDF...', 'info');
-        const { jsPDF } = window.jspdf;
         const reportContent = document.getElementById('report-page');
         if (!reportContent) {
             showToast('Không tìm thấy nội dung báo cáo để xuất.', 'error');
             return;
         }
-        const pdf = new jsPDF({ orientation: 'portrait', unit: 'cm', format: 'a4' });
-        await pdf.html(reportContent, {
-            callback: function(doc) {
-                doc.save('bao-cao.pdf');
-                showToast('Đã xuất file PDF thành công!', 'success');
-            },
-            width: 21,
-            windowWidth: reportContent.offsetWidth
+
+        // Sử dụng html2canvas để chụp ảnh chất lượng cao hơn
+        const canvas = await html2canvas(reportContent, {
+            scale: 2, // Tăng độ phân giải để ảnh nét hơn
+            useCORS: true,
+            logging: false,
         });
+
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+
+        // Khởi tạo jsPDF với định dạng A4
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4',
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = imgWidth / imgHeight;
+
+        // Tính toán chiều cao của ảnh trong PDF để giữ đúng tỷ lệ
+        const imgHeightInPdf = pdfWidth / ratio;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeightInPdf);
+
+        pdf.save('bao-cao.pdf');
+        showToast('Đã xuất file PDF thành công!', 'success');
     });
 
     initializePage();

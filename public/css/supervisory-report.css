@@ -23,6 +23,35 @@
     gap: 10px;
 }
 
+/* Thêm style cho các nút để đồng bộ với các trang khác */
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-primary:hover { background-color: #0056b3; }
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-secondary:hover { background-color: #5a6268; }
+
 /* --- Report Content Area --- */
 .report-content-area {
     background-color: #f0f2f5; /* Nền xám nhẹ bên ngoài trang giấy */
@@ -39,6 +68,7 @@
     min-height: 29.7cm; /* Chiều cao của trang A4 */
     padding: 2.5cm 2cm; /* Lề chuẩn của Word */
     box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    border: 1px solid #000; /* Thêm đường viền cho trang báo cáo */
     box-sizing: border-box;
     font-family: 'Times New Roman', Times, serif;
     color: #000;
@@ -129,15 +159,36 @@
     white-space: nowrap; /* Ngăn không cho văn bản xuống dòng */
 }
 
-.underline-2-3, .underline-full {
-    border-bottom: 1px solid black;
-    padding-bottom: 1px;
+.underline-2-3 {
+    position: relative;
+    display: inline-block;
 }
 
-.underline-2-3 {
+.underline-2-3::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -2px;
+    height: 1px;
+    width: 66.67%; /* Chiều dài bằng 2/3 */
+    background-color: black;
+}
+
+.underline-full {
+    position: relative;
     display: inline-block;
-    width: 66.67%;
-    margin: 0 auto;
+}
+
+.underline-full::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -2px;
+    height: 1px;
+    width: 100%; /* Chiều dài bằng 100% */
+    background-color: black;
 }
 
 .report-title-container {

@@ -64,6 +64,7 @@
     min-height: 29.7cm; /* Chiều cao của trang A4 */
     padding: 3cm 2cm; /* Lề chuẩn của Word */
     box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    border: 1px solid #000; /* Thêm đường viền cho trang báo cáo */
     box-sizing: border-box;
     font-family: 'Times New Roman', Times, serif;
     color: #000;
@@ -156,13 +157,27 @@
     display: inline-block; /* Để thẻ p co lại vừa với nội dung */
 }
 
-.underline-2-3,
+.underline-2-3 {
+    position: relative;
+    display: inline-block;
+}
+
+.underline-2-3::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -2px;
+    height: 1px;
+    width: 66.67%; /* Chiều dài bằng 2/3 */
+    background-color: black;
+}
+
 .underline-full {
     position: relative;
     display: inline-block;
 }
 
-.underline-2-3::after,
 .underline-full::after {
     content: '';
     position: absolute;
@@ -170,15 +185,8 @@
     transform: translateX(-50%);
     bottom: -2px;
     height: 1px;
-    background-color: black;
-}
-
-.underline-2-3::after {
-    width: 66.67%; /* Bằng 2/3 chiều dài của span */
-}
-
-.underline-full::after {
     width: 100%; /* Bằng chiều dài của span */
+    background-color: black;
 }
 
 .report-title-container {
