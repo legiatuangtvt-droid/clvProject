@@ -38,6 +38,7 @@ const initializeTeacherRegisterPage = (user) => {
     let deleteFunction = null; // To hold the function to execute on confirm
     let currentEditingRegId = null;
     let lastUsedSubject = null; // Lưu môn học từ lần đăng ký cuối
+    let registrationRule = 'none'; // Quy tắc đăng ký, mặc định là không giới hạn
     let selectedWeekNumber = null;
 
     const getSubjectsFromGroupName = (groupName) => {
@@ -49,6 +50,22 @@ const initializeTeacherRegisterPage = (user) => {
                               .map(s => s.trim().replace('Thể dục--QP--PLACEHOLDER', 'Thể dục - QP'));
         }
         return cleanedName.split(/\s*-\s*/).map(s => s.trim());
+    };
+
+    const loadRegistrationRule = async () => {
+        try {
+            // Lấy quy tắc từ document của năm học hiện tại
+            const q = query(collection(firestore, 'schoolYears'), where('schoolYear', '==', currentSchoolYear), limit(1));
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) {
+                const schoolYearData = snapshot.docs[0].data();
+                registrationRule = schoolYearData.registrationRule || 'none';
+            } else {
+                registrationRule = 'none'; // Mặc định nếu không tìm thấy
+            }
+        } catch (error) {
+            console.warn("Không thể tải quy tắc đăng ký, sử dụng mặc định.", error);
+        }
     };
     const loadTimePlan = async (user) => {
         const planQuery = query(collection(firestore, 'timePlans'), where("schoolYear", "==", currentSchoolYear));
@@ -244,7 +261,8 @@ const initializeTeacherRegisterPage = (user) => {
             weekDates.forEach(date => {
                 const reg = allRegistrations.find(r => r.date === date && r.period === period);
                 if (reg) {
-                    tableHTML += `<td>`;
+                    const editable = isSlotEditable(date);
+                    tableHTML += `<td class="${editable ? '' : 'disabled-slot'}" title="${editable ? '' : 'Đã hết hạn đăng ký/chỉnh sửa'}">`;
                     // Tạo tooltip chi tiết
                     const tooltipText = [
                         `Môn: ${reg.subject}`,
@@ -259,8 +277,9 @@ const initializeTeacherRegisterPage = (user) => {
                             <p><i class="fas fa-chalkboard"></i> Lớp ${reg.className}: ${reg.lessonName}</p>
                         </div>`;
                 } else {
-                    // Thêm class và data-attributes cho ô trống để có thể click
-                    tableHTML += `<td class="empty-slot" data-date="${date}" data-period="${period}">`;
+                    // Ô trống, kiểm tra xem có được phép đăng ký không
+                    const editable = isSlotEditable(date);
+                    tableHTML += `<td class="${editable ? 'empty-slot' : 'disabled-slot'}" data-date="${date}" data-period="${period}" title="${editable ? '' : 'Đã hết hạn đăng ký'}">`;
                 }
                 tableHTML += `</td>`;
             });
@@ -280,7 +299,9 @@ const initializeTeacherRegisterPage = (user) => {
             weekDates.forEach(date => {
                 const reg = allRegistrations.find(r => r.date === date && r.period === period);
                 if (reg) {
-                    tableHTML += `<td>`;
+                    // Ô đã có đăng ký, vẫn cho phép click để sửa nếu quy tắc cho phép
+                    const editable = isSlotEditable(date);
+                    tableHTML += `<td class="${editable ? '' : 'disabled-slot'}" title="${editable ? '' : 'Đã hết hạn đăng ký/chỉnh sửa'}">`;
                     // Tạo tooltip chi tiết
                     const tooltipText = [
                         `Môn: ${reg.subject}`,
@@ -295,7 +316,8 @@ const initializeTeacherRegisterPage = (user) => {
                             <p><i class="fas fa-chalkboard"></i> Lớp ${reg.className}: ${reg.lessonName}</p>
                         </div>`;
                 } else {
-                    tableHTML += `<td class="empty-slot" data-date="${date}" data-period="${period}">`;
+                    const editable = isSlotEditable(date);
+                    tableHTML += `<td class="empty-slot" data-date="${date}" data-period="${period}" title="${editable ? '' : 'Đã hết hạn đăng ký'}">`;
                 }
                 tableHTML += `</td>`;
             });
@@ -315,6 +337,7 @@ const initializeTeacherRegisterPage = (user) => {
         let mobileHTML = `<div class="mobile-schedule">`;
 
         weekDates.forEach((date, dayIndex) => {
+            const isDayEditable = isSlotEditable(date);
             mobileHTML += `
                 <div class="mobile-day-card">
                     <div class="mobile-day-header">
@@ -366,8 +389,8 @@ const initializeTeacherRegisterPage = (user) => {
 
             mobileHTML += `
                     </div>
-                    <div class="mobile-day-footer">
-                        <button class="add-registration-mobile-btn" data-date="${date}">
+                    <div class="mobile-day-footer" ${!isDayEditable ? 'style="display: none;"' : ''}>
+                        <button class="add-registration-mobile-btn" data-date="${date}" ${!isDayEditable ? 'disabled' : ''}>
                             <i class="fas fa-plus"></i> Đăng ký cho ngày này
                         </button>
                     </div>
@@ -648,6 +671,12 @@ const initializeTeacherRegisterPage = (user) => {
         else if (targetCell.classList.contains('empty-slot')) {
             openRegisterModal(user, null, targetCell.dataset.date, targetCell.dataset.period);
         }
+        // Ngăn không cho mở modal nếu ô bị vô hiệu hóa
+        if (targetCell.classList.contains('disabled-slot')) {
+            const title = targetCell.getAttribute('title');
+            showToast(title || 'Không thể thao tác trên ô này.', 'info');
+            return;
+        }
 
         // Xử lý click nút "Đăng ký cho ngày này" trên mobile
         const addBtnMobile = e.target.closest('.add-registration-mobile-btn');
@@ -850,6 +879,7 @@ const initializeTeacherRegisterPage = (user) => {
             if (!currentUserInfo) return; // Dừng lại nếu không có thông tin GV
 
             await loadTeachersInGroup();
+            await loadRegistrationRule(); // Tải quy tắc đăng ký
             await loadTimePlan(user);
             await populateModalSelectors(user);
             await loadLastUsedSubject(user);

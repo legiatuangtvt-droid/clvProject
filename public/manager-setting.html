@@ -55,6 +55,7 @@
                         <button class="tab-link" data-tab="teaching-methods"><i class="fas fa-lightbulb"></i><span class="desktop-text">Phương pháp dạy học</span><span class="mobile-text">PPDH</span></button>
                         <button class="tab-link" data-tab="data-repair-content"><i class="fas fa-tools"></i><span class="desktop-text">Sửa lỗi dữ liệu</span><span class="mobile-text">Sửa lỗi</span></button>
                         <button class="tab-link" data-tab="time-plan"><i class="fas fa-calendar-alt"></i><span class="desktop-text">Kế hoạch thời gian</span><span class="mobile-text">Kế hoạch</span></button>
+                        <button class="tab-link" data-tab="registration-rules"><i class="fas fa-gavel"></i><span class="desktop-text">Quy tắc Đăng ký</span><span class="mobile-text">Quy tắc</span></button>
                     </div>
 
                     <div id="tab-content-container">
@@ -124,6 +125,24 @@
                             </div>
                             <div id="weekly-plan-container"></div>
                         </div>
+
+                        <!-- Tab Quy tắc Đăng ký -->
+                        <div id="registration-rules" class="tab-content">
+                            <div class="page-header">
+                                <h2>Thiết lập Quy tắc Đăng ký cho Giáo viên</h2>
+                            </div>
+                            <div class="instruction-text">
+                                <p><i class="fas fa-info-circle"></i> Chọn một quy tắc để giới hạn thời gian giáo viên có thể đăng ký hoặc chỉnh sửa tiết dạy. Quy tắc này sẽ được áp dụng cho toàn bộ năm học hiện tại.</p>
+                            </div>
+                            <div id="rules-container" class="rules-container">
+                                <!-- Các tùy chọn quy tắc sẽ được JS chèn vào đây -->
+                                <p><i class="fas fa-spinner fa-spin"></i> Đang tải quy tắc...</p>
+                            </div>
+                            <div class="modal-actions" style="justify-content: flex-end; margin-top: 20px;">
+                                <button id="save-rules-btn" class="btn-save"><i class="fas fa-save"></i> Lưu Quy tắc</button>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </main>

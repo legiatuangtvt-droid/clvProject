@@ -1,4 +1,4 @@
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, writeBatch, where, getDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, writeBatch, where, getDoc, limit } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { firestore } from "./firebase-config.js";
 import { showToast } from "./toast.js";
 
@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Thêm các element mới
     const findSubjectMismatchBtn = document.getElementById('find-subject-mismatch-btn');
     const subjectRepairContainer = document.getElementById('subject-repair-results-container');
+    const rulesContainer = document.getElementById('rules-container');
+    const saveRulesBtn = document.getElementById('save-rules-btn');
+
 
     let currentSchoolYear = null; // Chuỗi năm học đang được chọn (VD: "2024-2025")
     let currentGroupId = null; // Dùng để biết đang thêm/sửa giáo viên cho tổ nào
@@ -33,6 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Hàm trợ giúp ---
+    const getSchoolYearDocRef = async (schoolYear) => {
+        if (!schoolYear) return null;
+        const q = query(collection(firestore, 'schoolYears'), where('schoolYear', '==', schoolYear), limit(1));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+            return null;
+        }
+        return snapshot.docs[0].ref;
+    };
+
     const formatDate = (dateString) => {
         if (!dateString || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
             return dateString; // Trả về chuỗi gốc nếu không đúng định dạng yyyy-mm-dd
@@ -270,6 +283,62 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // --- REGISTRATION RULES FUNCTIONS ---
+    const loadAndRenderRules = async () => {
+        const rules = [
+            { id: 'none', title: 'Không giới hạn', description: 'Giáo viên có thể đăng ký/sửa tiết dạy bất kỳ lúc nào.' },
+            { id: 'no-past-dates', title: 'Không đăng ký cho quá khứ', description: 'Giáo viên không thể đăng ký hoặc sửa các ngày đã qua.' },
+            { id: 'current-month-before-report', title: 'Trong tháng, trước ngày chốt báo cáo', description: 'Giáo viên chỉ được đăng ký các ngày trong tháng hiện tại, và chỉ khi ngày hiện tại chưa vượt qua ngày chốt báo cáo của tháng.' },
+            { id: 'next-week-only', title: 'Chỉ cho tuần kế tiếp', description: 'Giáo viên chỉ được đăng ký các ngày thuộc tuần học kế tiếp tuần hiện tại.' }
+        ];
+
+        try {
+            const schoolYearDocRef = await getSchoolYearDocRef(currentSchoolYear);
+            let currentRule = 'none'; // Mặc định
+            if (schoolYearDocRef) {
+                const docSnap = await getDoc(schoolYearDocRef);
+                currentRule = docSnap.exists() && docSnap.data().registrationRule ? docSnap.data().registrationRule : 'none';
+            }
+            
+            rulesContainer.innerHTML = rules.map(rule => `
+                <div class="rule-option">
+                    <input type="radio" id="rule-${rule.id}" name="registrationRule" value="${rule.id}" ${currentRule === rule.id ? 'checked' : ''}>
+                    <label for="rule-${rule.id}">
+                        <strong>${rule.title}</strong>
+                        <p>${rule.description}</p>
+                    </label>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            console.error("Lỗi khi tải quy tắc:", error);
+            rulesContainer.innerHTML = `<p class="error-message">Không thể tải cài đặt quy tắc.</p>`;
+        }
+    };
+
+    const saveRegistrationRule = async () => {
+        const selectedRuleInput = document.querySelector('input[name="registrationRule"]:checked');
+        if (!selectedRuleInput) {
+            showToast('Vui lòng chọn một quy tắc.', 'info');
+            return;
+        }
+
+        const ruleId = selectedRuleInput.value;
+        const schoolYearDocRef = await getSchoolYearDocRef(currentSchoolYear);
+
+        if (!schoolYearDocRef) {
+            showToast('Không tìm thấy năm học để lưu quy tắc.', 'error');
+            return;
+        }
+
+        try {
+            await updateDoc(schoolYearDocRef, { registrationRule: ruleId });
+            showToast('Đã lưu quy tắc đăng ký thành công!', 'success');
+        } catch (error) {
+            console.error("Lỗi khi lưu quy tắc:", error);
+            showToast('Không thể lưu quy tắc. Vui lòng thử lại.', 'error');
+        }
+    };
     // --- Hàm render ---
     const renderTeacher = (teacher, index) => {
         const name = teacher.teacher_name || 'Chưa có tên';
@@ -585,6 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await loadGroupsAndTeachers(currentSchoolYear);
                 await loadMethods(currentSchoolYear); // Tải PPDH khi chọn năm học
                 await loadTimePlan(currentSchoolYear);
+                await loadAndRenderRules(); // Tải quy tắc khi chọn năm học
             }
 
         } catch (error) {
@@ -600,6 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadGroupsAndTeachers(currentSchoolYear);
             await loadMethods(currentSchoolYear); // Tải lại PPDH khi đổi năm học
             await loadTimePlan(currentSchoolYear);
+            await loadAndRenderRules();
         }
     });
 
@@ -892,6 +963,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Sửa lỗi môn học ---
     findSubjectMismatchBtn.addEventListener('click', findAndRepairSubjectMismatches);
+
+    // --- Lưu quy tắc đăng ký ---
+    saveRulesBtn.addEventListener('click', saveRegistrationRule);
 
     // Xử lý click trong container của các tổ (delegation)
     groupsContainer.addEventListener('click', async (e) => {

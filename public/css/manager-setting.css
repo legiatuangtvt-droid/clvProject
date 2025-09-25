@@ -565,6 +565,39 @@
     font-weight: 600;
 }
 
+/* --- Registration Rules Tab --- */
+.rules-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.rule-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.rule-option:hover {
+    border-color: var(--primary-color);
+}
+
+.rule-option input[type="radio"] {
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+.rule-option label p {
+    margin: 0;
+    color: var(--text-light);
+}
 /* --- Responsive Styles for Mobile --- */
 @media (max-width: 768px) {
     /* --- General Layout --- */
