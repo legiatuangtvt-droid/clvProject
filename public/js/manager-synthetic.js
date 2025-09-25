@@ -737,6 +737,55 @@ document.addEventListener('DOMContentLoaded', () => {
         return costs[s2.length];
     };
 
+    const findBestTeacherMatch = (inputName, allTeachers) => {
+        const normalize = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
+
+        const normalizedInput = normalize(inputName);
+        const inputWords = new Set(normalizedInput.split(/\s+/));
+
+        // Ưu tiên 1: Tìm tên chứa tất cả các từ của tên nhập vào
+        const potentialMatches = allTeachers.filter(teacher => {
+            const normalizedTeacherName = normalize(teacher.teacher_name);
+            const teacherWords = new Set(normalizedTeacherName.split(/\s+/));
+            // Kiểm tra xem tất cả các từ trong input có nằm trong tên giáo viên không
+            return [...inputWords].every(word => teacherWords.has(word));
+        });
+
+        // Nếu tìm thấy các kết quả khớp từ, chọn kết quả ngắn nhất (gần nhất với input)
+        if (potentialMatches.length > 0) {
+            potentialMatches.sort((a, b) => a.teacher_name.length - b.teacher_name.length);
+            return potentialMatches[0].teacher_name;
+        }
+
+        // Ưu tiên 2: Nếu không, dùng Levenshtein distance để tìm lỗi chính tả
+        let bestMatch = null;
+        let minDistance = 4; // Ngưỡng khoảng cách, chỉ đề xuất nếu đủ gần
+
+        allTeachers.forEach(t => {
+            const distance = levenshteinDistance(inputName, t.teacher_name);
+            if (distance < minDistance) {
+                minDistance = distance;
+                bestMatch = t.teacher_name;
+            }
+        });
+
+        return bestMatch;
+    };
+
+    const findNextAvailablePeriod = (startPeriod, teacherId, className, existingRegs, newRegs) => {
+        let period = startPeriod;
+        // Giới hạn tìm kiếm trong 10 tiết của một ngày
+        while (period <= 10) {
+            const isTaken = existingRegs.some(reg => reg.period === period && (reg.teacherId === teacherId || reg.className === className)) ||
+                            newRegs.some(reg => reg.period === period && (reg.teacherId === teacherId || reg.className === className));
+            if (!isTaken) {
+                return period;
+            }
+            period++;
+        }
+        return null; // Không tìm thấy tiết trống
+    };
+
     const validateAndPreviewData = async (dataLines) => {
         const importDate = bulkImportDaySelect.value;
         if (!importDate || dataLines.length === 0) {
@@ -763,7 +812,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < dataLines.length; i++) {
             const parts = dataLines[i];
             const originalLineNumber = i + 1;
-            let lineIssues = [];
+            const lineIssues = [];
 
             if (parts.length < 5) {
                 lineIssues.push(`Không đủ thông tin (cần ít nhất 5 cột).`);
@@ -771,131 +820,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 continue;
             }
             const [teacherName, classNamesStr, periodsStr, lessonName, equipmentStr, teachingMethodStr = ''] = parts.map(p => p.trim());
-            const teacher = allTeachers.find(t => t.teacher_name.toLowerCase() === teacherName.toLowerCase());
+            let teacher = allTeachers.find(t => t.teacher_name.toLowerCase() === teacherName.toLowerCase());
+            let correctedTeacherName = null;
 
-            const rawPeriods = periodsStr.split(/[,;]/).map(p => parseInt(p.trim())).filter(p => !isNaN(p) && p > 0 && p <= 10);
-            const rawClassNames = expandClassNames(classNamesStr);
-            // Sửa lỗi: Tên bài dạy có thể chứa dấu phẩy, không nên tách ra.
-            // Chỉ coi là nhiều bài dạy nếu có dấu chấm phẩy ";".
-            const rawLessonNames = lessonName.split(';').map(l => l.trim()).filter(Boolean);
-
-            let lessonPeriodClassMap = [];
-
-            // Logic "zip" các mảng
-            if (rawPeriods.length > 0 && rawClassNames.length > 0 && rawLessonNames.length > 0) {
-                // Logic mới: Phân phối các tiết cho các lớp
-                // Ví dụ: Lớp: 12B5, 12B10; Tiết: 1,2,4,5 -> 12B5 dạy tiết 1,2 và 12B10 dạy tiết 4,5
-                const numClasses = rawClassNames.length;
-                const numPeriods = rawPeriods.length;
-                const periodsPerClass = Math.ceil(numPeriods / numClasses); // Số tiết trung bình cho mỗi lớp
-
-                for (let i = 0; i < numClasses; i++) {
-                    const className = rawClassNames[i];
-                    // Xác định các tiết cho lớp hiện tại
-                    const startPeriodIndex = i * periodsPerClass;
-                    const endPeriodIndex = Math.min(startPeriodIndex + periodsPerClass, numPeriods);
-                    const periodsForThisClass = rawPeriods.slice(startPeriodIndex, endPeriodIndex);
-
-                    periodsForThisClass.forEach((period, periodIndex) => {
-                        const lesson = rawLessonNames[i] ?? rawLessonNames[rawLessonNames.length - 1];
-                        lessonPeriodClassMap.push({ className, period, lesson });
-                    });
+            if (!teacher || !teacher.uid) {
+                const bestMatch = findBestTeacherMatch(teacherName, allTeachers);
+                if (bestMatch) {
+                    teacher = allTeachers.find(t => t.teacher_name === bestMatch);
+                    correctedTeacherName = bestMatch;
+                    lineIssues.push(`Tên GV "${teacherName}" đã được tự động sửa thành "${bestMatch}".`);
                 }
             }
 
             if (!teacher || !teacher.uid) {
-                lineIssues.push(`Không tìm thấy giáo viên "${teacherName}" hoặc giáo viên chưa có tài khoản.`);
-                // Nếu không tìm thấy giáo viên, không cần xử lý thêm, báo lỗi và chuyển sang dòng tiếp theo
+                lineIssues.push(`Không tìm thấy giáo viên "${teacherName}".`);
                 previewRegistrations.push({ lineNumber: originalLineNumber, data: parts, issues: lineIssues, isInvalid: true });
                 continue;
             }
 
-            for (const item of lessonPeriodClassMap) {
-                const { className, period, lesson } = item;
-                
-                // Điều chỉnh lại số tiết nếu người dùng chọn buổi chiều
-                const finalPeriod = selectedSession === 'afternoon' ? period + 5 : period;
+            const displayTeacherName = correctedTeacherName || teacherName;
+            const rawClassNames = expandClassNames(classNamesStr);
+            const rawPeriods = periodsStr.split(/[,;]/).map(p => parseInt(p.trim())).filter(p => !isNaN(p) && p > 0 && p <= 5); // Chỉ cho phép tiết 1-5
+            const rawLessonNames = lessonName.split(';').map(l => l.trim()).filter(Boolean);
 
-                // Logic xác định môn học: Ưu tiên môn học chính của giáo viên.
-                // Nếu không có, mới suy luận từ tên tổ.
-                const subject = teacher.subject 
-                                ? teacher.subject 
-                                : (getSubjectsFromGroupName(groupMap.get(teacher.group_id)?.group_name || '')[0] || 'Chưa xác định');
-                const newRegData = { teacherId: teacher.uid, teacherName: teacher.teacher_name, groupId: teacher.group_id, schoolYear: currentSchoolYear, weekNumber: selectedWeek.weekNumber, date: importDate, period: finalPeriod, subject: subject, className: className, lessonName: lesson, equipment: equipmentStr.split(/[,+]/).map(item => item.trim()).filter(Boolean), teachingMethod: teachingMethodStr.split(/[&,;]/).map(item => item.trim()).filter(Boolean), createdAt: serverTimestamp() };
+            // Lặp qua từng lớp và từng tiết để tạo các lượt đăng ký riêng lẻ
+            rawClassNames.forEach((className, classIndex) => {
+                rawPeriods.forEach((period, periodIndex) => {
+                    const lesson = rawLessonNames[classIndex] || rawLessonNames[0] || 'N/A';
+                    const finalPeriod = selectedSession === 'afternoon' ? period + 5 : period;
 
-                // Xử lý thông minh cho PPDH và thiết bị
-                const ppdhMapping = {
-                    'CNTT': 'Công nghệ thông tin',
-                    'TBDH': 'Thiết bị dạy học',
-                    'TH': 'Thực hành'
-                };
-                const validPpdhValues = Object.values(ppdhMapping);
-                const finalPpdh = new Set();
-                newRegData.teachingMethod.forEach(method => {
-                    const upperMethod = method.toUpperCase();
-                    if (ppdhMapping[upperMethod]) {
-                        finalPpdh.add(ppdhMapping[upperMethod]);
-                    } else if (!validPpdhValues.includes(method)) {
-                        // Đề xuất sửa lỗi chính tả cho PPDH
-                        let bestMatch = '';
-                        let minDistance = 3; // Chỉ xem xét nếu khoảng cách nhỏ
-                        for (const key in ppdhMapping) {
-                            const distance = levenshteinDistance(upperMethod, key);
-                            if (distance < minDistance) {
-                                minDistance = distance;
-                                bestMatch = ppdhMapping[key];
-                            }
-                        }
-                        if (bestMatch) finalPpdh.add(bestMatch);
+                    // Bỏ qua các tiết không thuộc buổi đã chọn
+                    if ((selectedSession === 'morning' && finalPeriod > 5) || (selectedSession === 'afternoon' && finalPeriod < 6)) {
+                        return; // Bỏ qua lần lặp này
                     }
+
+                    const newRegData = createRegistrationData(teacher, className, finalPeriod, lesson, equipmentStr, teachingMethodStr, selectedWeek);
+                    previewAndValidateSingleReg(originalLineNumber, displayTeacherName, newRegData, period, previewRegistrations, existingRegsOnDate, lineIssues);
                 });
-                newRegData.teachingMethod = [...finalPpdh];
-
-                // Tự động xử lý thiết bị nếu PPDH là CNTT
-                if (newRegData.teachingMethod.includes('Công nghệ thông tin')) {
-                    // Nếu cột thiết bị trống, tự động điền 'Tivi'
-                    if (newRegData.equipment.length === 0) {
-                        newRegData.equipment.push('Tivi');
-                    } else {
-                        // Nếu không trống, sửa các từ viết tắt như 'TV' thành 'Tivi'
-                        newRegData.equipment = newRegData.equipment.map(eq => {
-                            const lowerEq = eq.toLowerCase();
-                            if (lowerEq === 'tv' || lowerEq === 'tiv') return 'Tivi';
-                            return eq;
-                        });
-                    }
-                }
-
-                // Bỏ qua các tiết không thuộc buổi đã chọn
-                if ((selectedSession === 'morning' && newRegData.period > 5) || (selectedSession === 'afternoon' && newRegData.period < 6)) {
-                    continue;
-                }
-
-                const existingConflict = existingRegsOnDate.find(reg => reg.period === finalPeriod && (reg.teacherId === teacher.uid || reg.className === className));
-                const internalConflict = validRegistrationsToCreate.find(reg => reg.period === finalPeriod && (reg.teacherId === teacher.uid || reg.className === className));
-                
-                let currentRegIssues = [...lineIssues]; 
-                if (existingConflict) {
-                    const existingTeacherName = teacherMap.get(existingConflict.teacherId)?.teacher_name || 'N/A';
-                    currentRegIssues.push(`Trùng lịch với đăng ký đã có (Lớp ${className}, Tiết ${finalPeriod}, GV ${existingTeacherName}).`);
-                }
-                if (existingConflict) currentRegIssues.push(`Trùng lịch với đăng ký đã có (Lớp ${className}, Tiết ${finalPeriod}, GV ${existingConflict.teacherName}).`);
-                if (internalConflict) currentRegIssues.push(`Trùng lịch với dòng khác trong file (Lớp ${className}, Tiết ${finalPeriod}).`);
-
-                const hasConflict = !!existingConflict || !!internalConflict;
-                const isInvalid = lineIssues.length > 0 || hasConflict;
-
-                previewRegistrations.push({
-                    lineNumber: originalLineNumber,
-                    data: [teacherName, className, period, lesson, newRegData.equipment.join(', '), newRegData.teachingMethod.join(', ')],
-                    issues: currentRegIssues,
-                    isInvalid: isInvalid
-                });
-
-                if (!isInvalid) {
-                    validRegistrationsToCreate.push(newRegData);
-                }
-            }
+            });
         }
 
         // Always show the preview modal, regardless of errors.
@@ -917,9 +879,9 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmBtn.style.display = 'inline-block'; // Show confirm button
         }
 
-        let tableHTML = `<table class="preview-table"><thead><tr><th>Dòng gốc</th><th>Tên GV</th><th>Lớp</th><th>Tiết</th><th>Bài dạy</th><th>Thiết bị</th><th>PPDH</th></tr></thead><tbody>`;
+        let tableHTML = `<table class="preview-table"><thead><tr><th>Dòng gốc</th><th>Tên GV</th><th>Môn học</th><th>Lớp</th><th>Tiết</th><th>Bài dạy</th><th>Thiết bị</th><th>PPDH</th></tr></thead><tbody>`;
         previewRegistrations.forEach(reg => {
-            const rowClass = reg.isInvalid ? 'class="has-error"' : 'class="is-valid"';
+            const rowClass = reg.isInvalid ? 'class="has-error"' : (reg.issues.length > 0 ? 'class="has-warning"' : 'class="is-valid"');
             const cellsHTML = reg.data.map(cell => `<td contenteditable="false">${cell}</td>`).join('');
             tableHTML += `<tr ${rowClass} data-line-number="${reg.lineNumber}"><td>${reg.lineNumber}</td>${cellsHTML}</tr>`;
         });
@@ -928,6 +890,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
         bulkImportModal.style.display = 'none'; // Hide the initial import modal
         bulkImportPreviewModal.style.display = 'flex'; // Show the preview modal
+    };
+
+    const createRegistrationData = (teacher, className, period, lesson, equipmentStr, teachingMethodStr, week) => {
+        const subject = teacher.subject ? teacher.subject : (getSubjectsFromGroupName(groupMap.get(teacher.group_id)?.group_name || '')[0] || 'Chưa xác định');
+        const ppdhMapping = { 'CNTT': 'Công nghệ thông tin', 'TBDH': 'Thiết bị dạy học', 'TH': 'Thực hành' };
+        const finalPpdh = new Set();
+        teachingMethodStr.split(/[&,;]/).map(item => item.trim()).filter(Boolean).forEach(method => {
+            const upperMethod = method.toUpperCase();
+            if (ppdhMapping[upperMethod]) finalPpdh.add(ppdhMapping[upperMethod]);
+        });
+        let equipment = equipmentStr.split(/[,+]/).map(item => item.trim()).filter(Boolean);
+        if ([...finalPpdh].includes('Công nghệ thông tin') && !equipment.some(e => e.toLowerCase() === 'tivi')) {
+            equipment.push('Tivi');
+        }
+        return { teacherId: teacher.uid, teacherName: teacher.teacher_name, groupId: teacher.group_id, schoolYear: currentSchoolYear, weekNumber: week.weekNumber, date: bulkImportDaySelect.value, period: period, subject: subject, className: className, lessonName: lesson, equipment: equipment, teachingMethod: [...finalPpdh], createdAt: serverTimestamp() };
+    };
+
+    const previewAndValidateSingleReg = (lineNumber, teacherName, regData, displayPeriod, previewRegistrations, existingRegsOnDate, lineIssues) => {
+        const existingConflict = existingRegsOnDate.find(reg => reg.period === regData.period && (reg.teacherId === regData.teacherId || reg.className === regData.className));
+        const internalConflict = validRegistrationsToCreate.find(reg => reg.period === regData.period && (reg.teacherId === regData.teacherId || reg.className === regData.className));
+        
+        let currentRegIssues = [...lineIssues];
+        if (existingConflict) {
+            const existingTeacherName = teacherMap.get(existingConflict.teacherId)?.teacher_name || 'N/A';
+            currentRegIssues.push(`Trùng lịch với đăng ký đã có (Lớp ${regData.className}, Tiết ${regData.period}, GV ${existingTeacherName}).`);
+        }
+        if (internalConflict) currentRegIssues.push(`Trùng lịch với dòng khác trong file (Lớp ${regData.className}, Tiết ${regData.period}).`);
+
+        const hasConflict = !!existingConflict || !!internalConflict;
+        const isInvalid = lineIssues.length > 0 || hasConflict;
+
+        previewRegistrations.push({ lineNumber, data: [teacherName, regData.subject, regData.className, displayPeriod, regData.lessonName, regData.equipment.join(', '), regData.teachingMethod.join(', ')], issues: currentRegIssues, isInvalid });
+        if (!isInvalid) {
+            validRegistrationsToCreate.push(regData);
+        }
     };
 
     const processBulkImport = async () => {
@@ -1059,10 +1056,6 @@ document.addEventListener('DOMContentLoaded', () => {
             bulkImportPreviewModal.style.display = 'none'; // Ẩn modal xem trước
             bulkImportModal.style.display = 'flex'; // Hiển thị lại modal nhập liệu
         });
-
-        // Chức năng sửa trực tiếp đã bị loại bỏ, nên vô hiệu hóa nút này để tránh nhầm lẫn
-        recheckBulkImportBtn.disabled = true;
-        recheckBulkImportBtn.title = 'Chức năng này không còn được hỗ trợ. Vui lòng hủy và nhập lại từ đầu.';
 
         confirmBulkImportBtn.addEventListener('click', commitBulkImport);
 

@@ -41,8 +41,12 @@ export function showToast(message, type = 'info', duration = 3000) {
 
     // Tự động xóa toast sau một khoảng thời gian
     setTimeout(() => {
-        toast.classList.remove('show');
-        // Xóa element khỏi DOM sau khi animation kết thúc
-        toast.addEventListener('transitionend', () => toast.remove());
+        if (toast) {
+            toast.classList.remove('show');
+            // Đảm bảo toast được xóa khỏi DOM ngay cả khi transitionend không kích hoạt
+            setTimeout(() => {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 500); // 500ms là thời gian của hiệu ứng transition trong CSS
+        }
     }, duration);
 }
