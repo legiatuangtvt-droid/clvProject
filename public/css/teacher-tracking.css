@@ -49,6 +49,12 @@
     flex: 2; /* Biểu đồ chiếm ít không gian hơn */
     min-width: 300px;
     position: sticky; /* Giữ biểu đồ cố định khi cuộn */
+    /* Cải tiến giao diện cho vùng chứa biểu đồ */
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
     top: 20px;
 }
 

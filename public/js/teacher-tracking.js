@@ -273,39 +273,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderPieChart = (methodCounts, sortedMethods) => {
         const ctx = document.getElementById('methods-pie-chart').getContext('2d');
-
-        // Hủy biểu đồ cũ nếu tồn tại để tránh lỗi
         if (pieChartInstance) {
             pieChartInstance.destroy();
         }
 
+        // Đăng ký plugin datalabels
+        Chart.register(ChartDataLabels);
+
         const labels = sortedMethods;
         const data = sortedMethods.map(method => methodCounts[method]);
 
-        // Tạo màu ngẫu nhiên cho các phần của biểu đồ
-        const backgroundColors = labels.map(() => `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.7)`);
+        // Bảng màu đẹp và hài hòa hơn
+        const professionalColors = [
+            '#3498db', '#2ecc71', '#e74c3c', '#f1c40f', '#9b59b6',
+            '#34495e', '#1abc9c', '#e67e22', '#ecf0f1', '#7f8c8d'
+        ];
+        const backgroundColors = labels.map((_, index) => professionalColors[index % professionalColors.length]);
 
         pieChartInstance = new Chart(ctx, {
-            type: 'pie',
+            type: 'doughnut', // Chuyển sang biểu đồ Doughnut hiện đại hơn
             data: {
                 labels: labels,
                 datasets: [{
                     label: 'Số tiết đã đăng ký',
                     data: data,
                     backgroundColor: backgroundColors,
-                    borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
-                    borderWidth: 1
+                    borderColor: '#fff', // Thêm viền trắng để tách các phần
+                    borderWidth: 3,
+                    hoverOffset: 15 // Hiệu ứng "nổi" lên khi hover
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'top',
+                        position: 'bottom', // Chuyển chú giải xuống dưới
+                        labels: {
+                            padding: 20,
+                            boxWidth: 15,
+                            font: { size: 12 }
+                        }
                     },
                     title: {
                         display: true,
-                        text: 'Tỷ lệ sử dụng Phương pháp dạy học'
+                        text: 'Tỷ lệ sử dụng Phương pháp dạy học',
+                        font: { size: 16, weight: 'bold' },
+                        padding: { top: 10, bottom: 20 }
+                    },
+                    // Cấu hình plugin datalabels để hiển thị %
+                    datalabels: {
+                        formatter: (value, ctx) => {
+                            const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            const percentage = (value * 100 / sum).toFixed(1) + '%';
+                            // Chỉ hiển thị % nếu giá trị > 0
+                            return sum > 0 && value > 0 ? percentage : '';
+                        },
+                        color: '#fff',
+                        font: { weight: 'bold', size: 12 }
                     }
                 }
             }
