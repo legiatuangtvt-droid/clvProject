@@ -3,6 +3,8 @@
  * All rules are scoped under #manager-dashboard-page to prevent conflicts.
  */
 
+@import url('toast.css');
+
 /* --- Block: Thống kê tổng quan (dashboard-stats) --- */
 #manager-dashboard-page .dashboard-grid {
     display: grid;
