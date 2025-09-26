@@ -1131,8 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 3. Làm nổi bật các đăng ký liên quan
             // Tạo một CSS selector động để tìm tất cả các .registration-info có data-attribute khớp với giá trị đang được hover
-            const selector = `.registration-info[data-${type}*="${value}"]`;
-            console.log('Selector:', selector);            
+            const selector = `.registration-info[data-${type}*="${value}"]`;          
             
             // Lặp qua tất cả các phần tử tìm thấy và thêm class 'highlighted'
             // CSS sẽ xử lý việc làm các phần tử này nổi bật trở lại (opacity: 1)
@@ -1156,8 +1155,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const teacher = teacherMap.get(teacherId);
-        console.log('teacherMap:', teacherMap);
-        console.log('teacher:', teacher);
         if (!teacher || !teacher.subject) {
             // Nếu không có môn chính, hiển thị tất cả môn của tổ
             const group = groupMap.get(teacher.group_id);
