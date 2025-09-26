@@ -35,11 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const getSubjectsFromGroupName = (groupName) => {
         const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
-        // Tạm thời thay thế "Thể dục - QP" để không bị split sai
+        // Tạm thời thay thế "Giáo dục thể chất - QP" để không bị split sai
         const placeholder = 'TDQP_PLACEHOLDER';
-        return cleanedName.replace('Thể dục - QP', placeholder)
+        return cleanedName.replace('Giáo dục thể chất - QP', placeholder)
                           .split(/\s*-\s*/)
-                          .map(s => s.trim().replace(placeholder, 'Thể dục - QP'));
+                          .map(s => s.trim().replace(placeholder, 'Giáo dục thể chất - QP'));
     };
 
     const loadDashboardData = async () => {
