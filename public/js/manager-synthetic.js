@@ -714,79 +714,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return expanded;
     };
 
-    // Hàm tính khoảng cách Levenshtein để so sánh chuỗi
-    const levenshteinDistance = (s1, s2) => {
-        s1 = s1.toLowerCase();
-        s2 = s2.toLowerCase();
-        const costs = [];
-        for (let i = 0; i <= s1.length; i++) {
-            let lastValue = i;
-            for (let j = 0; j <= s2.length; j++) {
-                if (i === 0) costs[j] = j;
-                else {
-                    if (j > 0) {
-                        let newValue = costs[j - 1];
-                        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-                        costs[j - 1] = lastValue;
-                        lastValue = newValue;
-                    }
-                }
-            }
-            if (i > 0) costs[s2.length] = lastValue;
-        }
-        return costs[s2.length];
-    };
-
-    const findBestTeacherMatch = (inputName, allTeachers) => {
-        const normalize = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
-
-        const normalizedInput = normalize(inputName);
-        const inputWords = new Set(normalizedInput.split(/\s+/));
-
-        // Ưu tiên 1: Tìm tên chứa tất cả các từ của tên nhập vào
-        const potentialMatches = allTeachers.filter(teacher => {
-            const normalizedTeacherName = normalize(teacher.teacher_name);
-            const teacherWords = new Set(normalizedTeacherName.split(/\s+/));
-            // Kiểm tra xem tất cả các từ trong input có nằm trong tên giáo viên không
-            return [...inputWords].every(word => teacherWords.has(word));
-        });
-
-        // Nếu tìm thấy các kết quả khớp từ, chọn kết quả ngắn nhất (gần nhất với input)
-        if (potentialMatches.length > 0) {
-            potentialMatches.sort((a, b) => a.teacher_name.length - b.teacher_name.length);
-            return potentialMatches[0].teacher_name;
-        }
-
-        // Ưu tiên 2: Nếu không, dùng Levenshtein distance để tìm lỗi chính tả
-        let bestMatch = null;
-        let minDistance = 4; // Ngưỡng khoảng cách, chỉ đề xuất nếu đủ gần
-
-        allTeachers.forEach(t => {
-            const distance = levenshteinDistance(inputName, t.teacher_name);
-            if (distance < minDistance) {
-                minDistance = distance;
-                bestMatch = t.teacher_name;
-            }
-        });
-
-        return bestMatch;
-    };
-
-    const findNextAvailablePeriod = (startPeriod, teacherId, className, existingRegs, newRegs) => {
-        let period = startPeriod;
-        // Giới hạn tìm kiếm trong 10 tiết của một ngày
-        while (period <= 10) {
-            const isTaken = existingRegs.some(reg => reg.period === period && (reg.teacherId === teacherId || reg.className === className)) ||
-                            newRegs.some(reg => reg.period === period && (reg.teacherId === teacherId || reg.className === className));
-            if (!isTaken) {
-                return period;
-            }
-            period++;
-        }
-        return null; // Không tìm thấy tiết trống
-    };
-
     const validateAndPreviewData = async (dataLines) => {
+        // --- BƯỚC 1: Chuẩn bị dữ liệu ban đầu ---
         const importDate = bulkImportDaySelect.value;
         if (!importDate || dataLines.length === 0) {
             showToast('Không có dữ liệu để xử lý.', 'info');
@@ -795,6 +724,7 @@ document.addEventListener('DOMContentLoaded', () => {
         validRegistrationsToCreate = []; // Reset mảng đăng ký hợp lệ
         const selectedSession = document.getElementById('bulk-import-session').value;
 
+        // Tải các đăng ký đã có trong ngày để kiểm tra trùng lặp
         const existingRegsQuery = query(collection(firestore, 'registrations'), where('date', '==', importDate));
         const existingRegsSnapshot = await getDocs(existingRegsQuery);
         const existingRegsOnDate = existingRegsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -802,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const previewRegistrations = []; // Mảng mới để lưu các đăng ký riêng lẻ cho việc xem trước
         const errors = [];
         const conflicts = [];
-
+        
         const selectedWeek = timePlan.find(w => importDate >= w.startDate && importDate <= w.endDate);
         if (!selectedWeek) {
             showToast('Ngày được chọn không nằm trong tuần nào của kế hoạch năm học.', 'error');
@@ -810,6 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         for (let i = 0; i < dataLines.length; i++) {
+            // --- BƯỚC 2: Xử lý từng dòng dữ liệu ---
             const parts = dataLines[i];
             const originalLineNumber = i + 1;
             const lineIssues = [];
@@ -819,18 +750,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 previewRegistrations.push({ lineNumber: originalLineNumber, data: parts, issues: lineIssues, isInvalid: true });
                 continue;
             }
+
+            // Tách các cột từ dòng dữ liệu
             const [teacherName, classNamesStr, periodsStr, lessonName, equipmentStr, teachingMethodStr = ''] = parts.map(p => p.trim());
             let teacher = allTeachers.find(t => t.teacher_name.toLowerCase() === teacherName.toLowerCase());
-            let correctedTeacherName = null;
-
-            if (!teacher || !teacher.uid) {
-                const bestMatch = findBestTeacherMatch(teacherName, allTeachers);
-                if (bestMatch) {
-                    teacher = allTeachers.find(t => t.teacher_name === bestMatch);
-                    correctedTeacherName = bestMatch;
-                    lineIssues.push(`Tên GV "${teacherName}" đã được tự động sửa thành "${bestMatch}".`);
-                }
-            }
 
             if (!teacher || !teacher.uid) {
                 lineIssues.push(`Không tìm thấy giáo viên "${teacherName}".`);
@@ -838,29 +761,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 continue;
             }
 
-            const displayTeacherName = correctedTeacherName || teacherName;
+            // --- BƯỚC 3: Chuẩn hóa và tách dữ liệu từ các cột ---
+            const displayTeacherName = teacher.teacher_name; // Luôn dùng tên chính xác từ DB
             const rawClassNames = expandClassNames(classNamesStr);
             const rawPeriods = periodsStr.split(/[,;]/).map(p => parseInt(p.trim())).filter(p => !isNaN(p) && p > 0 && p <= 5); // Chỉ cho phép tiết 1-5
             const rawLessonNames = lessonName.split(';').map(l => l.trim()).filter(Boolean);
 
-            // Lặp qua từng lớp và từng tiết để tạo các lượt đăng ký riêng lẻ
-            rawClassNames.forEach((className, classIndex) => {
-                rawPeriods.forEach((period, periodIndex) => {
-                    const lesson = rawLessonNames[classIndex] || rawLessonNames[0] || 'N/A';
-                    const finalPeriod = selectedSession === 'afternoon' ? period + 5 : period;
+            // --- BƯỚC 4: Ghép cặp Lớp - Tiết và tạo các lượt đăng ký ---
+            // Logic này đảm bảo "12B9,12B8" và "1,2" sẽ tạo ra 2 đăng ký, không phải 4.
+            const loopCount = Math.max(rawClassNames.length, rawPeriods.length);
+            for (let j = 0; j < loopCount; j++) {
+                // Lấy lớp và tiết tương ứng. Nếu một trong hai danh sách ngắn hơn, tái sử dụng phần tử cuối cùng.
+                const className = rawClassNames[j] || rawClassNames[rawClassNames.length - 1];
+                const period = rawPeriods[j] || rawPeriods[rawPeriods.length - 1];
+                // Tương tự cho tên bài dạy
+                const lesson = rawLessonNames[j] || rawLessonNames[rawLessonNames.length - 1] || rawLessonNames[0] || 'N/A';
+                
+                // Chuyển đổi tiết sang buổi chiều nếu cần
+                const finalPeriod = selectedSession === 'afternoon' ? period + 5 : period;
 
-                    // Bỏ qua các tiết không thuộc buổi đã chọn
-                    if ((selectedSession === 'morning' && finalPeriod > 5) || (selectedSession === 'afternoon' && finalPeriod < 6)) {
-                        return; // Bỏ qua lần lặp này
-                    }
-
-                    const newRegData = createRegistrationData(teacher, className, finalPeriod, lesson, equipmentStr, teachingMethodStr, selectedWeek);
-                    previewAndValidateSingleReg(originalLineNumber, displayTeacherName, newRegData, period, previewRegistrations, existingRegsOnDate, lineIssues);
-                });
-            });
+                // Tạo đối tượng dữ liệu đăng ký
+                const newRegData = createRegistrationData(teacher, className, finalPeriod, lesson, equipmentStr, teachingMethodStr, selectedWeek);
+                // Kiểm tra và thêm vào bảng xem trước
+                previewAndValidateSingleReg(originalLineNumber, displayTeacherName, newRegData, period, previewRegistrations, existingRegsOnDate, lineIssues);
+            }
         }
 
-        // Always show the preview modal, regardless of errors.
+        // --- BƯỚC 5: Hiển thị kết quả trong Modal Xem trước ---
         const errorListContainer = document.getElementById('bulk-import-error-section'); // Sửa lại ID cho đúng
         const previewContainer = document.getElementById('bulk-import-preview-container');
         const confirmBtn = document.getElementById('confirm-bulk-import-btn');
