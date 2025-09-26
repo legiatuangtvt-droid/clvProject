@@ -580,12 +580,23 @@ const initializeTeacherRegisterPage = (user) => {
 
             if (conflictDoc) {
                 const conflictData = conflictDoc.data();
+                let conflictingTeacherName = 'một giáo viên khác';
+
+                // Truy vấn để lấy tên của giáo viên bị trùng lịch
+                if (conflictData.teacherId) {
+                    const teacherConflictQuery = query(collection(firestore, 'teachers'), where('uid', '==', conflictData.teacherId), limit(1));
+                    const teacherConflictSnapshot = await getDocs(teacherConflictQuery);
+                    if (!teacherConflictSnapshot.empty) {
+                        conflictingTeacherName = teacherConflictSnapshot.docs[0].data().teacher_name;
+                    }
+                }
+
+                const displayPeriod = conflictData.period > 5 ? conflictData.period - 5 : conflictData.period;
                 const conflictInfoContainer = conflictWarningModal.querySelector('.conflict-info-container');
                 conflictInfoContainer.innerHTML = `
-                    <p>Lớp <strong>${conflictData.className}</strong> đã được đăng ký vào tiết này bởi giáo viên có ID: <strong>${conflictData.teacherId}</strong>.</p>
+                    <p>Lớp <strong class="conflict-highlight">${conflictData.className}</strong>, <strong class="conflict-highlight">Tiết ${displayPeriod}</strong> đã được đăng ký bởi giáo viên <strong class="conflict-highlight">${conflictingTeacherName}</strong>.</p>
                     <p>Vui lòng kiểm tra lại trên lịch tổng hợp.</p>
                     <p><strong>Môn học:</strong> ${conflictData.subject}</p>
-                    <p><strong>Bài dạy:</strong> ${conflictData.lessonName}</p>
                 `;
                 conflictWarningModal.style.display = 'flex';
                 return; // Dừng việc lưu
@@ -812,6 +823,11 @@ const initializeTeacherRegisterPage = (user) => {
     // registerModal.addEventListener('click', (e) => {
     //     if (e.target === registerModal) registerModal.style.display = 'none';
     // });
+
+    // Đóng modal cảnh báo trùng lịch
+    document.getElementById('close-conflict-modal').addEventListener('click', () => {
+        conflictWarningModal.style.display = 'none';
+    });
 
     // Event listeners cho popup xác nhận xóa
     if (confirmDeleteModal) {
