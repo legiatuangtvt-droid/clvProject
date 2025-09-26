@@ -13,6 +13,7 @@ onAuthStateChanged(auth, async (user) => {
     // Nếu người dùng đã đăng nhập, lấy và hiển thị tên của họ
     await displayUserName(user);
     // setupEditFunctionality(user); // Tạm thời vô hiệu hóa
+    setupScrollToTop(); // Thêm hàm thiết lập nút cuộn lên đầu trang
     setupMenuToggle(); // Thêm hàm thiết lập cho menu
   }
 });
@@ -120,6 +121,31 @@ function setupEditFunctionality(user) {
     }
     closeModal();
   });
+}
+
+// 4. Xử lý nút "Quay lại đầu trang"
+function setupScrollToTop() {
+    const scrollToTopBtn = document.querySelector('.scroll-to-top-btn');
+    if (!scrollToTopBtn) return;
+
+    // Phần tử chính chứa thanh cuộn
+    const mainContent = document.getElementById('main-content');
+    if (!mainContent) return;
+
+    // Lắng nghe sự kiện cuộn trên phần tử main-content
+    mainContent.addEventListener('scroll', () => {
+        if (mainContent.scrollTop > 200) {
+            scrollToTopBtn.classList.add('show');
+        } else {
+            scrollToTopBtn.classList.remove('show');
+        }
+    });
+
+    // Xử lý click để cuộn lên đầu
+    scrollToTopBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        mainContent.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 }
 
 // 4. Xử lý thu/mở menu

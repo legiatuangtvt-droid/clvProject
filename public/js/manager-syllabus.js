@@ -575,29 +575,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const setupScrollToTop = () => {
-        const scrollToTopBtn = document.querySelector('.scroll-to-top-btn');
-        if (!scrollToTopBtn) return;
-
-        // Lắng nghe sự kiện cuộn trên phần tử main-content, vì đây là khu vực cuộn chính
-        const mainContent = document.getElementById('main-content');
-        if (!mainContent) return;
-
-        mainContent.addEventListener('scroll', () => {
-            if (mainContent.scrollTop > 200) {
-                scrollToTopBtn.classList.add('show');
-            } else {
-                scrollToTopBtn.classList.remove('show');
-            }
-        });
-
-        // Xử lý click để cuộn lên đầu
-        scrollToTopBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            mainContent.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    };
- 
     initializePage();
-    setupScrollToTop();
 });

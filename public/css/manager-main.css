@@ -169,6 +169,15 @@
     background-color: #fff9e6; /* Màu vàng nhạt */
 }
 
+/* --- Responsive Styles --- */
+@media (max-width: 768px) {
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .today-reg-table {
+        min-width: 900px; /* Đảm bảo bảng có chiều rộng tối thiểu */
+    }
+}
 #manager-dashboard-page .today-reg-table tr.current-period .col-session,
 #manager-dashboard-page .today-reg-table tr.current-period .col-period {
     font-weight: bold;

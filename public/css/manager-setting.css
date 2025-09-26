@@ -830,3 +830,35 @@
         display: inline; /* Hiển thị văn bản mobile */
     }
 }
+
+/* --- Responsive Styles --- */
+@media (max-width: 768px) {
+    .tab-nav {
+        gap: 5px;
+    }
+    .tab-link {
+        padding: 10px;
+        font-size: 0.8rem;
+    }
+    .tab-link .desktop-text { display: none; }
+    .tab-link .mobile-text { display: inline; }
+
+    .group-card .group-header {
+        flex-wrap: wrap;
+    }
+    .group-title-container {
+        flex-basis: 100%;
+        margin-bottom: 10px;
+    }
+
+    .time-plan-setup-card .form-row,
+    .timings-config-grid {
+        flex-direction: column;
+        grid-template-columns: 1fr;
+    }
+
+    .repair-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

@@ -139,3 +139,13 @@
     from { opacity: 0; transform: translateY(-20px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* --- Responsive Styles --- */
+@media (max-width: 768px) {
+    .device-table-container {
+        overflow-x: auto;
+    }
+    .device-table {
+        min-width: 800px; /* Đảm bảo bảng có chiều rộng tối thiểu */
+    }
+}

@@ -8,3 +8,12 @@
 
 /* Kế thừa các style từ manager-synthetic.css */
 @import url('manager-synthetic.css');
+
+@media (max-width: 768px) {
+    .synthetic-layout-container {
+        grid-template-columns: 1fr;
+    }
+    .synthetic-sidebar {
+        position: static;
+    }
+}
