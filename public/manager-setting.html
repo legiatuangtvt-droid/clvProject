@@ -56,6 +56,7 @@
                         <button class="tab-link" data-tab="data-repair-content"><i class="fas fa-tools"></i><span class="desktop-text">Sửa lỗi dữ liệu</span><span class="mobile-text">Sửa lỗi</span></button>
                         <button class="tab-link" data-tab="time-plan"><i class="fas fa-calendar-alt"></i><span class="desktop-text">Kế hoạch thời gian</span><span class="mobile-text">Kế hoạch</span></button>
                         <button class="tab-link" data-tab="registration-rules"><i class="fas fa-gavel"></i><span class="desktop-text">Quy tắc Đăng ký</span><span class="mobile-text">Quy tắc</span></button>
+                        <button class="tab-link" data-tab="class-timings"><i class="fas fa-clock"></i><span class="desktop-text">Thời gian tiết học</span><span class="mobile-text">Tiết học</span></button>
                     </div>
 
                     <div id="tab-content-container">
@@ -155,6 +156,79 @@
                             </div>
                         </div>
 
+                        <!-- Tab Thời gian tiết học -->
+                        <div id="class-timings" class="tab-content">
+                            <div class="page-header">
+                                <h2>Thiết lập Thời gian tiết học</h2>
+                            </div>
+                            <div class="instruction-text">
+                                <p><i class="fas fa-info-circle"></i> Thiết lập các thông số chung, hệ thống sẽ tự động tính toán lịch trình chi tiết. Nhấn "Xem trước" để kiểm tra kết quả trước khi lưu.</p>
+                            </div>
+
+                            <!-- Vùng cấu hình -->
+                            <div class="timings-config-grid">
+                                <!-- Cấu hình chung -->
+                                <div class="config-card">
+                                    <h4><i class="fas fa-cogs"></i> Cấu hình chung</h4>
+                                    <div class="form-group">
+                                        <label for="period-duration">Thời gian mỗi tiết (phút)</label>
+                                        <input type="number" id="period-duration" value="45">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="short-break-duration">Giải lao ngắn (phút)</label>
+                                        <input type="number" id="short-break-duration" value="5">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="long-break-duration">Giải lao giữa buổi (phút)</label>
+                                        <input type="number" id="long-break-duration" value="15">
+                                    </div>
+                                </div>
+                                <!-- Cấu hình Mùa hè -->
+                                <div class="config-card">
+                                    <h4><i class="fas fa-sun"></i> Mùa hè</h4>
+                                    <div class="form-group">
+                                        <label for="summer-morning-start">Bắt đầu tiết 1 (Sáng)</label>
+                                        <input type="time" id="summer-morning-start" value="07:00">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="summer-afternoon-start">Bắt đầu tiết 1 (Chiều)</label>
+                                        <input type="time" id="summer-afternoon-start" value="13:00">
+                                    </div>
+                                </div>
+                                <!-- Cấu hình Mùa đông -->
+                                <div class="config-card">
+                                    <h4><i class="fas fa-snowflake"></i> Mùa đông</h4>
+                                    <div class="form-group">
+                                        <label for="winter-morning-start">Bắt đầu tiết 1 (Sáng)</label>
+                                        <input type="time" id="winter-morning-start" value="07:00">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="winter-afternoon-start">Bắt đầu tiết 1 (Chiều)</label>
+                                        <input type="time" id="winter-afternoon-start" value="12:45">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Nút hành động -->
+                            <div class="modal-actions" style="margin-top: 20px;">
+                                <button id="preview-timings-btn" class="btn-secondary"><i class="fas fa-eye"></i> Xem trước</button>
+                                <div class="modal-actions-right">
+                                    <button id="save-timings-btn" class="btn-save"><i class="fas fa-save"></i> Lưu cấu hình</button>
+                                </div>
+                            </div>
+
+                            <!-- Vùng xem trước -->
+                            <div id="timings-preview-container" class="timings-container" style="display: none;">
+                                <div class="timing-season-card">
+                                    <h3><i class="fas fa-sun"></i> Xem trước: Mùa hè</h3>
+                                    <div id="summer-timings-container"></div>
+                                </div>
+                                <div class="timing-season-card">
+                                    <h3><i class="fas fa-snowflake"></i> Xem trước: Mùa đông</h3>
+                                    <div id="winter-timings-container"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>

@@ -28,6 +28,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const groupIdRepairContainer = document.getElementById('groupid-repair-results-container');
     const rulesContainer = document.getElementById('rules-container');
     const saveRulesBtn = document.getElementById('save-rules-btn');
+    const summerTimingsContainer = document.getElementById('summer-timings-container');
+    const winterTimingsContainer = document.getElementById('winter-timings-container');
+    const saveTimingsBtn = document.getElementById('save-timings-btn');
+    const previewTimingsBtn = document.getElementById('preview-timings-btn');
+    const timingsPreviewContainer = document.getElementById('timings-preview-container');
+    // Config inputs
+    const periodDurationInput = document.getElementById('period-duration');
+    const shortBreakDurationInput = document.getElementById('short-break-duration');
+    const longBreakDurationInput = document.getElementById('long-break-duration');
+    const summerMorningStartInput = document.getElementById('summer-morning-start');
+    const summerAfternoonStartInput = document.getElementById('summer-afternoon-start');
+    const winterMorningStartInput = document.getElementById('winter-morning-start');
+    const winterAfternoonStartInput = document.getElementById('winter-afternoon-start');
+
 
 
     let currentSchoolYear = null; // Chuỗi năm học đang được chọn (VD: "2024-2025")
@@ -429,6 +443,180 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Không thể lưu quy tắc. Vui lòng thử lại.', 'error');
         }
     };
+
+    // --- CLASS TIMINGS FUNCTIONS ---
+    const calculateScheduleFromConfig = (config) => {
+        const { 
+            periodDuration, shortBreakDuration, longBreakDuration, 
+            summerMorningStart, summerAfternoonStart, 
+            winterMorningStart, winterAfternoonStart 
+        } = config;
+
+        const calculateSession = (startTime) => {
+            const sessionItems = [];
+            let currentTime = new Date(`1970-01-01T${startTime}`);
+            const breakAfterPeriods = { morning: 2, afternoon: 3 }; // Cố định giải lao sau tiết 2 (sáng) và 3 (chiều)
+            for (let i = 1; i <= 5; i++) {
+                const periodStart = new Date(currentTime);
+                currentTime.setMinutes(currentTime.getMinutes() + periodDuration);
+                const periodEnd = new Date(currentTime);
+                
+                sessionItems.push({
+                    type: 'period',
+                    startTime: periodStart.toTimeString().substring(0, 5),
+                    endTime: periodEnd.toTimeString().substring(0, 5)
+                });
+
+                if (i < 5) { // Sau tiết cuối không có nghỉ
+                    const breakStart = new Date(currentTime);
+                    const currentSession = startTime.startsWith('0') ? 'morning' : 'afternoon';
+                    let breakDuration;
+                    if (i === breakAfterPeriods[currentSession]) {
+                        breakDuration = longBreakDuration;
+                    } else {
+                        breakDuration = shortBreakDuration;
+                    }
+                    currentTime.setMinutes(currentTime.getMinutes() + breakDuration);
+                    const breakEnd = new Date(currentTime);
+                    sessionItems.push({
+                        type: 'break',
+                        duration: breakDuration,
+                        startTime: breakStart.toTimeString().substring(0, 5),
+                        endTime: breakEnd.toTimeString().substring(0, 5)
+                    });
+                }
+            }
+            return sessionItems;
+        };
+
+        const summerMorning = calculateSession(summerMorningStart);
+        const summerAfternoon = calculateSession(summerAfternoonStart);
+        const winterMorning = calculateSession(winterMorningStart);
+        const winterAfternoon = calculateSession(winterAfternoonStart);
+
+        return {
+            summer: [...summerMorning, ...summerAfternoon],
+            winter: [...winterMorning, ...winterAfternoon]
+        };
+    };
+
+    const renderPreview = (schedule, container) => {
+        if (!schedule || schedule.length === 0) {
+            container.innerHTML = '<p>Không có dữ liệu thời gian.</p>';
+            return;
+        }
+        const renderSession = (startPeriod, title) => {
+            let sessionHtml = `<div class="timing-group"><h4>${title}</h4>`;
+            let periodCounter = startPeriod === 1 ? 1 : 6;
+            // Một buổi có 5 tiết và 4 lần giải lao => 9 items
+            const sessionItems = startPeriod === 1 ? schedule.slice(0, 9) : schedule.slice(9);
+
+            sessionItems.forEach(item => {
+                if (item.type === 'period') {
+                    const displayPeriod = startPeriod === 1 ? periodCounter : periodCounter - 5;
+                    // Không cho phép chỉnh sửa trực tiếp trên bảng xem trước
+                    sessionHtml += `
+                        <div class="timing-row" data-period="${periodCounter}">
+                            <label>Tiết ${displayPeriod}</label>
+                            <input type="time" class="start-time" value="${item.startTime}">
+                            <span class="time-separator">-</span>
+                            <input type="time" class="end-time" value="${item.endTime}">
+                        </div>
+                    `;
+                    periodCounter++;
+                } else { // item.type === 'break'
+                    sessionHtml += `
+                        <div class="timing-break-row">
+                            <i class="fas fa-coffee"></i> Giải lao (${item.duration} phút)
+                        </div>
+                    `;
+                }
+            });
+            sessionHtml += `</div>`;
+            return sessionHtml;
+        };
+        container.innerHTML = renderSession(1, 'Buổi sáng') + renderSession(6, 'Buổi chiều');
+    };
+
+    const loadAndRenderTimings = async () => {
+        // 1. Lấy config từ DB
+        const schoolYearDocRef = await getSchoolYearDocRef(currentSchoolYear);
+        if (!schoolYearDocRef) {
+            showToast('Không tìm thấy năm học để tải cấu hình.', 'error');
+            return;
+        }
+        const docSnap = await getDoc(schoolYearDocRef);
+        const savedData = docSnap.exists() ? docSnap.data().classTimings : null;
+        
+        // 2. Thiết lập giá trị mặc định nếu không có dữ liệu
+        const defaultConfig = {
+            periodDuration: 45,
+            shortBreakDuration: 5,
+            longBreakDuration: 15,
+            summerMorningStart: '07:00',
+            summerAfternoonStart: '13:00',
+            winterMorningStart: '07:00',
+            winterAfternoonStart: '12:45'
+        };
+
+        const config = savedData && savedData.config ? savedData.config : defaultConfig;
+
+        // 3. Điền giá trị vào các ô input
+        periodDurationInput.value = config.periodDuration;
+        shortBreakDurationInput.value = config.shortBreakDuration;
+        longBreakDurationInput.value = config.longBreakDuration;
+        summerMorningStartInput.value = config.summerMorningStart;
+        summerAfternoonStartInput.value = config.summerAfternoonStart;
+        winterMorningStartInput.value = config.winterMorningStart;
+        winterAfternoonStartInput.value = config.winterAfternoonStart;
+
+        // Ẩn vùng xem trước khi tải trang
+        timingsPreviewContainer.style.display = 'none';
+    };
+
+    const handlePreviewTimings = () => {
+        // 1. Lấy giá trị hiện tại từ các ô input
+        const currentConfig = {
+            periodDuration: parseInt(periodDurationInput.value),
+            shortBreakDuration: parseInt(shortBreakDurationInput.value),
+            longBreakDuration: parseInt(longBreakDurationInput.value),
+            summerMorningStart: summerMorningStartInput.value,
+            summerAfternoonStart: summerAfternoonStartInput.value,
+            winterMorningStart: winterMorningStartInput.value,
+            winterAfternoonStart: winterAfternoonStartInput.value
+        };
+
+        // 2. Tính toán lịch trình
+        const calculatedSchedules = calculateScheduleFromConfig(currentConfig);
+
+        // 3. Render kết quả ra vùng xem trước
+        renderPreview(calculatedSchedules.summer, summerTimingsContainer);
+        renderPreview(calculatedSchedules.winter, winterTimingsContainer);
+
+        // 4. Hiển thị vùng xem trước
+        timingsPreviewContainer.style.display = 'grid';
+        showToast('Đã cập nhật bản xem trước.', 'info');
+    };
+
+    const saveClassTimings = async () => {
+        const schoolYearDocRef = await getSchoolYearDocRef(currentSchoolYear);
+        if (!schoolYearDocRef) {
+            showToast('Không tìm thấy năm học để lưu cấu hình.', 'error');
+            return;
+        }
+        // 1. Lấy cấu hình từ input
+        const configToSave = {
+            periodDuration: parseInt(periodDurationInput.value), shortBreakDuration: parseInt(shortBreakDurationInput.value), longBreakDuration: parseInt(longBreakDurationInput.value),
+            summerMorningStart: summerMorningStartInput.value, summerAfternoonStart: summerAfternoonStartInput.value,
+            winterMorningStart: winterMorningStartInput.value, winterAfternoonStart: winterAfternoonStartInput.value
+        };
+        // 2. Tính toán lịch trình đầy đủ từ cấu hình
+        const fullSchedules = calculateScheduleFromConfig(configToSave);
+        // 3. Lưu cả cấu hình và lịch trình đã tính toán vào Firestore
+        await updateDoc(schoolYearDocRef, { classTimings: { config: configToSave, ...fullSchedules } });
+        showToast('Đã lưu cấu hình thời gian tiết học thành công!', 'success');
+    };
+
     // --- Hàm render ---
     const renderTeacher = (teacher, index) => {
         const name = teacher.teacher_name || 'Chưa có tên';
@@ -745,6 +933,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await loadMethods(currentSchoolYear); // Tải PPDH khi chọn năm học
                 await loadTimePlan(currentSchoolYear);
                 await loadAndRenderRules(); // Tải quy tắc khi chọn năm học
+                await loadAndRenderTimings(); // Tải thời gian tiết học
             }
 
         } catch (error) {
@@ -761,6 +950,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadMethods(currentSchoolYear); // Tải lại PPDH khi đổi năm học
             await loadTimePlan(currentSchoolYear);
             await loadAndRenderRules();
+            await loadAndRenderTimings();
         }
     });
 
@@ -1060,6 +1250,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Lưu quy tắc đăng ký ---
     saveRulesBtn.addEventListener('click', saveRegistrationRule);
+
+    // --- Xem trước thời gian tiết học ---
+    previewTimingsBtn.addEventListener('click', handlePreviewTimings);
+
+    // --- Lưu thời gian tiết học ---
+    saveTimingsBtn.addEventListener('click', saveClassTimings);
 
     // Xử lý click trong container của các tổ (delegation)
     groupsContainer.addEventListener('click', async (e) => {
