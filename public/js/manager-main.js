@@ -3,8 +3,10 @@ import {
     getDocs,
     query,
     orderBy,
-    where, 
-    limit
+    where,
+    limit,
+    doc,
+    getDoc
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { firestore } from "./firebase-config.js";
 
@@ -21,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // State
     let groupMap = new Map();
+    let classTimings = null; // State để lưu thời gian tiết học
     let allMethods = new Set(); // State để lưu các PPDH
 
     const loadDashboardData = async () => {
@@ -43,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await Promise.all([
                 getGroupCount(latestSchoolYear),
                 loadAllGroups(latestSchoolYear), // Tải thông tin các tổ
+                loadClassTimings(latestSchoolYear), // Tải thời gian tiết học
                 loadAllMethods(latestSchoolYear), // Tải các PPDH
                 getTeacherCount(latestSchoolYear),
                 loadTodayRegistrations() // Tải dữ liệu đăng ký hôm nay
@@ -61,23 +65,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const getCurrentTeachingPeriod = () => {
-        const now = new Date();
-        const hour = now.getHours();
-        const minute = now.getMinutes();
-        const currentTime = hour + minute / 60;
+    const loadClassTimings = async (schoolYear) => {
+        const q = query(collection(firestore, 'schoolYears'), where('schoolYear', '==', schoolYear), limit(1));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            const schoolYearData = snapshot.docs[0].data();
+            if (schoolYearData.classTimings) {
+                classTimings = schoolYearData.classTimings;
+            }
+        }
+    };
 
-        // Giả định thời gian các tiết học
-        if (currentTime >= 7.0 && currentTime < 7.75) return 1; // 7:00 - 7:45
-        if (currentTime >= 7.83 && currentTime < 8.58) return 2; // 7:50 - 8:35
-        if (currentTime >= 8.67 && currentTime < 9.42) return 3; // 8:40 - 9:25
-        if (currentTime >= 9.67 && currentTime < 10.42) return 4; // 9:40 - 10:25
-        if (currentTime >= 10.5 && currentTime < 11.25) return 5; // 10:30 - 11:15
-        if (currentTime >= 13.5 && currentTime < 14.25) return 6; // 13:30 - 14:15
-        if (currentTime >= 14.33 && currentTime < 15.08) return 7; // 14:20 - 15:05
-        if (currentTime >= 15.17 && currentTime < 15.92) return 8; // 15:10 - 15:55
-        if (currentTime >= 16.0 && currentTime < 16.75) return 9; // 16:00 - 16:45
-        if (currentTime >= 16.83 && currentTime < 17.58) return 10; // 16:50 - 17:35
+    const getCurrentTeachingPeriod = async () => {
+        if (!classTimings) return null;
+
+        const now = new Date();
+        const currentTime = now.toTimeString().substring(0, 5); // "HH:MM"
+        const isSummer = classTimings.activeSeason === 'summer';
+        const schedule = isSummer ? classTimings.summer : classTimings.winter;
+
+        if (!schedule) return null;
+
+        const periods = schedule.filter(item => item.type === 'period');
+        for (let i = 0; i < periods.length; i++) {
+            const periodData = periods[i];
+            if (currentTime >= periodData.startTime && currentTime < periodData.endTime) {
+                // i là index (0-9), period là số thứ tự (1-10)
+                return i + 1;
+            }
+        }
 
         return null; // Ngoài giờ dạy
     };
@@ -140,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </thead>
                 <tbody>`;
 
-            const currentPeriod = getCurrentTeachingPeriod();
+            const currentPeriod = await getCurrentTeachingPeriod();
             const nextPeriod = currentPeriod ? currentPeriod + 1 : null;
 
             // Sắp xếp các tiết và render

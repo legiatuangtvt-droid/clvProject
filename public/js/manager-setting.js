@@ -28,11 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const groupIdRepairContainer = document.getElementById('groupid-repair-results-container');
     const rulesContainer = document.getElementById('rules-container');
     const saveRulesBtn = document.getElementById('save-rules-btn');
-    const summerTimingsContainer = document.getElementById('summer-timings-container');
-    const winterTimingsContainer = document.getElementById('winter-timings-container');
-    const saveTimingsBtn = document.getElementById('save-timings-btn');
-    const previewTimingsBtn = document.getElementById('preview-timings-btn');
-    const timingsPreviewContainer = document.getElementById('timings-preview-container');
+    const activeScheduleTitle = document.getElementById('active-schedule-title');
+    const activeScheduleContainer = document.getElementById('active-schedule-container');
+
     // Config inputs
     const periodDurationInput = document.getElementById('period-duration');
     const shortBreakDurationInput = document.getElementById('short-break-duration');
@@ -41,6 +39,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const summerAfternoonStartInput = document.getElementById('summer-afternoon-start');
     const winterMorningStartInput = document.getElementById('winter-morning-start');
     const winterAfternoonStartInput = document.getElementById('winter-afternoon-start');
+    const activeSeasonDisplay = document.getElementById('active-season-display');
+    const applySummerBtn = document.getElementById('apply-summer-btn');
+    const applyWinterBtn = document.getElementById('apply-winter-btn');
 
 
 
@@ -500,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     };
 
-    const renderPreview = (schedule, container) => {
+    const renderActiveSchedule = (schedule, container) => {
         if (!schedule || schedule.length === 0) {
             container.innerHTML = '<p>Không có dữ liệu thời gian.</p>';
             return;
@@ -514,13 +515,13 @@ document.addEventListener('DOMContentLoaded', () => {
             sessionItems.forEach(item => {
                 if (item.type === 'period') {
                     const displayPeriod = startPeriod === 1 ? periodCounter : periodCounter - 5;
-                    // Không cho phép chỉnh sửa trực tiếp trên bảng xem trước
+                    // Hiển thị dạng chỉ đọc
                     sessionHtml += `
                         <div class="timing-row" data-period="${periodCounter}">
                             <label>Tiết ${displayPeriod}</label>
-                            <input type="time" class="start-time" value="${item.startTime}">
+                            <input type="time" class="start-time" value="${item.startTime}" readonly>
                             <span class="time-separator">-</span>
-                            <input type="time" class="end-time" value="${item.endTime}">
+                            <input type="time" class="end-time" value="${item.endTime}" readonly>
                         </div>
                     `;
                     periodCounter++;
@@ -535,7 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
             sessionHtml += `</div>`;
             return sessionHtml;
         };
-        container.innerHTML = renderSession(1, 'Buổi sáng') + renderSession(6, 'Buổi chiều');
+        container.innerHTML = renderSession(1, 'Buổi sáng') + renderSession(6, 'Buổi chiều'); // Giữ nguyên logic tạo HTML
     };
 
     const loadAndRenderTimings = async () => {
@@ -570,53 +571,67 @@ document.addEventListener('DOMContentLoaded', () => {
         winterMorningStartInput.value = config.winterMorningStart;
         winterAfternoonStartInput.value = config.winterAfternoonStart;
 
-        // Ẩn vùng xem trước khi tải trang
-        timingsPreviewContainer.style.display = 'none';
+        // 4. Hiển thị trạng thái mùa đang được áp dụng
+        const activeSeason = savedData && savedData.activeSeason ? savedData.activeSeason : null;
+        updateActiveSeasonDisplay(activeSeason);
+
+        // 5. Render khung thời gian đang áp dụng
+        const scheduleToRender = activeSeason === 'summer' ? savedData?.summer : savedData?.winter;
+        if (scheduleToRender) {
+            renderActiveSchedule(scheduleToRender, activeScheduleContainer);
+        } else {
+            activeScheduleContainer.innerHTML = '<p>Chưa có lịch học được áp dụng. Vui lòng lưu và áp dụng một mùa.</p>';
+        }
     };
 
-    const handlePreviewTimings = () => {
-        // 1. Lấy giá trị hiện tại từ các ô input
-        const currentConfig = {
-            periodDuration: parseInt(periodDurationInput.value),
-            shortBreakDuration: parseInt(shortBreakDurationInput.value),
-            longBreakDuration: parseInt(longBreakDurationInput.value),
-            summerMorningStart: summerMorningStartInput.value,
-            summerAfternoonStart: summerAfternoonStartInput.value,
-            winterMorningStart: winterMorningStartInput.value,
-            winterAfternoonStart: winterAfternoonStartInput.value
-        };
-
-        // 2. Tính toán lịch trình
-        const calculatedSchedules = calculateScheduleFromConfig(currentConfig);
-
-        // 3. Render kết quả ra vùng xem trước
-        renderPreview(calculatedSchedules.summer, summerTimingsContainer);
-        renderPreview(calculatedSchedules.winter, winterTimingsContainer);
-
-        // 4. Hiển thị vùng xem trước
-        timingsPreviewContainer.style.display = 'grid';
-        showToast('Đã cập nhật bản xem trước.', 'info');
-    };
-
-    const saveClassTimings = async () => {
+    const applySeason = async (season) => {
         const schoolYearDocRef = await getSchoolYearDocRef(currentSchoolYear);
         if (!schoolYearDocRef) {
-            showToast('Không tìm thấy năm học để lưu cấu hình.', 'error');
+            showToast('Không tìm thấy năm học để lưu và áp dụng.', 'error');
             return;
         }
-        // 1. Lấy cấu hình từ input
-        const configToSave = {
-            periodDuration: parseInt(periodDurationInput.value), shortBreakDuration: parseInt(shortBreakDurationInput.value), longBreakDuration: parseInt(longBreakDurationInput.value),
-            summerMorningStart: summerMorningStartInput.value, summerAfternoonStart: summerAfternoonStartInput.value,
-            winterMorningStart: winterMorningStartInput.value, winterAfternoonStart: winterAfternoonStartInput.value
-        };
-        // 2. Tính toán lịch trình đầy đủ từ cấu hình
-        const fullSchedules = calculateScheduleFromConfig(configToSave);
-        // 3. Lưu cả cấu hình và lịch trình đã tính toán vào Firestore
-        await updateDoc(schoolYearDocRef, { classTimings: { config: configToSave, ...fullSchedules } });
-        showToast('Đã lưu cấu hình thời gian tiết học thành công!', 'success');
+        try {
+            // Hợp nhất logic: Lưu cấu hình và áp dụng mùa trong một lần
+            const configToSave = {
+                periodDuration: parseInt(periodDurationInput.value), shortBreakDuration: parseInt(shortBreakDurationInput.value), longBreakDuration: parseInt(longBreakDurationInput.value),
+                summerMorningStart: summerMorningStartInput.value, summerAfternoonStart: summerAfternoonStartInput.value,
+                winterMorningStart: winterMorningStartInput.value, winterAfternoonStart: winterAfternoonStartInput.value
+            };
+            const fullSchedules = calculateScheduleFromConfig(configToSave);
+            const dataToSave = { config: configToSave, ...fullSchedules, activeSeason: season };
+
+            await updateDoc(schoolYearDocRef, { classTimings: dataToSave });
+
+            showToast(`Đã áp dụng lịch ${season === 'summer' ? 'MÙA HÈ' : 'MÙA ĐÔNG'} cho toàn hệ thống.`, 'success');
+            updateActiveSeasonDisplay(season);
+            renderActiveSchedule(season === 'summer' ? fullSchedules.summer : fullSchedules.winter, activeScheduleContainer);
+        } catch (error) {
+            console.error("Lỗi khi áp dụng mùa:", error);
+            showToast('Không thể áp dụng lịch. Vui lòng thử lại.', 'error');
+        }
     };
 
+    const updateActiveSeasonDisplay = (activeSeason) => {
+        if (!activeSeason) {
+            activeSeasonDisplay.textContent = 'Chưa đặt';
+            activeSeasonDisplay.className = 'status-badge'; // Xóa các class màu
+            return;
+        }
+        // Cập nhật text và class cho badge
+        activeSeasonDisplay.textContent = activeSeason === 'summer' ? 'Mùa hè' : 'Mùa đông';
+        activeSeasonDisplay.classList.remove('summer', 'winter');
+        activeSeasonDisplay.classList.add(activeSeason);
+
+        // Cập nhật tiêu đề của bảng xem trước
+        const titleIcon = activeSeason === 'summer' ? 'fa-sun' : 'fa-snowflake';
+        const titleText = `Khung thời gian áp dụng hiện tại (${activeSeason === 'summer' ? 'Mùa hè' : 'Mùa đông'})`;
+        activeScheduleTitle.innerHTML = `<i class="fas ${titleIcon}"></i> ${titleText}`;
+        activeScheduleTitle.querySelector('i').style.color = activeSeason === 'summer' ? '#f39c12' : '#3498db';
+
+        // Thêm viền cho nút đang được áp dụng để làm nổi bật
+        applySummerBtn.style.borderColor = activeSeason === 'summer' ? 'var(--primary-color)' : 'transparent';
+        applyWinterBtn.style.borderColor = activeSeason === 'winter' ? 'var(--primary-color)' : 'transparent';
+    };
     // --- Hàm render ---
     const renderTeacher = (teacher, index) => {
         const name = teacher.teacher_name || 'Chưa có tên';
@@ -933,7 +948,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 await loadMethods(currentSchoolYear); // Tải PPDH khi chọn năm học
                 await loadTimePlan(currentSchoolYear);
                 await loadAndRenderRules(); // Tải quy tắc khi chọn năm học
-                await loadAndRenderTimings(); // Tải thời gian tiết học
             }
 
         } catch (error) {
@@ -941,6 +955,10 @@ document.addEventListener('DOMContentLoaded', () => {
             schoolYearSelect.innerHTML = '<option>Lỗi tải dữ liệu</option>';
         }
     };
+    // Tải dữ liệu lần đầu sau khi loadSchoolYears hoàn tất
+    loadSchoolYears().then(() => {
+        if (currentSchoolYear) loadAndRenderTimings();
+    });
 
     // --- Xử lý sự kiện thay đổi năm học ---
     schoolYearSelect.addEventListener('change', async () => {
@@ -1248,14 +1266,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Sửa lỗi thiếu groupId ---
     findMissingGroupIdBtn.addEventListener('click', findAndRepairMissingGroupId);
 
-    // --- Lưu quy tắc đăng ký ---
-    saveRulesBtn.addEventListener('click', saveRegistrationRule);
+    // --- Áp dụng mùa ---
+    applySummerBtn.addEventListener('click', () => applySeason('summer'));
+    applyWinterBtn.addEventListener('click', () => applySeason('winter'));
 
-    // --- Xem trước thời gian tiết học ---
-    previewTimingsBtn.addEventListener('click', handlePreviewTimings);
-
-    // --- Lưu thời gian tiết học ---
-    saveTimingsBtn.addEventListener('click', saveClassTimings);
 
     // Xử lý click trong container của các tổ (delegation)
     groupsContainer.addEventListener('click', async (e) => {
@@ -1570,6 +1584,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Tải dữ liệu lần đầu ---
-    loadSchoolYears();
 });

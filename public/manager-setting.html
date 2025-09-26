@@ -160,6 +160,9 @@
                         <div id="class-timings" class="tab-content">
                             <div class="page-header">
                                 <h2>Thiết lập Thời gian tiết học</h2>
+                                <div class="active-season-status">
+                                    Trạng thái áp dụng: <span id="active-season-display" class="status-badge">Đang tải...</span>
+                                </div>
                             </div>
                             <div class="instruction-text">
                                 <p><i class="fas fa-info-circle"></i> Thiết lập các thông số chung, hệ thống sẽ tự động tính toán lịch trình chi tiết. Nhấn "Xem trước" để kiểm tra kết quả trước khi lưu.</p>
@@ -194,6 +197,7 @@
                                         <label for="summer-afternoon-start">Bắt đầu tiết 1 (Chiều)</label>
                                         <input type="time" id="summer-afternoon-start" value="13:00">
                                     </div>
+                                    <button id="apply-summer-btn" class="btn-apply-season" title="Lưu cấu hình và áp dụng lịch mùa hè cho toàn hệ thống"><i class="fas fa-sun"></i> Áp dụng thời gian học mùa hè</button>
                                 </div>
                                 <!-- Cấu hình Mùa đông -->
                                 <div class="config-card">
@@ -206,26 +210,18 @@
                                         <label for="winter-afternoon-start">Bắt đầu tiết 1 (Chiều)</label>
                                         <input type="time" id="winter-afternoon-start" value="12:45">
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Nút hành động -->
-                            <div class="modal-actions" style="margin-top: 20px;">
-                                <button id="preview-timings-btn" class="btn-secondary"><i class="fas fa-eye"></i> Xem trước</button>
-                                <div class="modal-actions-right">
-                                    <button id="save-timings-btn" class="btn-save"><i class="fas fa-save"></i> Lưu cấu hình</button>
+                                    <button id="apply-winter-btn" class="btn-apply-season" title="Lưu cấu hình và áp dụng lịch mùa đông cho toàn hệ thống"><i class="fas fa-snowflake"></i> Áp dụng thời gian học mùa đông</button>
                                 </div>
                             </div>
 
                             <!-- Vùng xem trước -->
-                            <div id="timings-preview-container" class="timings-container" style="display: none;">
+                            <div id="timings-preview-container" class="timings-container">
                                 <div class="timing-season-card">
-                                    <h3><i class="fas fa-sun"></i> Xem trước: Mùa hè</h3>
-                                    <div id="summer-timings-container"></div>
-                                </div>
-                                <div class="timing-season-card">
-                                    <h3><i class="fas fa-snowflake"></i> Xem trước: Mùa đông</h3>
-                                    <div id="winter-timings-container"></div>
+                                    <h3 id="active-schedule-title"><i class="fas fa-clock"></i> Khung thời gian áp dụng hiện tại</h3>
+                                    <div id="active-schedule-container">
+                                        <!-- Khung thời gian của mùa đang áp dụng sẽ được hiển thị ở đây -->
+                                        <p>Đang tải khung thời gian...</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>

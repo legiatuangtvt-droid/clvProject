@@ -601,8 +601,7 @@
 
 /* --- Class Timings Tab --- */
 .timings-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: block; /* Chuyển về block để chỉ hiển thị 1 card */
     gap: 25px;
     margin-top: 20px;
 }
@@ -678,6 +677,57 @@
     justify-content: center;
     gap: 8px;
 }
+
+/* --- Cải tiến bố cục cho khung thời gian áp dụng --- */
+#active-schedule-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Layout lưới linh hoạt */
+    gap: 25px;
+}
+
+/* --- Styles for Active Season Status and Buttons --- */
+.active-season-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.summer { background-color: #f39c12; } /* Màu cam cho mùa hè */
+.status-badge.winter { background-color: #3498db; } /* Màu xanh cho mùa đông */
+
+.btn-apply-season {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-apply-season:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.config-card .btn-apply-season {
+    width: 100%; /* Cho nút chiếm toàn bộ chiều rộng của thẻ */
+    margin-top: 20px; /* Tạo khoảng cách với các ô input bên trên */
+    justify-content: center; /* Căn giữa nội dung của nút */
+}
+
+.btn-apply-season .fa-sun { color: #f39c12; }
+.btn-apply-season .fa-snowflake { color: #3498db; }
 
 /* --- New Styles for Timings Configuration --- */
 .timings-config-grid {

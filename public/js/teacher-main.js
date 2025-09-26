@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let teachersInGroup = [];
     let allMethods = new Set();
     let currentRegistrations = []; // Lưu các đăng ký của tuần hiện tại
+    let classTimings = null; // State để lưu thời gian tiết học
 
     const getSubjectsFromGroupName = (groupName) => {
         const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
@@ -58,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Tải thông tin tổ và các giáo viên trong tổ
             await loadGroupInfo();
+            await loadClassTimings(latestSchoolYear); // Tải thời gian tiết học
             await loadAllMethods(latestSchoolYear);
 
             // 2. Tải kế hoạch thời gian và thiết lập tuần ban đầu
@@ -164,6 +166,17 @@ document.addEventListener('DOMContentLoaded', () => {
         methodsSnapshot.forEach(doc => {
             allMethods.add(doc.data().method);
         });
+    };
+
+    const loadClassTimings = async (schoolYear) => {
+        const q = query(collection(firestore, 'schoolYears'), where('schoolYear', '==', schoolYear), limit(1));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            const schoolYearData = snapshot.docs[0].data();
+            if (schoolYearData.classTimings) {
+                classTimings = schoolYearData.classTimings;
+            }
+        }
     };
 
 
@@ -300,7 +313,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // For simplicity, we'll just show teacher colors for now
     };
 
-    const renderWeeklySchedule = (week, allRegistrations) => {
+    const getCurrentTeachingPeriod = async () => {
+        if (!classTimings) return null;
+
+        const now = new Date();
+        const currentTime = now.toTimeString().substring(0, 5); // "HH:MM"
+        const isSummer = classTimings.activeSeason === 'summer';
+        const schedule = isSummer ? classTimings.summer : classTimings.winter;
+
+        if (!schedule) return null;
+
+        const periods = schedule.filter(item => item.type === 'period');
+        for (let i = 0; i < periods.length; i++) {
+            const periodData = periods[i];
+            if (currentTime >= periodData.startTime && currentTime < periodData.endTime) {
+                return i + 1;
+            }
+        }
+        return null;
+    };
+
+    const renderWeeklySchedule = async (week, allRegistrations) => {
         const currentUser = auth.currentUser;
         // Create a map for easy lookup: uid -> name
         const teacherNameMap = new Map();
@@ -329,16 +362,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         desktopHTML += `</tr></thead><tbody>`;
 
+        const currentPeriod = await getCurrentTeachingPeriod();
+        const todayString = new Date().toISOString().split('T')[0];
+
         // Buổi Sáng
         for (let period = 1; period <= 5; period++) {
-            desktopHTML += `<tr>`;
+            desktopHTML += `<tr>`; // Bắt đầu một hàng mới cho mỗi tiết
             if (period === 1) {
                 desktopHTML += `<td class="session-header" rowspan="5">Sáng</td>`;
             }
             desktopHTML += `<td class="period-header">${period}</td>`;
             weekDates.forEach(date => {
                 const regsInSlot = filteredRegistrations.filter(r => r.date === date && r.period === period);
-                desktopHTML += `<td>`;
+                // Làm nổi bật ô của tiết học hiện tại
+                const isCurrentSlot = (date === todayString && period === currentPeriod);
+                const slotClass = isCurrentSlot ? 'current-slot' : '';
+
+                desktopHTML += `<td class="${slotClass}">`;
                 regsInSlot.forEach(reg => {
                     const subjectColor = generateColor(reg.subject);
                     // Lấy tất cả PPDH, nhưng vẫn dùng PPDH đầu tiên để tô màu nền cho nhất quán
@@ -382,14 +422,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Buổi Chiều
         for (let period = 6; period <= 10; period++) {
-            desktopHTML += `<tr>`;
+            desktopHTML += `<tr>`; // Bắt đầu một hàng mới cho mỗi tiết
             if (period === 6) {
                 desktopHTML += `<td class="session-header" rowspan="5">Chiều</td>`;
             }
             desktopHTML += `<td class="period-header">${period - 5}</td>`;
             weekDates.forEach(date => {
                 const regsInSlot = filteredRegistrations.filter(r => r.date === date && r.period === period);
-                desktopHTML += `<td>`;
+                // Làm nổi bật ô của tiết học hiện tại
+                const isCurrentSlot = (date === todayString && period === currentPeriod);
+                const slotClass = isCurrentSlot ? 'current-slot' : '';
+
+                desktopHTML += `<td class="${slotClass}">`;
                 regsInSlot.forEach(reg => {
                     // Lấy tất cả PPDH, nhưng vẫn dùng PPDH đầu tiên để tô màu nền cho nhất quán
                     const allRegMethods = Array.isArray(reg.teachingMethod) && reg.teachingMethod.length > 0 ? reg.teachingMethod : ['Không có PPDH'];
@@ -565,13 +609,13 @@ document.addEventListener('DOMContentLoaded', () => {
         filterSubjectSelect.addEventListener('change', () => {
             // Khi môn học thay đổi, cập nhật lại danh sách giáo viên và vẽ lại lịch
             updateTeacherFilter();
-            renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber), currentRegistrations);
+            renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber), currentRegistrations); // Không cần await ở đây
         });
 
         // Gộp listener cho teacher và method
         [filterTeacherSelect, filterMethodSelect].forEach(select => {
             select.addEventListener('change', () => {
-                renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber), currentRegistrations);
+                renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber), currentRegistrations); // Không cần await ở đây
             });
         });
         /* filterTeacherSelect.addEventListener('change', () => {

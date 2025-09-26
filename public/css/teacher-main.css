@@ -341,3 +341,10 @@
         padding: 10px 0;
     }
 }
+
+/* --- Làm nổi bật tiết học hiện tại --- */
+.weekly-schedule-table td.current-slot {
+    background-color: #e7f7ec !important; /* Màu xanh lá cây nhạt, !important để ghi đè các style khác */
+    border: 2px solid #28a745; /* Viền xanh lá cây đậm */
+    box-shadow: inset 0 0 10px rgba(40, 167, 69, 0.1); /* Thêm hiệu ứng bóng đổ bên trong */
+}
