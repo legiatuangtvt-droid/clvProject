@@ -1,129 +1,168 @@
-/* manager-syllabus.css */
-
+/* --- Layout & Filter Controls --- */
 .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 15px;
+    margin-bottom: 20px;
 }
 
 .filter-controls {
     display: flex;
-    gap: 1rem;
     flex-wrap: wrap;
+    gap: 15px;
     align-items: center;
 }
+
+.page-actions {
+    display: flex;
+    gap: 10px;
+}
+
 
 .filter-controls .form-group {
-    margin-bottom: 0;
-}
-
-#syllabus-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: 1.5rem;
-}
-
-.syllabus-card {
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    border: 1px solid var(--border-color);
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0; /* Override default margin from shared-layout */
 }
 
-.syllabus-card-header {
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    position: relative;
+.filter-controls .form-group label {
+    margin-bottom: 0;
+    white-space: nowrap;
 }
 
-.syllabus-card-header h3 {
-    margin: 0;
+/* --- Syllabus Container & Table --- */
+#syllabus-container {
+    margin-top: 20px;
+}
+
+#syllabus-container p {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 20px;
+}
+
+.syllabus-table-title {
+    text-align: center;
     font-size: 1.1rem;
-    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--text-color);
 }
 
-.syllabus-card-header p {
-    margin: 0.25rem 0 0;
-    font-size: 0.9rem;
-    color: #666;
-}
-
-.syllabus-card-header .item-actions {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-}
-
-.syllabus-card-body {
-    padding: 0;
-    overflow-y: auto;
-    max-height: 400px; /* Limit height and allow scrolling */
-}
-
-.lesson-table {
+.syllabus-table {
     width: 100%;
     border-collapse: collapse;
+    font-size: 0.95rem;
 }
 
-.lesson-table th, .lesson-table td {
-    padding: 0.75rem 1.5rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.lesson-table thead th {
-    background-color: #f9fafb;
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: #555;
-}
-
-.lesson-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-/* Modal Styles */
-.lesson-row {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    margin-bottom: 0.5rem;
-}
-
-.lesson-row .lesson-period {
-    width: 80px;
-}
-
-.lesson-row .lesson-name {
-    flex-grow: 1;
-}
-
-.lesson-row .remove-lesson-row-btn {
-    color: var(--danger-color);
-}
-
-#lessons-container {
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 0.5rem;
+.syllabus-table th,
+.syllabus-table td {
     border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: #f9fafb;
+    padding: 8px 15px; /* Thu hẹp khoảng cách dọc */
+    text-align: left;
+    vertical-align: middle;
 }
 
-#add-lesson-row-btn {
-    margin-top: 0.75rem;
+.syllabus-table thead th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
 }
 
-/* Ghi chú cho form */
-.form-note {
+.syllabus-table tbody tr:hover {
+    background-color: #f1f5f9;
+}
+
+.syllabus-table .col-period,
+.syllabus-table .col-actions {
+    text-align: center;
+}
+
+.syllabus-table .col-period {
+    width: 100px;
+    font-weight: 500;
+}
+
+.syllabus-table .col-actions {
+    width: 120px;
+}
+
+.syllabus-table .item-actions .icon-button {
+    margin: 0 5px;
+}
+
+/* --- Modal Styles --- */
+.modal-content.large {
+    max-width: 800px;
+}
+
+.modal-content .form-note {
+    margin-top: 8px;
     font-size: 0.85rem;
     color: #6c757d;
-    margin-top: 8px;
-    line-height: 1.4;
+}
+
+.modal-content .form-note strong {
+    color: #333;
+}
+
+#lessons-input {
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 1.6;
+}
+
+/* --- Responsive Styles for Mobile --- */
+@media (max-width: 768px) {
+    /* --- Layout & Filter Controls --- */
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+    }
+
+    .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-controls .form-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .filter-controls .form-group select {
+        width: 100%;
+    }
+
+    #add-syllabus-btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .page-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    /* --- Syllabus Table --- */
+    #syllabus-container {
+        overflow-x: auto; /* Allow horizontal scrolling for the table */
+    }
+
+    .syllabus-table {
+        min-width: 600px; /* Ensure table has a minimum width to prevent cramping */
+        font-size: 0.9rem;
+    }
+
+    /* --- Modal Styles --- */
+    .modal-content.large {
+        width: 95%;
+        max-width: none;
+    }
 }
