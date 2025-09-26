@@ -165,6 +165,36 @@ const initializeTeacherRegisterPage = (user) => {
         }
     };
 
+    const loadLessonSuggestions = async () => {
+        const subject = document.getElementById('reg-subject').value;
+        const className = document.getElementById('reg-class').value;
+        const suggestionsDatalist = document.getElementById('lesson-suggestions');
+        if (!suggestionsDatalist) return;
+
+        suggestionsDatalist.innerHTML = ''; // Xóa gợi ý cũ
+
+        if (!subject || !className || !currentSchoolYear) return;
+
+        const gradeMatch = className.match(/^(10|11|12)/);
+        if (!gradeMatch) return;
+        const grade = parseInt(gradeMatch[0]);
+
+        try {
+            const q = query(collection(firestore, 'syllabuses'),
+                where('schoolYear', '==', currentSchoolYear),
+                where('subject', '==', subject),
+                where('grade', '==', grade)
+            );
+            const snapshot = await getDocs(q);
+            snapshot.forEach(doc => {
+                const syllabus = doc.data();
+                syllabus.lessons?.forEach(lesson => {
+                    suggestionsDatalist.innerHTML += `<option value="${lesson.lessonName}"></option>`;
+                });
+            });
+        } catch (error) { console.warn("Không thể tải gợi ý bài học:", error); }
+    };
+
     const populateModalSelectors = async (user) => {
         // Tải PPDH
         const subjectSelect = document.getElementById('reg-subject');
@@ -875,6 +905,10 @@ const initializeTeacherRegisterPage = (user) => {
             }
         }
     });
+
+    // Thêm sự kiện để tải gợi ý bài học khi thay đổi môn hoặc lớp
+    document.getElementById('reg-subject').addEventListener('change', loadLessonSuggestions);
+    document.getElementById('reg-class').addEventListener('input', loadLessonSuggestions);
 
     // Tự động thêm/xóa 'Tivi' khi chọn PPDH 'Công nghệ thông tin'
     const methodContainer = document.getElementById('reg-method-container');
