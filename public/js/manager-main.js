@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Yêu cầu quyền từ người dùng.
                 Notification.requestPermission().then(permission => {
                     if (permission === 'granted') {
-                        new Notification('CLV-TBDH', { body: 'Đã bật thông báo cho các tiết học sắp tới.', icon: 'images/lab-natural.png' });
+                        new Notification('CLV-TBDH', { body: 'Đã bật thông báo cho các tiết học sắp tới.', icon: 'images/magnetic.png' });
                     }
                 });
                 break;
@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
             audioToPlay = practiceNotificationAudio; // Âm thanh ưu tiên 1
         } else {
             title = '🔔 Chuẩn bị thiết bị dạy học!';
-            iconPath = 'images/learning.png'; // Icon ưu tiên 2
+            iconPath = 'images/communicating-vessels.png'; // Icon ưu tiên 2
             audioToPlay = equipmentNotificationAudio; // Âm thanh ưu tiên 2
         }
 

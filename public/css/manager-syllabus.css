@@ -1,0 +1,129 @@
+/* manager-syllabus.css */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-controls .form-group {
+    margin-bottom: 0;
+}
+
+#syllabus-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.syllabus-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.syllabus-card-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+}
+
+.syllabus-card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+}
+
+.syllabus-card-header p {
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.syllabus-card-header .item-actions {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+}
+
+.syllabus-card-body {
+    padding: 0;
+    overflow-y: auto;
+    max-height: 400px; /* Limit height and allow scrolling */
+}
+
+.lesson-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lesson-table th, .lesson-table td {
+    padding: 0.75rem 1.5rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.lesson-table thead th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.lesson-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Modal Styles */
+.lesson-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.lesson-row .lesson-period {
+    width: 80px;
+}
+
+.lesson-row .lesson-name {
+    flex-grow: 1;
+}
+
+.lesson-row .remove-lesson-row-btn {
+    color: var(--danger-color);
+}
+
+#lessons-container {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: #f9fafb;
+}
+
+#add-lesson-row-btn {
+    margin-top: 0.75rem;
+}
+
+/* Ghi chú cho form */
+.form-note {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 8px;
+    line-height: 1.4;
+}
