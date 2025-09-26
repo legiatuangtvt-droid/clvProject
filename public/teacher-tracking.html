@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Theo dõi & Tổng hợp</title>
+    <link rel="stylesheet" href="css/shared-layout.css">
     <link rel="stylesheet" href="css/teacher-layout.css">
     <link rel="stylesheet" href="css/teacher-tracking.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -42,14 +43,20 @@
                     <div class="page-header">
                         <h1>Theo dõi & Tổng hợp</h1>
                         <div class="filter-container">
-                            <select id="time-filter-type">
-                                <option value="week">Theo Tuần</option>
-                                <option value="month">Theo Tháng</option>
-                                <option value="semester">Theo Học kỳ</option>
-                                <option value="year">Theo Năm học</option>
-                            </select>
-                            <select id="time-filter-value"></select>
-                            <button class="btn-primary view-report-btn"><i class="fas fa-eye"></i> Xem</button>
+                            <div class="form-group">
+                                <label for="time-filter-type">Thống kê theo:</label>
+                                <select id="time-filter-type">
+                                    <option value="week">Tuần</option>
+                                    <option value="month">Tháng</option>
+                                    <option value="semester">Học kỳ</option>
+                                    <option value="year">Năm học</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="time-filter-value">Chọn giá trị:</label>
+                                <select id="time-filter-value"></select>
+                            </div>
+                            <button class="view-report-btn btn-primary"><i class="fas fa-eye"></i> Xem</button>
                         </div>
                     </div>
                     <div class="report-container">

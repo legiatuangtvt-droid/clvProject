@@ -1,119 +1,172 @@
+/* --- Tab Navigation --- */
+.tab-nav {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.tab-link {
+    padding: 12px 20px;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-light);
+    transition: all 0.2s ease-in-out;
+    margin-bottom: -1px; /* Nâng nút lên để viền dưới đè lên viền của container */
+}
+
+.tab-link:hover {
+    background-color: #f1f5f9;
+    color: var(--primary-color);
+}
+
+.tab-link.active {
+    color: var(--primary-color);
+    font-weight: 600;
+    border-bottom-color: var(--primary-color);
+}
+
+/* --- Filter Controls --- */
 .filter-container {
     display: flex;
     gap: 15px;
     align-items: center;
     flex-wrap: wrap;
-    margin-top: 10px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
 }
 
 .filter-container select,
-.filter-container button {
-    padding: 8px 12px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-    background-color: #fff;
+.filter-container .view-report-btn {
+    padding: 10px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
 }
 
-.filter-container button {
-    cursor: pointer;
+/* --- Report Subtitles --- */
+.report-subtitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 15px 0;
 }
 
-/* Tùy chỉnh riêng cho nút "Xem" trên trang này để nổi bật hơn */
-.view-report-btn.btn-primary {
-    background-color: #28a745; /* Màu xanh lá cây */
-    color: white;
-    border-color: #28a745;
-}
-
-.view-report-btn.btn-primary:hover {
-    background-color: #218838; /* Màu xanh lá cây đậm hơn khi hover */
-}
-
+/* --- Report Area --- */
 .report-container {
     margin-top: 25px;
 }
 
 .report-layout {
     display: flex;
-    gap: 30px;
+    gap: 25px;
     align-items: flex-start;
 }
 
 .report-table-container {
-    flex: 3; /* Bảng chiếm nhiều không gian hơn */
-    min-width: 350px;
+    flex: 1; /* Bảng chiếm không gian còn lại */
+    min-width: 0; /* Cho phép co lại trên màn hình nhỏ */
 }
 
 .report-chart-container {
-    flex: 2; /* Biểu đồ chiếm ít không gian hơn */
-    min-width: 300px;
+    flex-shrink: 0;
+    width: 400px; /* Chiều rộng cố định cho biểu đồ */
     position: sticky; /* Giữ biểu đồ cố định khi cuộn */
-    /* Cải tiến giao diện cho vùng chứa biểu đồ */
+    top: 20px;
     background-color: #fff;
     padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    border: 1px solid #e9ecef;
-    top: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
 }
 
-/* Responsive: trên màn hình nhỏ, xếp chồng lên nhau */
-@media (max-width: 992px) {
-    .report-layout {
-        flex-direction: column;
-    }
-    .report-chart-container {
-        order: -1; /* Đưa biểu đồ lên trên cùng */
-    }
-}
-
+/* --- Report Table --- */
 .report-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
+    font-size: 0.95rem;
 }
 
 .report-table th,
 .report-table td {
-    border: 1px solid #ddd;
-    padding: 10px;
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
     text-align: left;
 }
 
-.report-table th {
+.report-table thead th {
     background-color: #f8f9fa;
     font-weight: 600;
+    color: var(--text-dark);
     text-align: center;
+    vertical-align: middle;
+    position: sticky; /* Giữ header của bảng cố định khi cuộn */
+    top: 0;
 }
 
-.report-table tr:nth-child(even) {
-    background-color: #f2f2f2;
+/* Định dạng riêng cho cột đầu tiên (PPDH) trong bảng ma trận */
+.report-table tbody td:first-child {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+.report-table tbody tr:hover {
+    background-color: #f1f5f9;
 }
 
 .report-table .total-row {
     font-weight: bold;
-    background-color: #e9ecef;
+    background-color: #f1f5f9;
+    border-top: 2px solid var(--border-color);
 }
 
-.report-table td:nth-child(1) {
-    width: 5%;
+/* Căn chỉnh các cột số liệu cho bảng cá nhân */
+.report-table td:nth-child(1), /* STT */
+.report-table td:nth-child(3), /* Số tiết */
+.report-table td:nth-child(4) { /* Tỷ lệ */
     text-align: center;
 }
 
-.report-table td:nth-child(3),
-.report-table td:nth-child(4) {
-    width: 15%; /* Điều chỉnh độ rộng cho 2 cột cuối */
-    text-align: center;
-}
-
-/* Căn giữa cho ô tổng cộng */
-.report-table .total-row td:nth-child(2),
-.report-table .total-row td:nth-child(3) {
+/* Căn giữa tất cả các ô số liệu (trừ ô đầu tiên) trong bảng ma trận của tổ */
+.report-table tbody td:not(:first-child) {
     text-align: center;
 }
 
 .instruction-text {
-    color: #666;
+    color: var(--text-light);
     font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+/* --- Chart Canvases --- */
+/* Đặt chiều cao tối đa cho canvas để tránh bị giãn nở vô hạn */
+#methods-pie-chart {
+    max-height: 400px;
+    width: 100%;
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 1024px) {
+    .report-layout {
+        flex-direction: column;
+    }
+
+    .report-chart-container {
+        order: -1; /* Đưa biểu đồ lên trên cùng */
+        width: 100%; /* Chiếm toàn bộ chiều rộng */
+        position: static; /* Bỏ sticky */
+    }
+}
+
+@media (max-width: 768px) {
+    .filter-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
