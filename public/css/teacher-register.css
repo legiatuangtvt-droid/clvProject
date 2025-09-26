@@ -236,7 +236,6 @@
 }
 .conflict-info-container strong {
     color: var(--text-dark);
-    min-width: 100px;
     display: inline-block;
 }
 
@@ -359,3 +358,9 @@
         border-radius: 50%;
     }
 }
+
+/* Ghi đè CSS để loại bỏ khoảng trống không mong muốn trong câu cảnh báo */
+.conflict-info-container p .conflict-highlight {
+    margin-right: 0;
+}
+
