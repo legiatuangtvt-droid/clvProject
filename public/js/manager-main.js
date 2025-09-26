@@ -9,6 +9,7 @@ import {
     getDoc
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { firestore } from "./firebase-config.js";
+import { showToast } from "./toast.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     // Chỉ thực thi code nếu element chính tồn tại
@@ -280,15 +281,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- NOTIFICATION LOGIC ---
 
     function requestNotificationPermission() {
-        if ('Notification' in window && Notification.permission !== 'granted') {
-            Notification.requestPermission().then(permission => {
-                if (permission === 'granted') {
-                    new Notification('CLV-TBDH', {
-                        body: 'Đã bật thông báo cho các tiết học sắp tới.',
-                        icon: 'images/icon-192x192.png'
-                    });
-                }
-            });
+        if (!('Notification' in window)) {
+            console.warn('Trình duyệt này không hỗ trợ Thông báo Desktop.');
+            return;
+        }
+
+        switch (Notification.permission) {
+            case 'granted':
+                // Quyền đã được cấp, không cần làm gì thêm.
+                break;
+            case 'denied':
+                // Quyền đã bị từ chối. Hướng dẫn người dùng bật lại.
+                showToast(
+                    'Thông báo đã bị chặn. Vui lòng nhấn vào biểu tượng 🔒 hoặc 🎶 trên thanh địa chỉ để bật lại.',
+                    'warning',
+                    10000 // Hiển thị trong 10 giây
+                );
+                break;
+            case 'default':
+                // Yêu cầu quyền từ người dùng.
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        new Notification('CLV-TBDH', { body: 'Đã bật thông báo cho các tiết học sắp tới.', icon: 'images/lab-natural.png' });
+                    }
+                });
+                break;
         }
     }
 
