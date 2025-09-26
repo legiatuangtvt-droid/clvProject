@@ -17,9 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const teacherCountEl = document.getElementById('teacher-count');
     const todayDateEl = document.getElementById('today-date');
     const todayRegsContainer = document.getElementById('today-registrations-container');
+    const todayMethodFilter = document.getElementById('today-method-filter'); // Thêm bộ lọc PPDH
 
     // State
     let groupMap = new Map();
+    let allMethods = new Set(); // State để lưu các PPDH
 
     const loadDashboardData = async () => {
         try {
@@ -41,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await Promise.all([
                 getGroupCount(latestSchoolYear),
                 loadAllGroups(latestSchoolYear), // Tải thông tin các tổ
+                loadAllMethods(latestSchoolYear), // Tải các PPDH
                 getTeacherCount(latestSchoolYear),
                 loadTodayRegistrations() // Tải dữ liệu đăng ký hôm nay
             ]);
@@ -50,6 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
             schoolYearEl.textContent = 'Lỗi tải dữ liệu';
             groupCountEl.textContent = 'N/A';
             teacherCountEl.textContent = 'N/A';
+        }
+
+        // Thêm event listener cho bộ lọc PPDH
+        if (todayMethodFilter) {
+            todayMethodFilter.addEventListener('change', loadTodayRegistrations);
         }
     };
 
@@ -94,6 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
             );
             const snapshot = await getDocs(regsQuery);
 
+            // Lấy giá trị bộ lọc PPDH
+            const selectedMethod = todayMethodFilter ? todayMethodFilter.value : 'all';
+
+
             if (snapshot.empty) {
                 todayRegsContainer.innerHTML = '<p>Không có lượt đăng ký nào cho hôm nay.</p>';
                 return;
@@ -103,8 +115,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const regsByPeriod = new Map();
             snapshot.forEach(doc => {
                 const reg = doc.data();
-                if (!regsByPeriod.has(reg.period)) regsByPeriod.set(reg.period, []);
-                regsByPeriod.get(reg.period).push(reg);
+                // Lọc theo PPDH đã chọn
+                const methodMatch = selectedMethod === 'all' || (Array.isArray(reg.teachingMethod) && reg.teachingMethod.includes(selectedMethod));
+
+                if (methodMatch) {
+                    if (!regsByPeriod.has(reg.period)) regsByPeriod.set(reg.period, []);
+                    regsByPeriod.get(reg.period).push(reg);
+                }
             });
 
             let tableHTML = `<div class="table-responsive"><table class="today-reg-table">
@@ -128,6 +145,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Sắp xếp các tiết và render
             const sortedPeriods = [...regsByPeriod.keys()].sort((a, b) => a - b);
+
+            if (sortedPeriods.length === 0 && selectedMethod !== 'all') {
+                todayRegsContainer.innerHTML = `<p>Không có lượt đăng ký nào cho PPDH "${selectedMethod}" trong hôm nay.</p>`;
+                return;
+            }
 
             sortedPeriods.forEach(period => {
                 const regsInPeriod = regsByPeriod.get(period);
@@ -179,6 +201,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const group = doc.data();
             groupMap.set(group.group_id, group);
         });
+    };
+
+    const loadAllMethods = async (schoolYear) => {
+        const methodsQuery = query(collection(firestore, 'teachingMethods'), where('schoolYear', '==', schoolYear), orderBy('method'));
+        const methodsSnapshot = await getDocs(methodsQuery);
+        allMethods.clear();
+        methodsSnapshot.forEach(doc => {
+            allMethods.add(doc.data().method);
+        });
+
+        // Populate the filter dropdown
+        if (todayMethodFilter) {
+            todayMethodFilter.innerHTML = '<option value="all">Tất cả PPDH</option>';
+            // Ưu tiên "Thực hành" lên đầu nếu có
+            if (allMethods.has('Thực hành')) {
+                todayMethodFilter.innerHTML += `<option value="Thực hành">Thực hành</option>`;
+            }
+            [...allMethods].sort().forEach(method => {
+                if (method !== 'Thực hành') // Tránh lặp lại
+                    todayMethodFilter.innerHTML += `<option value="${method}">${method}</option>`;
+            });
+        }
     };
 
     const getTeacherCount = async (schoolYear) => {

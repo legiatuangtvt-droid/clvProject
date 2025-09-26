@@ -1,127 +1,173 @@
-/* Grid cho các thẻ thông tin tổng quan */
-.dashboard-grid {
+/*
+ * CSS for Manager Dashboard Page
+ * All rules are scoped under #manager-dashboard-page to prevent conflicts.
+ */
+
+/* --- Block: Thống kê tổng quan (dashboard-stats) --- */
+#manager-dashboard-page .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
     margin-top: 20px;
 }
 
-/* Thẻ thông tin tổng quan (Tổ, Giáo viên) */
-.dashboard-card {
+/* Element: Thẻ thống kê */
+#manager-dashboard-page .dashboard-card {
     background-color: #fff;
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: 12px; /* Đồng bộ với các card khác */
+    padding: 25px;
     display: flex;
     align-items: center;
     gap: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef;
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.dashboard-card:hover {
+#manager-dashboard-page .dashboard-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.dashboard-card .card-icon {
+/* Element: Icon của thẻ */
+#manager-dashboard-page .dashboard-card .card-icon {
     font-size: 2.5rem;
-    color: #007bff; /* Màu chính */
+    color: #3498db; /* Màu xanh dương đồng bộ */
     width: 60px;
     height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #e7f3ff;
+    background-color: #eaf5fc;
     border-radius: 50%;
 }
 
-.dashboard-card .card-content h3 {
+/* Element: Nội dung của thẻ */
+#manager-dashboard-page .dashboard-card .card-content h3 {
     margin: 0;
     font-size: 2rem;
-    color: #333;
+    color: #2c3e50;
 }
 
-.dashboard-card .card-content p {
+#manager-dashboard-page .dashboard-card .card-content p {
     margin: 0;
-    color: #666;
-    font-size: 0.9rem;
+    color: #6c757d;
 }
 
-/* Khu vực "Tình hình đăng ký hôm nay" */
-.today-registrations-container {
+/* --- Block: Đăng ký hôm nay (today-registrations) --- */
+/* Element: Header của khu vực */
+#manager-dashboard-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+#manager-dashboard-page .page-header h2,
+#manager-dashboard-page .page-header h3 {
+    margin: 0;
+    font-size: 1.5rem; /* Đồng bộ kích thước tiêu đề */
+}
+
+/* Element: Bộ lọc trong header (sử dụng lại style từ shared-layout) */
+#manager-dashboard-page .page-header .filter-group {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    border: 1px solid var(--border-color, #e9ecef);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    flex-grow: 0; /* Ngăn bộ lọc tự động co giãn chiều rộng */
+}
+
+#manager-dashboard-page .page-header .filter-group label {
+    padding: 10px 15px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-light, #6c757d);
+    background-color: #f8f9fa;
+    border-right: 1px solid var(--border-color, #e9ecef);
+}
+
+#manager-dashboard-page .page-header .filter-group select {
+    padding: 10px 30px 10px 15px;
+    border: none;
+    background-color: transparent;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-dark, #212529);
+    min-width: 200px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    cursor: pointer;
+}
+
+/* Element: Container của bảng */
+#manager-dashboard-page #today-registrations-container {
     margin-top: 15px;
 }
 
-/* Table for today's registrations */
-.table-responsive {
+/* Element: Wrapper cho phép cuộn */
+#manager-dashboard-page .table-responsive {
     overflow-x: auto;
     width: 100%;
 }
 
-.today-reg-table {
+/* Element: Bảng đăng ký */
+#manager-dashboard-page .today-reg-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9rem;
-    min-width: 800px; /* Đảm bảo bảng không bị vỡ trên màn hình nhỏ */
+    min-width: 900px; /* Đảm bảo bảng không bị vỡ trên màn hình nhỏ */
 }
 
-.today-reg-table th,
-.today-reg-table td {
+#manager-dashboard-page .today-reg-table th,
+#manager-dashboard-page .today-reg-table td {
     padding: 10px 12px;
     border: 1px solid #e9ecef;
-    text-align: left;
+    text-align: center; /* Mặc định căn giữa */
     vertical-align: middle;
 }
 
-.today-reg-table thead th {
+#manager-dashboard-page .today-reg-table thead th {
     background-color: #f8f9fa;
     font-weight: bold;
     color: #343a40;
-    text-align: center; /* Căn giữa tất cả tiêu đề cột */
 }
 
-.today-reg-table tbody tr:nth-child(even) {
+#manager-dashboard-page .today-reg-table tbody tr:nth-child(even) {
     background-color: #fcfdff;
 }
 
-.today-reg-table tbody tr:hover {
+#manager-dashboard-page .today-reg-table tbody tr:hover {
     background-color: #e7f3ff;
 }
 
-/* Căn chỉnh nội dung các cột bằng class */
-.today-reg-table .col-session,
-.today-reg-table .col-period,
-.today-reg-table .col-group,
-.today-reg-table .col-subject,
-.today-reg-table .col-teacher,
-.today-reg-table .col-class,
-.today-reg-table .col-ppdh,
-.today-reg-table .col-equipment {
-    text-align: center;
-}
-
-.today-reg-table .col-lesson {
+/* Modifier: Căn trái cho các cột cần thiết */
+#manager-dashboard-page .today-reg-table .col-lesson {
     text-align: left;
-}
-
-/* Cho phép các cột có nội dung dài được xuống dòng */
-.today-reg-table .col-lesson,
-.today-reg-table .col-ppdh,
-.today-reg-table .col-equipment {
     white-space: normal; /* Cho phép xuống dòng */
 }
 
-/* --- Highlighting --- */
-.today-reg-table tr.current-period td {
+/* Modifier: Làm nổi bật tiết học */
+#manager-dashboard-page .today-reg-table tr.current-period td {
     background-color: #e7f7ec; /* Màu xanh lá cây nhạt */
     font-weight: 500;
 }
 
-.today-reg-table tr.next-period td {
+#manager-dashboard-page .today-reg-table tr.next-period td {
     background-color: #fff9e6; /* Màu vàng nhạt */
 }
 
-.today-reg-table tr.current-period .col-session,
-.today-reg-table tr.current-period .col-period {
+#manager-dashboard-page .today-reg-table tr.current-period .col-session,
+#manager-dashboard-page .today-reg-table tr.current-period .col-period {
     font-weight: bold;
 }
