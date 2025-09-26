@@ -99,6 +99,18 @@
                             <div id="subject-repair-results-container">
                                 <!-- Kết quả quét lỗi môn học sẽ hiển thị ở đây -->
                             </div>
+
+                            <div class="content-header" style="margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 25px;">
+                                <h2>Sửa lỗi thiếu ID Tổ chuyên môn</h2>
+                                <button id="find-missing-groupid-btn" class="btn-primary"><i class="fas fa-sitemap"></i> Quét đăng ký thiếu ID Tổ</button>
+                            </div>
+                            <div class="instruction-text">
+                                <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tìm các lượt đăng ký không được lưu `groupId` (thường là dữ liệu cũ). Việc thiếu `groupId` có thể khiến báo cáo hiển thị sai tổ chuyên môn nếu giáo viên đã chuyển tổ.</p>
+                                <p>Sau khi quét, bạn có thể tự động cập nhật `groupId` chính xác cho các lượt đăng ký này dựa trên thông tin tổ của giáo viên tại thời điểm quét.</p>
+                            </div>
+                            <div id="groupid-repair-results-container">
+                                <!-- Kết quả quét lỗi groupId sẽ hiển thị ở đây -->
+                            </div>
                         </div>
 
                         <div id="time-plan" class="tab-content">

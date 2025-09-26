@@ -24,6 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Thêm các element mới
     const findSubjectMismatchBtn = document.getElementById('find-subject-mismatch-btn');
     const subjectRepairContainer = document.getElementById('subject-repair-results-container');
+    const findMissingGroupIdBtn = document.getElementById('find-missing-groupid-btn');
+    const groupIdRepairContainer = document.getElementById('groupid-repair-results-container');
     const rulesContainer = document.getElementById('rules-container');
     const saveRulesBtn = document.getElementById('save-rules-btn');
 
@@ -278,6 +280,96 @@ document.addEventListener('DOMContentLoaded', () => {
             await batch.commit();
             showToast(`Đã sửa thành công ${mismatches.length} lượt đăng ký.`, 'success');
             subjectRepairContainer.innerHTML = `<p class="success-message">Đã hoàn tất việc sửa lỗi. Bạn có thể quét lại để kiểm tra.</p>`;
+        });
+    };
+
+    // --- MISSING GROUPID REPAIR FUNCTIONS ---
+    const findAndRepairMissingGroupId = async () => {
+        groupIdRepairContainer.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Đang quét dữ liệu, vui lòng chờ...</p>`;
+
+        try {
+            // 1. Lấy tất cả giáo viên và tạo map UID -> teacherData
+            const teachersQuery = query(collection(firestore, 'teachers'));
+            const teachersSnapshot = await getDocs(teachersQuery);
+            const teacherMap = new Map();
+            teachersSnapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.uid) {
+                    teacherMap.set(data.uid, data);
+                }
+            });
+
+            // 2. Lấy tất cả lượt đăng ký trong năm học hiện tại
+            const regsQuery = query(collection(firestore, 'registrations'), where('schoolYear', '==', currentSchoolYear));
+            const regsSnapshot = await getDocs(regsQuery);
+
+            // 3. Tìm các lượt đăng ký thiếu `groupId`
+            const missingGroupIdRegs = [];
+            regsSnapshot.forEach(doc => {
+                const regData = doc.data();
+                if (!regData.groupId && regData.teacherId) {
+                    const teacher = teacherMap.get(regData.teacherId);
+                    if (teacher && teacher.group_id) {
+                        missingGroupIdRegs.push({
+                            regId: doc.id,
+                            teacherName: teacher.teacher_name,
+                            date: regData.date,
+                            period: regData.period,
+                            className: regData.className,
+                            subject: regData.subject,
+                            correctGroupId: teacher.group_id
+                        });
+                    }
+                }
+            });
+
+            renderMissingGroupIdUI(missingGroupIdRegs);
+
+        } catch (error) {
+            console.error("Lỗi khi quét lỗi thiếu groupId:", error);
+            groupIdRepairContainer.innerHTML = `<p class="error-message">Đã có lỗi xảy ra trong quá trình quét. Vui lòng thử lại.</p>`;
+            showToast('Quét dữ liệu thất bại!', 'error');
+        }
+    };
+
+    const renderMissingGroupIdUI = (missingRegs) => {
+        if (missingRegs.length === 0) {
+            groupIdRepairContainer.innerHTML = `<p class="success-message"><i class="fas fa-check-circle"></i> Không tìm thấy lượt đăng ký nào thiếu ID Tổ. Dữ liệu của bạn đã nhất quán!</p>`;
+            return;
+        }
+
+        let tableRows = missingRegs.map(m => `
+            <tr>
+                <td>${m.teacherName}</td>
+                <td>${formatDate(m.date)}</td>
+                <td style="text-align: center;">${m.period}</td>
+                <td style="text-align: center;">${m.className}</td>
+                <td>${m.subject}</td>
+                <td style="color: green;">${m.correctGroupId}</td>
+            </tr>
+        `).join('');
+
+        groupIdRepairContainer.innerHTML = `
+            <div class="repair-header">
+                <h4>Tìm thấy ${missingRegs.length} lượt đăng ký thiếu ID Tổ:</h4>
+                <button id="execute-groupid-repair-btn" class="btn-danger"><i class="fas fa-check-double"></i> Sửa tất cả</button>
+            </div>
+            <table class="weekly-plan-table" style="margin-top: 15px;">
+                <thead><tr><th>Giáo viên</th><th>Ngày</th><th>Tiết</th><th>Lớp</th><th>Môn học</th><th>ID Tổ cần cập nhật</th></tr></thead>
+                <tbody>${tableRows}</tbody>
+            </table>
+        `;
+
+        document.getElementById('execute-groupid-repair-btn').addEventListener('click', async () => {
+            const batch = writeBatch(firestore);
+            missingRegs.forEach(m => {
+                const regRef = doc(firestore, 'registrations', m.regId);
+                batch.update(regRef, { groupId: m.correctGroupId });
+            });
+
+            await batch.commit();
+            showToast(`Đã cập nhật thành công ${missingRegs.length} lượt đăng ký.`, 'success');
+            groupIdRepairContainer.innerHTML = `<p class="success-message">Đã hoàn tất việc sửa lỗi. Bạn có thể quét lại để kiểm tra.</p>`;
         });
     };
 
@@ -962,6 +1054,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Sửa lỗi môn học ---
     findSubjectMismatchBtn.addEventListener('click', findAndRepairSubjectMismatches);
+
+    // --- Sửa lỗi thiếu groupId ---
+    findMissingGroupIdBtn.addEventListener('click', findAndRepairMissingGroupId);
 
     // --- Lưu quy tắc đăng ký ---
     saveRulesBtn.addEventListener('click', saveRegistrationRule);
