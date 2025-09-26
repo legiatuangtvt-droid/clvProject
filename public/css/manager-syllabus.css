@@ -49,20 +49,20 @@
     text-align: center;
     font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 15px;
+    margin-bottom: 10px; /* Giảm khoảng cách với bảng */
     color: var(--text-color);
 }
 
 .syllabus-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.95rem;
+    font-size: 0.9rem; /* Giảm nhẹ cỡ chữ */
 }
 
 .syllabus-table th,
 .syllabus-table td {
     border: 1px solid var(--border-color);
-    padding: 8px 15px; /* Thu hẹp khoảng cách dọc */
+    padding: 5px 15px; /* Thu hẹp hơn nữa khoảng cách dọc */
     text-align: left;
     vertical-align: middle;
 }
@@ -115,6 +115,37 @@
     font-family: 'Courier New', Courier, monospace;
     line-height: 1.6;
 }
+
+/* --- Scroll to Top Button --- */
+.scroll-to-top-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    background-color: var(--primary-color, #1abc9c);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+    transform: translateY(20px);
+}
+
+.scroll-to-top-btn.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.scroll-to-top-btn:hover { background-color: var(--primary-hover, #16a085); }
 
 /* --- Responsive Styles for Mobile --- */
 @media (max-width: 768px) {
