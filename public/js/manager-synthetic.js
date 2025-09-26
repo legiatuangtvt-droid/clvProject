@@ -458,10 +458,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const getFirstMethod = reg => Array.isArray(reg.teachingMethod) && reg.teachingMethod.length > 0 ? reg.teachingMethod[0] : 'Không có PPDH';
         createLegendSection('PPDH (Màu nền)', getFirstMethod, 'bg', 'method');
-        createLegendSection('Môn học (Viền trái)', reg => reg.subject, 'border', 'subject');
-        createLegendSection('Tổ chuyên môn (Viền phải)', reg => reg.groupName, 'border', 'group');
+        createLegendSection('Môn học (Viền trái)', reg => reg.subject, 'border', 'subject'); // data-type="subject" -> khớp với data-subject
+        createLegendSection('Tổ chuyên môn (Viền phải)', reg => reg.groupName, 'border', 'group-name'); // Sửa 'group' -> 'group-name'
         // Lấy teacherName từ teacherMap
-        createLegendSection('Giáo viên (Icon)', reg => teacherMap.get(reg.teacherId)?.teacher_name, 'border', 'teacher');
+        createLegendSection('Giáo viên (Icon)', reg => teacherMap.get(reg.teacherId)?.teacher_name, 'border', 'teacher-name'); // Sửa 'teacher' -> 'teacher-name'
     };
 
     // --- MODAL & FORM HANDLING ---
@@ -1131,7 +1131,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 3. Làm nổi bật các đăng ký liên quan
             // Tạo một CSS selector động để tìm tất cả các .registration-info có data-attribute khớp với giá trị đang được hover
-            const selector = `.registration-info[data-${type}*="${value}"]`;            
+            const selector = `.registration-info[data-${type}*="${value}"]`;
+            console.log('Selector:', selector);            
             
             // Lặp qua tất cả các phần tử tìm thấy và thêm class 'highlighted'
             // CSS sẽ xử lý việc làm các phần tử này nổi bật trở lại (opacity: 1)
