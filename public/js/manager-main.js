@@ -269,11 +269,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const groupIds = groupsSnapshot.docs.map(doc => doc.data().group_id);
 
-        // Firestore `in` query chỉ hỗ trợ tối đa 30 phần tử trong mảng
-        // Nếu có nhiều hơn 30 tổ, cần chia nhỏ query. Tuy nhiên, với quy mô trường học, 30 là đủ.
-        const teachersQuery = query(collection(firestore, 'teachers'), where('group_id', 'in', groupIds));
-        const teachersSnapshot = await getDocs(teachersQuery);
-        teacherCountEl.textContent = teachersSnapshot.size;
+        // --- FIX: Xử lý lỗi 400 Bad Request khi groupIds rỗng hoặc quá 30 ---
+        if (groupIds.length === 0) {
+            teacherCountEl.textContent = '0';
+            return;
+        }
+
+        // Chia mảng groupIds thành các chunk nhỏ hơn (tối đa 30 phần tử mỗi chunk)
+        const CHUNK_SIZE = 30;
+        const chunks = [];
+        for (let i = 0; i < groupIds.length; i += CHUNK_SIZE) {
+            chunks.push(groupIds.slice(i, i + CHUNK_SIZE));
+        }
+
+        // Thực hiện các truy vấn song song cho từng chunk
+        const queryPromises = chunks.map(chunk => {
+            const teachersQuery = query(collection(firestore, 'teachers'), where('group_id', 'in', chunk));
+            return getDocs(teachersQuery);
+        });
+
+        const snapshots = await Promise.all(queryPromises);
+
+        // Cộng dồn kết quả từ tất cả các snapshot
+        const totalTeachers = snapshots.reduce((acc, snapshot) => acc + snapshot.size, 0);
+        teacherCountEl.textContent = totalTeachers;
     };
 
     loadDashboardData();
@@ -302,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Yêu cầu quyền từ người dùng.
                 Notification.requestPermission().then(permission => {
                     if (permission === 'granted') {
-                        new Notification('CLV-TBDH', { body: 'Đã bật thông báo cho các tiết học sắp tới.', icon: 'images/magnetic.png' });
+                        new Notification('CLV-TBDH', { body: 'Đã bật thông báo cho các tiết học sắp tới.', icon: 'images/lab-natural.png' });
                     }
                 });
                 break;
@@ -382,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
             audioToPlay = practiceNotificationAudio; // Âm thanh ưu tiên 1
         } else {
             title = '🔔 Chuẩn bị thiết bị dạy học!';
-            iconPath = 'images/communicating-vessels.png'; // Icon ưu tiên 2
+            iconPath = 'images/learning.png'; // Icon ưu tiên 2
             audioToPlay = equipmentNotificationAudio; // Âm thanh ưu tiên 2
         }
 
