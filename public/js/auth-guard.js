@@ -100,15 +100,24 @@ function injectSharedElements() {
                     <h2>Thay đổi mật khẩu</h2>
                     <div class="form-group">
                         <label for="current-password">Mật khẩu hiện tại</label>
-                        <input type="password" id="current-password" required>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="current-password" required>
+                            <button type="button" class="password-toggle-btn" title="Hiển thị mật khẩu"><i class="fas fa-eye"></i><i class="fas fa-eye-slash" style="display: none;"></i></button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="new-password">Mật khẩu mới</label>
-                        <input type="password" id="new-password" required>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="new-password" required>
+                            <button type="button" class="password-toggle-btn" title="Hiển thị mật khẩu"><i class="fas fa-eye"></i><i class="fas fa-eye-slash" style="display: none;"></i></button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="confirm-new-password">Xác nhận mật khẩu mới</label>
-                        <input type="password" id="confirm-new-password" required>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="confirm-new-password" required>
+                            <button type="button" class="password-toggle-btn" title="Hiển thị mật khẩu"><i class="fas fa-eye"></i><i class="fas fa-eye-slash" style="display: none;"></i></button>
+                        </div>
                     </div>
                     <div class="modal-actions">
                         <button id="cancel-password-change-btn" class="btn-cancel">Hủy</button>
@@ -182,6 +191,26 @@ function setupProfileFunctionality(user) {
   // Xử lý các nút hủy
   document.getElementById('cancel-edit-button')?.addEventListener('click', () => profileModal.style.display = 'none');
   document.getElementById('cancel-password-change-btn')?.addEventListener('click', () => passwordModal.style.display = 'none');
+
+  // Xử lý nút hiển thị/ẩn mật khẩu
+  const togglePasswordVisibility = (e) => {
+    const button = e.currentTarget;
+    const wrapper = button.closest('.password-input-wrapper');
+    const input = wrapper.querySelector('input');
+    const eyeIcon = button.querySelector('.fa-eye');
+    const eyeSlashIcon = button.querySelector('.fa-eye-slash');
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        eyeIcon.style.display = 'none';
+        eyeSlashIcon.style.display = 'inline';
+    } else {
+        input.type = 'password';
+        eyeIcon.style.display = 'inline';
+        eyeSlashIcon.style.display = 'none';
+    }
+  };
+  document.querySelectorAll('.password-toggle-btn').forEach(btn => btn.addEventListener('click', togglePasswordVisibility));
 
   // Xử lý lưu tên mới
   document.getElementById('save-name-button')?.addEventListener('click', async () => {
