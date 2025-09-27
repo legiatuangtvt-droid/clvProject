@@ -749,10 +749,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const importDate = bulkImportDaySelect.value;
         if (!importDate || dataLines.length === 0) {
             showToast('Không có dữ liệu để xử lý.', 'info');
-            return;
+            return; // Dừng hàm nếu không có dữ liệu
         }
         validRegistrationsToCreate = []; // Reset mảng đăng ký hợp lệ
-        const selectedSession = document.getElementById('bulk-import-session').value;
+        const sessionToggleButton = document.getElementById('session-toggle-btn');
+        const selectedSession = sessionToggleButton ? sessionToggleButton.dataset.session : 'morning';
 
         // Tải các đăng ký đã có trong ngày để kiểm tra trùng lặp
         const existingRegsQuery = query(collection(firestore, 'registrations'), where('date', '==', importDate));
@@ -889,11 +890,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!importText) {
             showToast('Vui lòng nhập dữ liệu để xử lý.', 'error');
         }
-        // Lưu các lựa chọn vào localStorage
+        // Lấy các lựa chọn từ giao diện mới
         const selectedDay = bulkImportDaySelect.value;
-        const selectedSession = document.getElementById('bulk-import-session').value;
-        localStorage.setItem('bulkImport_lastDay', selectedDay);
-        localStorage.setItem('bulkImport_lastSession', selectedSession);
+        const sessionToggleButton = document.getElementById('session-toggle-btn');
+        const selectedSession = sessionToggleButton ? sessionToggleButton.dataset.session : 'morning';
+
+        // Không cần lưu vào localStorage nữa vì đã tự động chọn theo giờ
         const lines = importText.split('\n').filter(line => line.trim() !== '').map(line => line.split('\t'));
         await validateAndPreviewData(lines);
     };
@@ -971,28 +973,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Bulk import modal
         bulkImportBtn.addEventListener('click', () => {
-            document.getElementById('bulk-import-input').value = '';
-
-            const lastDay = localStorage.getItem('bulkImport_lastDay');
-            const lastSession = localStorage.getItem('bulkImport_lastSession');
-
+            const bulkImportInput = document.getElementById('bulk-import-input');
+            if (bulkImportInput) bulkImportInput.value = '';
+        
             // Luôn sử dụng tuần đang được chọn ở giao diện chính
             if (selectedWeekNumber) {
                 populateBulkImportDaySelector(selectedWeekNumber);
             }
-
-            // Nếu chưa có lựa chọn nào được lưu, đặt lại về mặc định
-            if (!lastDay || !lastSession) {
-                bulkImportDaySelect.selectedIndex = 0; // Mặc định là Thứ 2
-                document.getElementById('bulk-import-session').value = 'morning'; // Mặc định là Sáng
-            } else { // Nếu không, giữ lại lựa chọn cũ
-                bulkImportDaySelect.value = lastDay;
-                document.getElementById('bulk-import-session').value = lastSession;
+        
+            // Giữ nguyên trạng thái Sáng/Chiều, chỉ đặt mặc định lần đầu
+            const sessionBtn = document.getElementById('session-toggle-btn');
+            if (sessionBtn && !sessionBtn.dataset.session) {
+                // Nếu chưa có trạng thái nào (lần đầu mở), đặt mặc định là "Sáng"
+                updateSessionToggle('morning');
             }
+        
             bulkImportModal.style.display = 'flex';
         });
         cancelBulkImportBtn.addEventListener('click', () => bulkImportModal.style.display = 'none');
 
+        // --- Logic cho nút Sáng/Chiều trong modal Nhập hàng loạt ---
+        const sessionToggleButton = document.getElementById('session-toggle-btn');
+        if (sessionToggleButton) {
+            sessionToggleButton.addEventListener('click', () => {
+                const currentSession = sessionToggleButton.dataset.session;
+                const nextSession = currentSession === 'morning' ? 'afternoon' : 'morning';
+                updateSessionToggle(nextSession);
+            });
+        }
+        function updateSessionToggle(session) {
+            const btn = document.getElementById('session-toggle-btn');
+            if (btn) {
+                btn.dataset.session = session;
+                btn.textContent = session === 'morning' ? 'Sáng' : 'Chiều';
+            }
+        }
+        cancelBulkImportBtn.addEventListener('click', () => bulkImportModal.style.display = 'none');
         // Thêm sự kiện cho nút điều hướng ngày
         document.getElementById('prev-day-bulk-import').addEventListener('click', () => {
             const currentIndex = bulkImportDaySelect.selectedIndex;

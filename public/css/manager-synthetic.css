@@ -643,3 +643,23 @@
     background-color: #e2e8f0;
     color: #1e293b;
 }
+
+/* --- Session Toggle Buttons for Bulk Import --- */
+.session-toggle-container {
+    display: flex; /* Đảm bảo label và button thẳng hàng */
+    align-items: center;
+    gap: 10px;
+}
+
+#session-toggle-btn {
+    flex-grow: 1;
+    padding: 10px 15px;
+    border: 1px solid #00796b;
+    background-color: #00796b;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
