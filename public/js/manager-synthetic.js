@@ -61,6 +61,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let deleteFunction = null;
     let validRegistrationsToCreate = []; // Lưu các đăng ký hợp lệ để chờ xác nhận
 
+    // --- Constants for localStorage ---
+    const LAST_BULK_IMPORT_DAY_KEY = 'lastBulkImportDay';
+    const LAST_BULK_IMPORT_SESSION_KEY = 'lastBulkImportSession';
+
     const getSubjectsFromGroupName = (groupName) => {
         const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
         // Tạm thời thay thế "Giáo dục thể chất - QP" để không bị split sai
@@ -852,12 +856,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const createRegistrationData = (teacher, className, period, lesson, equipmentStr, teachingMethodStr, week) => {
         const subject = teacher.subject ? teacher.subject : (getSubjectsFromGroupName(groupMap.get(teacher.group_id)?.group_name || '')[0] || 'Chưa xác định');
-        const ppdhMapping = { 'CNTT': 'Công nghệ thông tin', 'TBDH': 'Thiết bị dạy học', 'TH': 'Thực hành' };
+        
+        // Mở rộng logic PPDH để nhận cả tên đầy đủ và viết tắt
+        const ppdhMapping = {
+            'CNTT': 'Công nghệ thông tin',
+            'CÔNG NGHỆ THÔNG TIN': 'Công nghệ thông tin',
+            'TBDH': 'Thiết bị dạy học',
+            'THIẾT BỊ DẠY HỌC': 'Thiết bị dạy học',
+            'TH': 'Thực hành',
+            'THỰC HÀNH': 'Thực hành'
+        };
+
         const finalPpdh = new Set();
         teachingMethodStr.split(/[&,;]/).map(item => item.trim()).filter(Boolean).forEach(method => {
             const upperMethod = method.toUpperCase();
-            if (ppdhMapping[upperMethod]) finalPpdh.add(ppdhMapping[upperMethod]);
+            // Chuẩn hóa PPDH về tên đầy đủ
+            if (ppdhMapping[upperMethod]) {
+                finalPpdh.add(ppdhMapping[upperMethod]);
+            }
         });
+
         let equipment = equipmentStr.split(/[,+]/).map(item => item.trim()).filter(Boolean);
         if ([...finalPpdh].includes('Công nghệ thông tin') && !equipment.some(e => e.toLowerCase() === 'tivi')) {
             equipment.push('Tivi');
@@ -974,20 +992,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bulk import modal
         bulkImportBtn.addEventListener('click', () => {
             const bulkImportInput = document.getElementById('bulk-import-input');
-            if (bulkImportInput) bulkImportInput.value = '';
-        
+            if (bulkImportInput) bulkImportInput.value = ''; // Xóa nội dung cũ
+
             // Luôn sử dụng tuần đang được chọn ở giao diện chính
             if (selectedWeekNumber) {
                 populateBulkImportDaySelector(selectedWeekNumber);
             }
-        
-            // Giữ nguyên trạng thái Sáng/Chiều, chỉ đặt mặc định lần đầu
-            const sessionBtn = document.getElementById('session-toggle-btn');
-            if (sessionBtn && !sessionBtn.dataset.session) {
-                // Nếu chưa có trạng thái nào (lần đầu mở), đặt mặc định là "Sáng"
-                updateSessionToggle('morning');
+
+            // Tải và áp dụng các lựa chọn đã lưu từ lần trước
+            const lastDay = localStorage.getItem(LAST_BULK_IMPORT_DAY_KEY);
+            const lastSession = localStorage.getItem(LAST_BULK_IMPORT_SESSION_KEY);
+
+            // Nếu có ngày đã lưu và ngày đó tồn tại trong danh sách tùy chọn, hãy chọn nó.
+            // Ngược lại, mặc định là tùy chọn đầu tiên (Thứ Hai).
+            if (lastDay && Array.from(bulkImportDaySelect.options).some(opt => opt.value === lastDay)) {
+                bulkImportDaySelect.value = lastDay;
             }
-        
+
+            // Mặc định là 'sáng' nếu chưa có gì được lưu.
+            updateSessionToggle(lastSession || 'morning');
+
             bulkImportModal.style.display = 'flex';
         });
         cancelBulkImportBtn.addEventListener('click', () => bulkImportModal.style.display = 'none');
@@ -999,6 +1023,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const currentSession = sessionToggleButton.dataset.session;
                 const nextSession = currentSession === 'morning' ? 'afternoon' : 'morning';
                 updateSessionToggle(nextSession);
+                // Lưu lựa chọn mới
+                localStorage.setItem(LAST_BULK_IMPORT_SESSION_KEY, nextSession);
             });
         }
         function updateSessionToggle(session) {
@@ -1009,18 +1035,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         cancelBulkImportBtn.addEventListener('click', () => bulkImportModal.style.display = 'none');
-        // Thêm sự kiện cho nút điều hướng ngày
+        // Thêm sự kiện cho các control trong modal nhập hàng loạt
         document.getElementById('prev-day-bulk-import').addEventListener('click', () => {
             const currentIndex = bulkImportDaySelect.selectedIndex;
             if (currentIndex > 0) {
                 bulkImportDaySelect.selectedIndex = currentIndex - 1;
+                localStorage.setItem(LAST_BULK_IMPORT_DAY_KEY, bulkImportDaySelect.value); // Lưu lựa chọn mới
             }
         });
         document.getElementById('next-day-bulk-import').addEventListener('click', () => {
             const currentIndex = bulkImportDaySelect.selectedIndex;
             if (currentIndex < bulkImportDaySelect.options.length - 1) {
                 bulkImportDaySelect.selectedIndex = currentIndex + 1;
+                localStorage.setItem(LAST_BULK_IMPORT_DAY_KEY, bulkImportDaySelect.value); // Lưu lựa chọn mới
             }
+        });
+        bulkImportDaySelect.addEventListener('change', () => {
+            localStorage.setItem(LAST_BULK_IMPORT_DAY_KEY, bulkImportDaySelect.value); // Lưu khi người dùng tự chọn
         });
         processBulkImportBtn.addEventListener('click', processBulkImport);
 
