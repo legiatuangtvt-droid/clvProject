@@ -738,7 +738,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let lastPrefix = '';
         const expanded = parts.map(part => {
-            const match = part.match(/^(\d+[A-Z])/); // Tìm tiền tố như "11B"
+            // Tìm tiền tố dạng "10A", "12B"
+            const match = part.match(/^(\d+[A-Z])/);
             if (match) {
                 lastPrefix = match[0];
                 return part;
@@ -801,24 +802,42 @@ document.addEventListener('DOMContentLoaded', () => {
             const rawClassNames = expandClassNames(classNamesStr);
             const rawPeriods = periodsStr.split(/[,;]/).map(p => parseInt(p.trim())).filter(p => !isNaN(p) && p > 0 && p <= 5); // Chỉ cho phép tiết 1-5
             const rawLessonNames = lessonName.split(';').map(l => l.trim()).filter(Boolean);
+            
+            // --- BƯỚC 4: LOGIC ÁNH XẠ LỚP - TIẾT - BÀI DẠY THÔNG MINH ---
+            const numClasses = rawClassNames.length;
+            const numPeriods = rawPeriods.length;
+            const numLessons = rawLessonNames.length;
 
-            // --- BƯỚC 4: Ghép cặp Lớp - Tiết và tạo các lượt đăng ký ---
-            // Logic này đảm bảo "12B9,12B8" và "1,2" sẽ tạo ra 2 đăng ký, không phải 4.
-            const loopCount = Math.max(rawClassNames.length, rawPeriods.length);
-            for (let j = 0; j < loopCount; j++) {
-                // Lấy lớp và tiết tương ứng. Nếu một trong hai danh sách ngắn hơn, tái sử dụng phần tử cuối cùng.
-                const className = rawClassNames[j] || rawClassNames[rawClassNames.length - 1];
-                const period = rawPeriods[j] || rawPeriods[rawPeriods.length - 1];
-                // Tương tự cho tên bài dạy
-                const lesson = rawLessonNames[j] || rawLessonNames[rawLessonNames.length - 1] || rawLessonNames[0] || 'N/A';
-                
-                // Chuyển đổi tiết sang buổi chiều nếu cần
-                const finalPeriod = selectedSession === 'afternoon' ? period + 5 : period;
+            // Trường hợp 1: Số tiết là bội số của số lớp -> Chia đều
+            if (numClasses > 0 && numPeriods > 0 && numPeriods % numClasses === 0) {
+                const periodsPerClass = numPeriods / numClasses;
+                for (let i = 0; i < numClasses; i++) {
+                    const className = rawClassNames[i];
+                    // Nếu số bài dạy bằng số lớp, gán tương ứng. Nếu không, dùng bài đầu tiên.
+                    const lesson = (numLessons === numClasses) ? rawLessonNames[i] : rawLessonNames[0] || 'N/A';
+                    const assignedPeriods = rawPeriods.slice(i * periodsPerClass, (i + 1) * periodsPerClass);
 
-                // Tạo đối tượng dữ liệu đăng ký
-                const newRegData = createRegistrationData(teacher, className, finalPeriod, lesson, equipmentStr, teachingMethodStr, selectedWeek);
-                // Kiểm tra và thêm vào bảng xem trước
-                previewAndValidateSingleReg(originalLineNumber, displayTeacherName, newRegData, period, previewRegistrations, existingRegsOnDate, lineIssues);
+                    for (const period of assignedPeriods) {
+                        const finalPeriod = selectedSession === 'afternoon' ? period + 5 : period;
+                        const newRegData = createRegistrationData(teacher, className, finalPeriod, lesson, equipmentStr, teachingMethodStr, selectedWeek);
+                        previewAndValidateSingleReg(originalLineNumber, displayTeacherName, newRegData, period, previewRegistrations, existingRegsOnDate, lineIssues);
+                    }
+                }
+            } 
+            // Trường hợp 2: Logic cũ - lặp qua danh sách dài hơn
+            else {
+                const loopCount = Math.max(numClasses, numPeriods);
+                for (let j = 0; j < loopCount; j++) {
+                    // Lấy lớp và tiết tương ứng. Nếu một trong hai danh sách ngắn hơn, tái sử dụng phần tử cuối cùng.
+                    const className = rawClassNames[j] || rawClassNames[rawClassNames.length - 1];
+                    const period = rawPeriods[j] || rawPeriods[rawPeriods.length - 1];
+                    // Tương tự cho tên bài dạy
+                    const lesson = rawLessonNames[j] || rawLessonNames[rawLessonNames.length - 1] || rawLessonNames[0] || 'N/A';
+                    
+                    const finalPeriod = selectedSession === 'afternoon' ? period + 5 : period;
+                    const newRegData = createRegistrationData(teacher, className, finalPeriod, lesson, equipmentStr, teachingMethodStr, selectedWeek);
+                    previewAndValidateSingleReg(originalLineNumber, displayTeacherName, newRegData, period, previewRegistrations, existingRegsOnDate, lineIssues);
+                }
             }
         }
 
@@ -868,7 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const finalPpdh = new Set();
-        teachingMethodStr.split(/[&,;]/).map(item => item.trim()).filter(Boolean).forEach(method => {
+        teachingMethodStr.split(/[&,;]/).map(item => item.trim()).filter(Boolean).forEach(method => { // Tách PPDH bằng &, ; hoặc ,
             const upperMethod = method.toUpperCase();
             // Chuẩn hóa PPDH về tên đầy đủ
             if (ppdhMapping[upperMethod]) {
@@ -923,6 +942,12 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Không có dữ liệu hợp lệ để nhập.', 'info');
             return;
         }
+
+        const confirmBtn = document.getElementById('confirm-bulk-import-btn');
+        const originalBtnHTML = confirmBtn.innerHTML;
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Đang ghi dữ liệu...`;
+
         try {
             const batch = writeBatch(firestore);
             validRegistrationsToCreate.forEach(regData => {
@@ -930,12 +955,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 batch.set(newRegRef, regData);
             });
             await batch.commit();
+
             showToast(`Nhập thành công ${validRegistrationsToCreate.length} lượt đăng ký!`, 'success');
             bulkImportPreviewModal.style.display = 'none';
             loadAndRenderSchedule();
+
         } catch (error) {
             console.error("Lỗi khi ghi dữ liệu hàng loạt:", error);
             showToast('Đã có lỗi xảy ra khi lưu dữ liệu vào cơ sở dữ liệu.', 'error');
+        } finally {
+            // Luôn khôi phục lại trạng thái của nút sau khi hoàn tất
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalBtnHTML;
         }
     };
 
