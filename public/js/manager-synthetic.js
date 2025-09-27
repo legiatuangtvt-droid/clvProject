@@ -389,28 +389,39 @@ document.addEventListener('DOMContentLoaded', () => {
         const filteredRegistrations = getFilteredRegistrations();
 
         // --- NEW: Render aggregated slot summary ---
-        const renderSlotSummary = (regsInSlot) => {
-            if (regsInSlot.length === 0) return ''; // Trả về chuỗi rỗng nếu không có đăng ký
-
-            const count = regsInSlot.length;
-            const methodCounts = regsInSlot.flatMap(r => r.teachingMethod || []).reduce((acc, method) => {
+        const renderSlotSummary = (regs) => {
+            if (regs.length === 0) return '';
+        
+            const count = regs.length;
+        
+            // Đếm số lần xuất hiện của mỗi PPDH
+            const methodCounts = regs.reduce((acc, reg) => {
+                (reg.teachingMethod || []).forEach(method => {
                 acc[method] = (acc[method] || 0) + 1;
+                });
                 return acc;
             }, {});
-
-            // Lấy 3 PPDH được dùng nhiều nhất
-            const topMethods = Object.entries(methodCounts)
-                .sort(([, a], [, b]) => b - a)
-                .slice(0, 3)
-                .map(([method]) => method);
-
+        
+            // Lấy tối đa 3 PPDH phổ biến nhất
+            const topMethods = Object.keys(methodCounts).sort((a, b) => methodCounts[b] - methodCounts[a]).slice(0, 3);
+        
             const methodIcons = {
                 'Công nghệ thông tin': '<i class="fas fa-desktop method-icon-summary icon-cntt" title="CNTT"></i>',
-                'Thực hành': '<i class="fas fa-flask method-icon-summary icon-th" title="Thực hành"></i>',
-                'Thiết bị dạy học': '<i class="fas fa-microscope method-icon-summary icon-tbdh" title="TBDH"></i>'
+                'Thiết bị dạy học': '<i class="fas fa-microscope method-icon-summary icon-tbdh" title="TBDH"></i>',
+                'Thực hành': {
+                    default: '<i class="fas fa-flask method-icon-summary icon-th" title="Thực hành"></i>',
+                    'Giáo dục thể chất - QP': '<i class="fas fa-futbol method-icon-summary icon-th" title="Thực hành GDTC-QP"></i>'
+                }
             };
-
-            const iconsHTML = topMethods.map(method => methodIcons[method] || '').join('');
+        
+            const iconsHTML = topMethods.map(method => {
+                if (method === 'Thực hành') {
+                    // Kiểm tra xem có đăng ký nào là môn GDTC-QP trong slot này không
+                    const hasQpReg = regs.some(r => r.subject === 'Giáo dục thể chất - QP' && r.teachingMethod?.includes('Thực hành'));
+                    return hasQpReg ? methodIcons['Thực hành']['Giáo dục thể chất - QP'] : methodIcons['Thực hành'].default;
+                }
+                return methodIcons[method] || '';
+            }).join('');
             
             return `
                 <div class="slot-summary">
