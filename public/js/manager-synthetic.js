@@ -919,11 +919,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const internalConflict = validRegistrationsToCreate.find(reg => reg.period === regData.period && (reg.teacherId === regData.teacherId || reg.className === regData.className));
         
         let currentRegIssues = [...lineIssues];
+        // Chuyển đổi tiết học để hiển thị đúng cho buổi chiều (1-5)
+        const displayPeriodInError = regData.period > 5 ? regData.period - 5 : regData.period;
+
         if (existingConflict) {
             const existingTeacherName = teacherMap.get(existingConflict.teacherId)?.teacher_name || 'N/A';
-            currentRegIssues.push(`Trùng lịch với đăng ký đã có (Lớp ${regData.className}, Tiết ${regData.period}, GV ${existingTeacherName}).`);
+            currentRegIssues.push(`Trùng lịch với đăng ký đã có (Lớp ${regData.className}, Tiết ${displayPeriodInError}, GV ${existingTeacherName}, Môn ${existingConflict.subject}).`);
         }
-        if (internalConflict) currentRegIssues.push(`Trùng lịch với dòng khác trong file (Lớp ${regData.className}, Tiết ${regData.period}).`);
+        if (internalConflict) currentRegIssues.push(`Trùng lịch với dòng khác trong file (Lớp ${regData.className}, Tiết ${displayPeriodInError}).`);
 
         const hasConflict = !!existingConflict || !!internalConflict;
         const isInvalid = lineIssues.length > 0 || hasConflict;
