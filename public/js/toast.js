@@ -12,14 +12,15 @@ export function showToast(message, type = 'info', duration = 3000) {
     }
 
     const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
+    toast.className = `toast ${type}`; // Sửa lại cách gán class
 
     // Tạo icon dựa trên loại thông báo
     const icon = document.createElement('i');
     const iconClasses = {
         success: 'fas fa-check-circle',
         error: 'fas fa-times-circle',
-        info: 'fas fa-info-circle'
+        info: 'fas fa-info-circle',
+        warning: 'fas fa-exclamation-triangle'
     };
     icon.className = `toast-icon ${iconClasses[type] || 'fas fa-info-circle'}`;
 

@@ -36,11 +36,26 @@
 }
 
 /* Các loại Toast */
-.toast.success { border-color: #28a745; }
-.toast.success .toast-icon { color: #28a745; }
-.toast.error { border-color: #dc3545; }
-.toast.error .toast-icon { color: #dc3545; }
+.toast.success {
+    background-color: #28a745;
+    color: #fff;
+    border-color: #218838;
+}
+.toast.success .toast-icon { color: #fff; }
+
+.toast.error {
+    background-color: #dc3545;
+    color: #fff;
+    border-color: #c82333;
+}
+.toast.error .toast-icon { color: #fff; }
+
 .toast.info { border-color: #17a2b8; }
 .toast.info .toast-icon { color: #17a2b8; }
-.toast.warning { border-color: #ffc107; }
-.toast.warning .toast-icon { color: #ffc107; }
+
+.toast.warning {
+    background-color: #ffc107;
+    color: #212529; /* Chữ đen để dễ đọc trên nền vàng */
+    border-color: #e0a800;
+}
+.toast.warning .toast-icon { color: #212529; }
