@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const equipmentStatsBtn = document.getElementById('equipment-stats-btn');
     const equipmentStatsModal = document.getElementById('equipment-stats-modal');
     const closeEquipmentStatsModalBtn = document.getElementById('close-equipment-stats-modal');
+    const slotDetailModal = document.getElementById('slot-detail-modal');
 
     // State variables
     let currentSchoolYear = null;
@@ -217,13 +218,12 @@ document.addEventListener('DOMContentLoaded', () => {
         scheduleContainer.innerHTML = '<p>Đang tải lịch...</p>';
         try {
             const regsQuery = query(
-                collection(firestore, 'registrations'),
-                where('schoolYear', '==', currentSchoolYear),
-                where('weekNumber', '==', selectedWeekNumber)
+                collection(firestore, 'registrations'), where('schoolYear', '==', currentSchoolYear), where('weekNumber', '==', selectedWeekNumber)
             );
             const regsSnapshot = await getDocs(regsQuery);
             allRegistrations = regsSnapshot.docs.map(doc => {
                 const data = doc.data();
+                // Ưu tiên groupId từ chính registration, nếu không có thì mới suy ra từ teacherMap
                 const groupId = data.groupId || teacherMap.get(data.teacherId)?.group_id || null;
                 return {
                     id: doc.id,
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     groupName: groupMap.get(groupId)?.group_name || 'Không xác định'
                 };
             });
-            updateDependentFilters();
+            // updateDependentFilters(); // Không cần gọi lại ở đây vì dữ liệu bộ lọc không đổi
             renderWeeklySchedule(selectedWeek);
         } catch (error) {
             console.error("Lỗi tải lịch đăng ký:", error);
@@ -247,11 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedMethod = filterMethodSelect.value;
 
         return allRegistrations.filter(reg => {
-            const groupMatch = selectedGroup === 'all' || reg.groupId === selectedGroup;
-            const subjectMatch = selectedSubject === 'all' || reg.subject === selectedSubject;
-            const teacherMatch = selectedTeacher === 'all' || reg.teacherId === selectedTeacher;
-            const methodMatch = selectedMethod === 'all' || (Array.isArray(reg.teachingMethod) && reg.teachingMethod.includes(selectedMethod));
-            return groupMatch && subjectMatch && teacherMatch && methodMatch;
+            const groupMatch = selectedGroup === 'all' || reg.groupId === selectedGroup; const subjectMatch = selectedSubject === 'all' || reg.subject === selectedSubject; const teacherMatch = selectedTeacher === 'all' || reg.teacherId === selectedTeacher; const methodMatch = selectedMethod === 'all' || (Array.isArray(reg.teachingMethod) && reg.teachingMethod.includes(selectedMethod)); return groupMatch && subjectMatch && teacherMatch && methodMatch;
         });
     };
 
@@ -292,50 +288,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const filteredRegistrations = getFilteredRegistrations();
 
-        const renderSlot = (reg) => {
-            const teacherName = teacherMap.get(reg.teacherId)?.teacher_name || reg.teacherName || 'N/A';
-            const groupColor = generateColor(reg.groupName);
-            const subjectColor = generateColor(reg.subject);
-            const teacherColor = generateColor(teacherName);
-            // Lấy tất cả PPDH, nhưng vẫn dùng PPDH đầu tiên để tô màu nền cho nhất quán
-            const allRegMethods = Array.isArray(reg.teachingMethod) && reg.teachingMethod.length > 0 ? reg.teachingMethod : ['Không có PPDH'];
-            const methodColor = generateColor(allRegMethods[0]);
+        // --- NEW: Render aggregated slot summary ---
+        const renderSlotSummary = (regsInSlot) => {
+            if (regsInSlot.length === 0) return '';
 
-            const tooltipText = `Giáo viên: ${teacherName}\nLớp: ${reg.className}\nMôn: ${reg.subject}\nBài dạy: ${reg.lessonName}\nThiết bị: ${Array.isArray(reg.equipment) ? reg.equipment.join(', ') : ''}\nPPDH: ${Array.isArray(reg.teachingMethod) ? reg.teachingMethod.join(', ') : ''}`.trim();
+            const count = regsInSlot.length;
+            const methodCounts = regsInSlot.flatMap(r => r.teachingMethod || []).reduce((acc, method) => {
+                acc[method] = (acc[method] || 0) + 1;
+                return acc;
+            }, {});
 
+            const topMethods = Object.entries(methodCounts).sort(([, a], [, b]) => b - a).slice(0, 3).map(([method]) => method);
+
+            const methodIcons = {
+                'Công nghệ thông tin': '<i class="fas fa-desktop method-icon-summary icon-cntt" title="CNTT"></i>',
+                'Thực hành': '<i class="fas fa-flask method-icon-summary icon-th" title="Thực hành"></i>',
+                'Thiết bị dạy học': '<i class="fas fa-microscope method-icon-summary icon-tbdh" title="TBDH"></i>'
+            };
+
+            const iconsHTML = topMethods.map(method => methodIcons[method] || '').join('');
+            
             return `
-                <div class="registration-info" 
-                     data-reg-id="${reg.id}" 
-                     data-group-name="${reg.groupName}"
-                     data-subject="${reg.subject}"
-                     data-teacher-name="${teacherName}"
-                     data-method="${allRegMethods.join(',')}"
-                     title="${tooltipText}" 
-                     style="background-color: ${methodColor.bg}; border-left-color: ${subjectColor.border}; border-right-color: ${groupColor.border}; cursor: help;">
-                    <p><i class="fas fa-user" style="color: ${teacherColor.border};"></i> ${teacherName} - Lớp ${reg.className}</p>
-                </div>`;
+                <div class="slot-summary">
+                    <div class="slot-summary-count">${count} lượt</div>
+                    <div class="slot-summary-icons">${iconsHTML}</div>
+                </div>
+            `;
         };
 
         ['Sáng', 'Chiều'].forEach((session, sessionIndex) => {
             const startPeriod = sessionIndex * 5 + 1;
             const endPeriod = startPeriod + 4;
 
-            for (let period = startPeriod; period <= endPeriod; period++) {
-                desktopHTML += `<tr>`;
-                if (period === startPeriod) {
-                    desktopHTML += `<td class="session-header" rowspan="5">${session}</td>`;
-                }
-                desktopHTML += `<td class="period-header">${period > 5 ? period - 5 : period}</td>`;
-                weekDates.forEach(date => {
-                    const regsInSlot = filteredRegistrations.filter(r => r.date === date && r.period === period);
-                    desktopHTML += `<td class="slot" data-date="${date}" data-period="${period}">`;
-                    regsInSlot.forEach(reg => {
-                        desktopHTML += renderSlot(reg);
-                    });
-                    desktopHTML += `</td>`;
-                });
-                desktopHTML += `</tr>`;
-            }
+            for (let period = startPeriod; period <= endPeriod; period++) { desktopHTML += `<tr>`; if (period === startPeriod) { desktopHTML += `<td class="session-header" rowspan="5">${session}</td>`; } desktopHTML += `<td class="period-header">${period > 5 ? period - 5 : period}</td>`; weekDates.forEach(date => { const regsInSlot = filteredRegistrations.filter(r => r.date === date && r.period === period); const slotHasRegs = regsInSlot.length > 0; desktopHTML += `<td class="slot ${slotHasRegs ? 'has-regs' : ''}" data-date="${date}" data-period="${period}">`; desktopHTML += renderSlotSummary(regsInSlot); desktopHTML += `</td>`; }); desktopHTML += `</tr>`; }
             if (session === 'Sáng') {
                 desktopHTML += `<tr class="session-separator"><td colspan="8"></td></tr>`;
             }
@@ -343,7 +328,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
         desktopHTML += `</tbody></table></div>`;
         scheduleContainer.innerHTML = desktopHTML;
-        renderLegend(filteredRegistrations);
+        // renderLegend(filteredRegistrations); // Chú thích màu không còn cần thiết với layout mới
+        legendContainer.style.display = 'none'; // Ẩn luôn phần chú thích
+    };
+
+    // --- NEW: Slot Detail Modal ---
+    const openSlotDetailModal = (date, period) => {
+        const filteredRegistrations = getFilteredRegistrations();
+        const regsInSlot = filteredRegistrations.filter(r => r.date === date && r.period === parseInt(period));
+        const modalTitle = document.getElementById('slot-detail-title');
+        const modalBody = document.getElementById('slot-detail-body');
+        const displayPeriod = period > 5 ? period - 5 : period;
+        const session = period > 5 ? 'Chiều' : 'Sáng';
+
+        modalTitle.textContent = `Chi tiết Tiết ${displayPeriod} (${session}) - Ngày ${formatDate(date)}`;
+
+        if (regsInSlot.length === 0) {
+            modalBody.innerHTML = '<p class="no-regs-in-slot">Chưa có lượt đăng ký nào cho tiết học này.</p>';
+        } else {
+            let tableHTML = `<table class="slot-detail-table">
+                <thead>
+                    <tr>
+                        <th>GV</th>
+                        <th>Môn</th>
+                        <th>Lớp</th>
+                        <th>Bài dạy</th>
+                        <th>Thiết bị</th>
+                        <th>PPDH</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            regsInSlot.forEach(reg => {
+                const teacherName = teacherMap.get(reg.teacherId)?.teacher_name || 'N/A';
+                tableHTML += `
+                    <tr data-reg-id="${reg.id}">
+                        <td>${teacherName}</td>
+                        <td>${reg.subject}</td>
+                        <td>${reg.className}</td>
+                        <td>${reg.lessonName}</td>
+                        <td>${reg.equipment?.join(', ') || ''}</td>
+                        <td>${reg.teachingMethod?.join(', ') || ''}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table>`;
+            modalBody.innerHTML = tableHTML;
+        }
+
+        slotDetailModal.style.display = 'flex';
     };
 
     const renderLegend = (filteredRegs) => {
@@ -411,6 +445,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filterTeacherSelect.addEventListener('change', () => {
             renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber));
+        });
+
+        // --- NEW: Slot Detail Modal Listeners ---
+        scheduleContainer.addEventListener('click', (e) => {
+            const slot = e.target.closest('.slot');
+            if (slot) {
+                openSlotDetailModal(slot.dataset.date, slot.dataset.period);
+            }
+        });
+
+        document.getElementById('close-slot-detail-modal').addEventListener('click', () => {
+            slotDetailModal.style.display = 'none';
         });
     };
     
@@ -495,25 +541,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
-    const setupLegendHighlighting = () => {
-        legendContainer.addEventListener('mouseover', (e) => {
-            const legendItem = e.target.closest('.legend-item');
-            if (!legendItem) return;
-
-            const type = legendItem.dataset.type;
-            const value = legendItem.dataset.value;
-            if (!type || !value) return;    
-
-            scheduleContainer.classList.add('dimmed');
-            document.querySelectorAll(`.registration-info[data-${type}*="${value}"]`).forEach(el => el.classList.add('highlighted'));
-        });
-
-        legendContainer.addEventListener('mouseout', () => {
-            scheduleContainer.classList.remove('dimmed');
-            document.querySelectorAll('.registration-info.highlighted').forEach(el => el.classList.remove('highlighted'));
-        });
-    };
-
     // --- HELPERS ---
     const updateSelectedWeek = (weekNum) => {
         if (!weekNum) return;
@@ -539,5 +566,4 @@ document.addEventListener('DOMContentLoaded', () => {
     initializePage();
     setupEventListeners();
     setupStatsModalListeners();
-    setupLegendHighlighting();
 });
