@@ -114,7 +114,7 @@ body {
 
 .main-content {
     flex-grow: 1;
-    padding: 30px;
+    padding: 8px;
     overflow-y: auto; /* Đảm bảo có thể cuộn nếu nội dung dài */
 }
 
