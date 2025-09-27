@@ -843,11 +843,38 @@ const initializeTeacherRegisterPage = (user) => {
 
     document.getElementById('save-register-btn').addEventListener('click', (e) => {
         e.preventDefault();
-        if (registerForm.checkValidity()) {
-            saveRegistration(user);
-        } else {
+        if (!registerForm.checkValidity()) {
             registerForm.reportValidity();
+            return;
         }
+
+        const saveBtn = document.getElementById('save-register-btn');
+        const originalBtnHTML = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Đang ghi lại đăng ký...`;
+
+        // Wrap saveRegistration in a new async function to handle finally block
+        (async () => {
+            try {
+                await saveRegistration(user);
+            } catch (error) {
+                // Errors inside saveRegistration are already handled with toasts.
+                // This catch is for any unexpected errors during the async operation.
+                console.error("Lỗi không mong muốn trong quá trình lưu:", error);
+                showToast('Đã có lỗi không mong muốn xảy ra.', 'error');
+            } finally {
+                // This block will run whether saveRegistration succeeds or fails (returns early).
+                // A small delay to let the user see the success/error toast before the button resets.
+                setTimeout(() => {
+                    // Check if the modal is still open before resetting the button.
+                    // If save was successful, the modal closes and we don't need to reset.
+                    if (registerModal.style.display === 'flex') {
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = originalBtnHTML;
+                    }
+                }, 300); // 300ms delay
+            }
+        })();
     });
     document.getElementById('cancel-register-modal').addEventListener('click', () => registerModal.style.display = 'none');
     // registerModal.addEventListener('click', (e) => {

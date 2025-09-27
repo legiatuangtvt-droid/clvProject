@@ -315,11 +315,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         scheduleContainer.innerHTML = '<p>Đang tải lịch...</p>';
         try {
-            const regsQuery = query(
+            // Lấy giá trị từ các bộ lọc
+            const selectedGroupId = filterGroupSelect.value;
+            const selectedSubjectId = filterSubjectSelect.value;
+            const selectedTeacherId = filterTeacherSelect.value;
+            const selectedMethod = filterMethodSelect.value;
+
+            // Bắt đầu xây dựng truy vấn động
+            let regsQuery = query(
                 collection(firestore, 'registrations'),
                 where('schoolYear', '==', currentSchoolYear),
                 where('weekNumber', '==', selectedWeekNumber)
             );
+
+            // Thêm các điều kiện lọc vào truy vấn nếu chúng được chọn
+            if (selectedGroupId !== 'all') {
+                regsQuery = query(regsQuery, where('groupId', '==', selectedGroupId));
+            }
+            if (selectedSubjectId !== 'all') {
+                regsQuery = query(regsQuery, where('subject', '==', selectedSubjectId));
+            }
+            if (selectedTeacherId !== 'all') {
+                regsQuery = query(regsQuery, where('teacherId', '==', selectedTeacherId));
+            }
+
             const regsSnapshot = await getDocs(regsQuery);
             allRegistrations = regsSnapshot.docs.map(doc => {
                 const data = doc.data();
@@ -332,7 +351,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     groupName: groupMap.get(groupId)?.group_name || 'Không xác định'
                 };
             });
-            updateDependentFilters(); // Cập nhật bộ lọc sau khi có dữ liệu đăng ký mới
+
+            // Bộ lọc PPDH vẫn được áp dụng ở client do giới hạn của Firestore
+            if (selectedMethod !== 'all') {
+                allRegistrations = allRegistrations.filter(reg => 
+                    Array.isArray(reg.teachingMethod) && reg.teachingMethod.includes(selectedMethod)
+                );
+            }
             renderWeeklySchedule(selectedWeek);
         } catch (error) {
             console.error("Lỗi tải lịch đăng ký:", error);
@@ -341,19 +366,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getFilteredRegistrations = () => {
-        const selectedGroup = filterGroupSelect.value;
-        const selectedSubject = filterSubjectSelect.value;
-        const selectedTeacher = filterTeacherSelect.value;
-        const selectedMethod = filterMethodSelect.value;
-
-        return allRegistrations.filter(reg => {
-            const groupMatch = selectedGroup === 'all' || reg.groupId === selectedGroup;
-            const subjectMatch = selectedSubject === 'all' || reg.subject === selectedSubject;
-            const teacherMatch = selectedTeacher === 'all' || reg.teacherId === selectedTeacher;
-            // Kiểm tra xem mảng PPDH của lượt đăng ký có chứa PPDH đã chọn không
-            const methodMatch = selectedMethod === 'all' || (Array.isArray(reg.teachingMethod) && reg.teachingMethod.includes(selectedMethod));
-            return groupMatch && subjectMatch && teacherMatch && methodMatch;
-        });
+        // Hàm này không còn cần thiết vì việc lọc đã được chuyển vào `loadAndRenderSchedule`
+        return allRegistrations;
     };
 
     const renderWeeklySchedule = (week) => {
@@ -995,7 +1009,7 @@ document.addEventListener('DOMContentLoaded', () => {
         [filterGroupSelect, filterSubjectSelect, filterMethodSelect].forEach(select => {
             select.addEventListener('change', () => {
                 updateDependentFilters();
-                renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber)); // Vẽ lại lịch với bộ lọc mới
+                loadAndRenderSchedule(); // Tải lại dữ liệu từ server với bộ lọc mới
             });
         });
 
@@ -1003,7 +1017,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Listener riêng cho bộ lọc giáo viên để không trigger vòng lặp
         filterTeacherSelect.addEventListener('change', () => {
-            renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber));
+            loadAndRenderSchedule(); // Tải lại dữ liệu từ server với bộ lọc mới
         });
 
         // Schedule clicks
