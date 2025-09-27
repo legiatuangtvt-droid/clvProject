@@ -12,6 +12,40 @@
     --card-shadow-hover: 0 7px 14px rgba(0, 0, 0, 0.05), 0 3px 6px rgba(0, 0, 0, 0.08);
     --border-radius: 12px;
 }
+/* --- Profile Dropdown --- */
+.user-info {
+    position: relative; /* Cần thiết để định vị dropdown */
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: 110%; /* Hiển thị ngay dưới nút */
+    right: 0;
+    background-color: var(--background-light);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    z-index: 1001;
+    min-width: 220px;
+    overflow: hidden; /* Để bo góc cho các item bên trong */
+    padding: 5px;
+}
+
+.profile-dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 15px;
+    color: var(--text-dark);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+    border-radius: 6px;
+}
+
+.profile-dropdown a:hover {
+    background-color: #f1f5f9;
+}
 
 /* --- Header của trang & Selector Năm học --- */
 .school-year-selector-header {

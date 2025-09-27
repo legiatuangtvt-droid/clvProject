@@ -389,3 +389,42 @@
     background-size: 16px 12px;
     cursor: pointer;
 }
+
+.filter-select:focus {
+    outline: none;
+}
+
+/* --- Profile Dropdown (Dùng chung) --- */
+.user-info {
+    position: relative; /* Cần thiết để định vị dropdown */
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: 110%; /* Hiển thị ngay dưới nút */
+    right: 0;
+    background-color: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    z-index: 1001;
+    min-width: 220px;
+    overflow: hidden; /* Để bo góc cho các item bên trong */
+    padding: 5px;
+}
+
+.profile-dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 15px;
+    color: #212529;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+    border-radius: 6px;
+}
+
+.profile-dropdown a:hover {
+    background-color: #f1f5f9;
+}
