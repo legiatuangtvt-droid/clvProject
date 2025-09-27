@@ -468,6 +468,12 @@ const initializeTeacherRegisterPage = (user) => {
     const openRegisterModal = (user, regId = null, date = null, period = null) => {
         currentEditingRegId = regId;
         const deleteBtn = document.getElementById('delete-register-btn');
+        const saveBtn = document.getElementById('save-register-btn');
+
+        // --- FIX: Luôn đặt lại trạng thái nút "Lưu" khi mở modal ---
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = 'Lưu';
+        // -----------------------------------------------------------
 
         registerForm.reset();
         document.querySelectorAll('#reg-method-container input[type="checkbox"]').forEach(cb => cb.checked = false);
