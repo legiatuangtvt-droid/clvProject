@@ -458,16 +458,51 @@ document.addEventListener('DOMContentLoaded', () => {
         desktopHTML += `</tbody></table></div>`;
 
         // --- MOBILE VIEW ---
+        const renderDaySummary = (regs) => {
+            if (regs.length === 0) {
+                return `<span class="day-summary-info">(0 lượt)</span>`;
+            }
+            const count = regs.length;
+            const methodCounts = regs.reduce((acc, reg) => {
+                (reg.teachingMethod || []).forEach(method => {
+                    acc[method] = (acc[method] || 0) + 1;
+                });
+                return acc;
+            }, {});
+            const topMethods = Object.keys(methodCounts).sort((a, b) => methodCounts[b] - methodCounts[a]).slice(0, 3);
+            const methodIcons = {
+                'Công nghệ thông tin': '<i class="fas fa-desktop method-icon-summary icon-cntt" title="CNTT"></i>',
+                'Thiết bị dạy học': '<i class="fas fa-microscope method-icon-summary icon-tbdh" title="TBDH"></i>',
+                'Thực hành': {
+                    default: '<i class="fas fa-flask method-icon-summary icon-th" title="Thực hành"></i>',
+                    'Giáo dục thể chất - QP': '<i class="fas fa-futbol method-icon-summary icon-th" title="Thực hành GDTC-QP"></i>'
+                }
+            };
+            const iconsHTML = topMethods.map(method => {
+                if (method === 'Thực hành') {
+                    const hasQpReg = regs.some(r => r.subject === 'Giáo dục thể chất - QP' && r.teachingMethod?.includes('Thực hành'));
+                    return hasQpReg ? methodIcons['Thực hành']['Giáo dục thể chất - QP'] : methodIcons['Thực hành'].default;
+                }
+                return methodIcons[method] || '';
+            }).join('');
+            return `<div class="day-summary-container"><span class="day-summary-count">${count} lượt</span><div class="day-summary-icons">${iconsHTML}</div></div>`;
+        };
+
         let mobileHTML = `<div class="mobile-schedule">`;
         weekDates.forEach((date, index) => {
+            const regsForDay = filteredRegistrations.filter(r => r.date === date);
+
             mobileHTML += `
-                <div class="mobile-day-card">
-                    <div class="mobile-day-header">${daysOfWeek[index]} - ${formatDate(date)}</div>
+                <details class="mobile-day-card">
+                    <summary class="mobile-day-header">
+                        <span class="day-name">${daysOfWeek[index]} - ${formatDate(date)}</span>
+                        ${renderDaySummary(regsForDay)}
+                    </summary>
                     <div class="mobile-day-body">`;
             
             let hasRegsThisDay = false;
             for (let period = 1; period <= 10; period++) {
-                const regsInSlot = filteredRegistrations.filter(r => r.date === date && r.period === period);
+                const regsInSlot = regsForDay.filter(r => r.period === period);
                 if (regsInSlot.length > 0) {
                     hasRegsThisDay = true;
                     const session = period <= 5 ? 'Sáng' : 'Chiều';
@@ -486,7 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 mobileHTML += `<p class="no-registrations-mobile">Không có lượt đăng ký nào.</p>`;
             }
 
-            mobileHTML += `</div></div>`;
+            mobileHTML += `</div></details>`;
         });
         mobileHTML += `</div>`;
 
@@ -1076,6 +1111,21 @@ document.addEventListener('DOMContentLoaded', () => {
             } 
         });
 
+        // Accordion behavior for mobile view
+        scheduleContainer.addEventListener('toggle', (e) => {
+            const detailsElement = e.target;
+            // Ensure the event is from a <details> element and it was just opened
+            if (detailsElement.tagName === 'DETAILS' && detailsElement.open) {
+                // Find all <details> elements within the mobile schedule
+                const allDetails = scheduleContainer.querySelectorAll('.mobile-schedule .mobile-day-card');
+                allDetails.forEach(otherDetails => {
+                    // Close any other <details> element that is not the one that was just opened
+                    if (otherDetails !== detailsElement) {
+                        otherDetails.open = false;
+                    }
+                });
+            }
+        }, true); // Use capture phase to ensure this runs before other potential listeners
         // Bulk import modal
         bulkImportBtn.addEventListener('click', () => {
             const bulkImportInput = document.getElementById('bulk-import-input');

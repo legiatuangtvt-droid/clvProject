@@ -705,10 +705,42 @@
     }
 
     /* Tái sử dụng các style từ teacher-register.css cho card mobile */
-    .mobile-day-card { background-color: #fff; border: 1px solid #e9ecef; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }
-    .mobile-day-header { padding: 12px 15px; background-color: #f8f9fa; font-weight: 600; border-bottom: 1px solid #e9ecef; }
+    .mobile-day-card {
+        background-color: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        overflow: hidden;
+        transition: background-color 0.2s;
+    }
+    .mobile-day-card[open] {
+        background-color: #fcfdff;
+    }
+    .mobile-day-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 15px;
+        background-color: #f8f9fa;
+        font-weight: 600;
+        cursor: pointer;
+        list-style: none; /* Bỏ dấu tam giác mặc định */
+    }
+    .mobile-day-card[open] .mobile-day-header {
+        border-bottom: 1px solid #e9ecef;
+    }
+    .mobile-day-header::-webkit-details-marker { display: none; }
+    .mobile-day-header::after {
+        content: '\f078'; /* chevron-down */
+        font-family: "Font Awesome 6 Free"; font-weight: 900;
+        transition: transform 0.2s ease-in-out;
+    }
+    .mobile-day-card[open] .mobile-day-header::after { transform: rotate(-180deg); }    .day-name { flex-grow: 1; }
+    .day-summary-container { display: flex; align-items: center; gap: 10px; }
+    .day-summary-count { font-size: 0.9rem; font-weight: 600; color: #004d40; background-color: #e6f7f4; padding: 3px 8px; border-radius: 5px; }
+    .day-summary-icons { display: flex; gap: 8px; font-size: 1rem; }
     .mobile-day-body { padding: 15px; display: flex; flex-direction: column; gap: 15px; }
-    .mobile-slot { display: flex; align-items: baseline; gap: 10px; }
+    .mobile-slot { display: flex; align-items: stretch; gap: 10px; cursor: pointer; transition: background-color 0.2s; border-radius: 8px; }
     .mobile-slot:hover { background-color: #e7f3ff; }
     .mobile-period-info { background-color: #f1f5f9; padding: 5px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; color: #6c757d; white-space: nowrap; text-align: center; }
     .mobile-slot-summary-container {
