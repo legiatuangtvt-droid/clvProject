@@ -766,6 +766,13 @@
     }
 }
 
+@media (max-width: 700px) {
+    .synthetic-layout-container {
+        /* Chuyển từ 2 cột sang 1 cột trên màn hình hẹp */
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Đơn giản hóa selector */
 .weekly-plan-table thead th {
     background-color: #f1f5f9;
