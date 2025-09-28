@@ -1,4 +1,4 @@
-/* --- Biến CSS chung --- */
+/* --- Biến CSS dành riêng cho Teacher Layout --- */
 :root {
     --primary-color: #3498db; /* Màu xanh dương mới, nhẹ nhàng hơn */
     --primary-hover: #2980b9;
@@ -15,99 +15,10 @@
     --border-radius: 12px;
 }
 
-/* --- Reset & Body --- */
-body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: var(--main-bg);
-    color: var(--text-dark);
-    font-size: 16px;
-}
-
 /* --- Layout chính --- */
 .teacher-layout {
     display: flex;
     min-height: 100vh;
-}
-
-/* --- Sidebar --- */
-.sidebar {
-    width: 65px; /* Chiều rộng khi thu gọn */
-    background-color: var(--sidebar-bg);
-    color: var(--sidebar-text);
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    transition: width 0.3s ease;
-}
-
-.sidebar-header {
-    padding: 20px;
-    text-align: center;
-    border-bottom: 1px solid #4a627a;
-}
-
-.sidebar-header h3 {
-    margin: 0;
-    font-size: 1.5rem;
-    color: var(--primary-color);
-    white-space: nowrap;
-    opacity: 0; /* Ẩn chữ mặc định */
-    transition: opacity 0.2s ease;
-}
-.sidebar.expanded .sidebar-header h3 {
-    opacity: 1; /* Hiện chữ khi mở rộng */
-}
-
-.menu-links {
-    list-style: none;
-    padding: 0;
-    margin: 20px 0;
-    flex-grow: 1;
-}
-
-.nav-link {
-    display: flex;
-    align-items: center;
-    padding: 15px 20px;
-    color: var(--sidebar-text);
-    text-decoration: none;
-    transition: background-color 0.2s, color 0.2s;
-    border-left: 4px solid transparent;
-}
-
-.nav-link span {
-    white-space: nowrap;
-    opacity: 0; /* Ẩn chữ mặc định */
-    transition: opacity 0.2s ease;
-}
-
-.sidebar.expanded .nav-link span {
-    opacity: 1; /* Hiện chữ khi mở rộng */
-    transition-delay: 0.1s;
-}
-
-.nav-link i {
-    width: 20px;
-    margin-right: 15px;
-    font-size: 1.1rem;
-    text-align: center;
-}
-
-.nav-link:hover {
-    background-color: var(--sidebar-active-bg);
-    color: var(--sidebar-hover-text);
-}
-
-.nav-link.active {
-    background-color: var(--sidebar-active-bg);
-    border-left-color: var(--primary-color);
-    font-weight: 600;
-}
-
-/* Trạng thái mở rộng của sidebar */
-.sidebar.expanded {
-    width: 250px; /* Chiều rộng khi mở rộng */
 }
 
 /* --- Content Wrapper --- */
@@ -115,41 +26,6 @@ body {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-}
-
-/* --- Top Bar --- */
-.top-bar {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding: 15px 30px;
-    background-color: var(--top-bar-bg);
-    border-bottom: 1px solid #e9ecef;
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.logout-button {
-    background-color: #fbebee;
-    color: #dc3545;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    margin-left: 20px;
-}
-
-.icon-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1rem;
-    color: var(--text-light);
 }
 
 /* --- Main Content --- */
@@ -280,40 +156,15 @@ body {
 
 /* --- Responsive Styles for Mobile --- */
 @media (max-width: 768px) {
-    .teacher-layout {
-        flex-direction: column;
-    }
-
     .sidebar {
         position: fixed;
         left: -250px; /* Ẩn sidebar */
         top: 0;
         height: 100%;
-        z-index: 1100;
         width: 250px; /* Luôn mở rộng khi hiện ra */
     }
 
     .sidebar.expanded {
         left: 0; /* Hiện sidebar */
-    }
-
-    .sidebar.expanded .sidebar-header h3,
-    .sidebar.expanded .nav-link span {
-        opacity: 1;
-    }
-
-    .content-wrapper {
-        width: 100%;
-    }
-
-    .main-content {
-        padding: 15px;
-    }
-
-     .sidebar-overlay {
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(0,0,0,0.5);
-        z-index: 1050;
     }
 }

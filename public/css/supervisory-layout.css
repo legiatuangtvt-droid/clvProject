@@ -6,4 +6,4 @@
 */
 
 /* Kế thừa các style từ manager-layout để tránh lặp code */
-@import url('manager-layout.css');
+@import url('shared-layout.css');
