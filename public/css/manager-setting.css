@@ -262,6 +262,65 @@
     box-shadow: 0 0 0 0.2rem rgba(26, 188, 156, 0.25);
 }
 
+/* --- NEW: Collapsible Details for Repair Results --- */
+.repair-details {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    margin-top: 20px;
+    background-color: #fcfdff;
+}
+
+.repair-details[open] {
+    background-color: var(--background-light);
+}
+
+.repair-details summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none; /* Bỏ dấu tam giác mặc định */
+    transition: background-color 0.2s;
+}
+
+.repair-details summary:hover {
+    background-color: #f1f5f9;
+}
+
+.repair-details[open] > summary {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.repair-details summary::-webkit-details-marker {
+    display: none; /* Bỏ dấu tam giác trên Chrome/Safari */
+}
+
+.summary-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.summary-title::before {
+    content: '\f078'; /* Icon chevron-down */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    transition: transform 0.2s ease-in-out;
+}
+
+.repair-details[open] .summary-title::before {
+    transform: rotate(-180deg);
+}
+
+.repair-details .repair-list,
+.repair-details .weekly-plan-table {
+    padding: 20px;
+    border-top: none; /* Bỏ viền trên của bảng/danh sách */
+    margin-top: 0;
+}
+
 /* --- Container chứa các tổ --- */
 .groups-container {
     display: grid;

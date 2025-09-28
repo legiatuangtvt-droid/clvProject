@@ -190,12 +190,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let html = `
-            <div class="repair-header">
-                <h4>Tìm thấy ${orphanedMap.size} tài khoản giáo viên cũ cần được ánh xạ lại:</h4>
-                <button id="execute-repair-btn" class="btn-danger"><i class="fas fa-tools"></i> Thực hiện sửa lỗi</button>
-            </div>
-            <div class="repair-list">`;
-
+            <details class="repair-details" open>
+                <summary>
+                    <span class="summary-title">Tìm thấy ${orphanedMap.size} tài khoản giáo viên cũ cần được ánh xạ lại</span>
+                    <span class="summary-actions">
+                        <button id="execute-repair-btn" class="btn-danger"><i class="fas fa-tools"></i> Thực hiện sửa lỗi</button>
+                    </span>
+                </summary>
+                <div class="repair-list">`;
         // Tạo dropdown HTML một lần để tái sử dụng
         const teacherOptions = allCurrentTeachers
             .sort((a, b) => a.name.localeCompare(b.name))
@@ -221,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         });
 
-        html += `</div>`;
+        html += `</div></details>`;
         container.innerHTML = html;
 
         document.getElementById('execute-repair-btn').addEventListener('click', () => executeRepair(orphanedMap));
@@ -331,14 +333,18 @@ document.addEventListener('DOMContentLoaded', () => {
         `).join('');
 
         subjectRepairContainer.innerHTML = `
-            <div class="repair-header">
-                <h4>Tìm thấy ${mismatches.length} lượt đăng ký có môn học không khớp:</h4>
-                <button id="execute-subject-repair-btn" class="btn-danger"><i class="fas fa-check-double"></i> Sửa tất cả</button>
-            </div>
-            <table class="weekly-plan-table" style="margin-top: 15px;">
-                <thead><tr><th>Giáo viên</th><th>Ngày</th><th>Tiết</th><th>Lớp</th><th>Môn học sai</th><th>Môn học đúng</th></tr></thead>
-                <tbody>${tableRows}</tbody>
-            </table>
+            <details class="repair-details" open>
+                <summary>
+                    <span class="summary-title">Tìm thấy ${mismatches.length} lượt đăng ký có môn học không khớp</span>
+                    <span class="summary-actions">
+                        <button id="execute-subject-repair-btn" class="btn-danger"><i class="fas fa-check-double"></i> Sửa tất cả</button>
+                    </span>
+                </summary>
+                <table class="weekly-plan-table">
+                    <thead><tr><th>Giáo viên</th><th>Ngày</th><th>Tiết</th><th>Lớp</th><th>Môn học sai</th><th>Môn học đúng</th></tr></thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+            </details>
         `;
 
         document.getElementById('execute-subject-repair-btn').addEventListener('click', async () => {
@@ -422,14 +428,18 @@ document.addEventListener('DOMContentLoaded', () => {
         `).join('');
 
         groupIdRepairContainer.innerHTML = `
-            <div class="repair-header">
-                <h4>Tìm thấy ${missingRegs.length} lượt đăng ký thiếu ID Tổ:</h4>
-                <button id="execute-groupid-repair-btn" class="btn-danger"><i class="fas fa-check-double"></i> Sửa tất cả</button>
-            </div>
-            <table class="weekly-plan-table" style="margin-top: 15px;">
-                <thead><tr><th>Giáo viên</th><th>Ngày</th><th>Tiết</th><th>Lớp</th><th>Môn học</th><th>ID Tổ cần cập nhật</th></tr></thead>
-                <tbody>${tableRows}</tbody>
-            </table>
+            <details class="repair-details" open>
+                <summary>
+                    <span class="summary-title">Tìm thấy ${missingRegs.length} lượt đăng ký thiếu ID Tổ</span>
+                    <span class="summary-actions">
+                        <button id="execute-groupid-repair-btn" class="btn-danger"><i class="fas fa-check-double"></i> Sửa tất cả</button>
+                    </span>
+                </summary>
+                <table class="weekly-plan-table">
+                    <thead><tr><th>Giáo viên</th><th>Ngày</th><th>Tiết</th><th>Lớp</th><th>Môn học</th><th>ID Tổ cần cập nhật</th></tr></thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+            </details>
         `;
 
         document.getElementById('execute-groupid-repair-btn').addEventListener('click', async () => {
