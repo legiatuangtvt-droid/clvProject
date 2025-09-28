@@ -237,11 +237,20 @@ document.addEventListener('DOMContentLoaded', () => {
             );
             const snapshot = await getDocs(regsQuery);
 
+            const teacherGroupMap = new Map(allTeachers.map(t => [t.uid, t.group_id]));
             snapshot.forEach(doc => {
                 const reg = doc.data();
-                if (groupData.has(reg.group_id)) {
-                    groupData.get(reg.group_id).count++;
+                let groupIdToCount = reg.group_id;
+
+                // Fallback: If groupId is missing on the registration, find it from the teacher's data
+                if (!groupIdToCount && reg.teacherId) {
+                    groupIdToCount = teacherGroupMap.get(reg.teacherId);
                 }
+
+                if (groupIdToCount && groupData.has(groupIdToCount)) {
+                    groupData.get(groupIdToCount).count++;
+                }
+
                 if (teacherData.has(reg.teacherId)) {
                     teacherData.get(reg.teacherId).count++;
                 }

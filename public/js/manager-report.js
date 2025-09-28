@@ -250,12 +250,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const snapshot = await getDocs(regsQuery);
 
             // 3. Cập nhật số đếm từ dữ liệu đăng ký
+            const teacherGroupMap = new Map(allTeachers.map(t => [t.uid, t.group_id]));
             snapshot.forEach(doc => {
                 const reg = doc.data();
-                // Count for group
-                if (groupData.has(reg.group_id)) { // Sửa lỗi: dùng group_id thay vì groupId
-                    groupData.get(reg.group_id).count++;
+                let groupIdToCount = reg.group_id;
+
+                // Fallback: If groupId is missing on the registration, find it from the teacher's data
+                if (!groupIdToCount && reg.teacherId) {
+                    groupIdToCount = teacherGroupMap.get(reg.teacherId);
                 }
+
+                // Count for group
+                if (groupIdToCount && groupData.has(groupIdToCount)) {
+                    groupData.get(groupIdToCount).count++;
+                }
+
                 // Count for teacher
                 if (teacherData.has(reg.teacherId)) {
                     teacherData.get(reg.teacherId).count++;
