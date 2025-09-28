@@ -231,6 +231,11 @@
     transition: background-color 0.2s;
 }
 
+/* --- NEW: Utility class to hide elements --- */
+.hidden {
+    display: none !important;
+}
+
 .slot:hover {
     background-color: #e7f3ff;
 }

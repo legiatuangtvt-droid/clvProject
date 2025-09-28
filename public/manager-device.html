@@ -45,40 +45,115 @@
             <main id="main-content" class="main-content">
                 <!-- Nội dung chính của trang device -->
                 <div class="content-card">
-                    <div class="page-header">
-                        <!-- Tiêu đề đã được chuyển lên top-bar -->
-                        <button id="add-device-btn" class="btn-primary"><i class="fas fa-plus"></i> Thêm danh mục</button>
-                    </div>
-                    <div class="device-table-container">
-                        <table class="device-table">
-                            <thead>
-                                <tr>
-                                    <th class="col-stt">STT</th>
-                                    <th class="col-subject">Môn học</th>
-                                    <th class="col-category">Loại</th>
-                                    <th class="col-code">Mã TB</th>
-                                    <th class="col-name">Tên thiết bị</th>
-                                    <th class="col-description">Mô tả chi tiết</th>
-                                    <th class="col-grades">Lớp</th>
-                                    <th class="col-notes">Ghi chú</th>
-                                    <th class="col-actions">Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody id="device-table-body">
-                                <!-- Dữ liệu sẽ được chèn vào đây bằng JS -->
-                            </tbody>
-                        </table>
+                    <div id="device-explorer-layout" class="device-explorer-layout">
+                        <!-- Cột trái: Cây thư mục -->
+                        <aside id="device-tree-sidebar" class="device-tree-sidebar">
+                            <div class="sidebar-header">
+                                <h4><i class="fas fa-sitemap"></i> Cây danh mục</h4>
+                                <button id="add-subject-btn" class="icon-button" title="Thêm môn học mới"><i class="fas fa-plus"></i></button>
+                            </div>
+                            <div id="device-tree-container" class="tree-container">
+                                <!-- Cây thư mục sẽ được JS render vào đây -->
+                            </div>
+                        </aside>
+
+                        <!-- Cột phải: Nội dung thư mục -->
+                        <div id="device-content-main" class="device-content-main">
+                            <div class="page-header">
+                                <h3 id="current-folder-title">Tất cả danh mục</h3>
+                                <div class="page-actions">
+                                    <button id="add-category-btn" class="btn-secondary"><i class="fas fa-folder-plus"></i> Thêm danh mục</button>
+                                    <button id="add-device-btn" class="btn-secondary"><i class="fas fa-plus-circle"></i> Thêm thiết bị</button>
+                                    <button id="bulk-import-btn" class="btn-secondary"><i class="fas fa-file-import"></i> Nhập hàng loạt</button>
+                                </div>
+                            </div>
+                            <div id="device-list-container" class="table-container">
+                                <!-- Bảng danh sách thiết bị và thư mục con sẽ được JS render vào đây -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- Modal xác nhận xóa (tái sử dụng từ manager-setting) -->
+    <!-- Modal cho Thêm/Sửa Danh mục & Thiết bị -->
+    <div id="item-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="item-modal-title">Thêm mục mới</h2>
+            <form id="item-form" class="form-grid">
+                <!-- Các trường chung -->
+                <div class="form-group form-group-span-2">
+                    <label for="item-name">Tên <span class="required-star">*</span></label>
+                    <input type="text" id="item-name" required>
+                </div>
+
+                <!-- Các trường chỉ dành cho thiết bị -->
+                <div class="device-only-fields" style="display: contents;">
+                    <div class="form-group">
+                        <label for="item-parent-select">Vị trí (Danh mục cha)</label>
+                        <select id="item-parent-select"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="item-order">Thứ tự</label>
+                        <input type="number" id="item-order" placeholder="Để trống để tự động sắp xếp">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="item-topic">Chủ đề dạy học</label>
+                        <input type="text" id="item-topic">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="item-purpose">Mục đích sử dụng</label>
+                        <input type="text" id="item-purpose">
+                    </div>
+
+                    <div class="form-group form-group-span-2">
+                        <label for="item-description">Mô tả chi tiết</label>
+                        <textarea id="item-description" rows="2"></textarea>
+                    </div>
+
+                    <div class="form-group checkbox-group-container">
+                        <label>Đối tượng sử dụng</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" id="item-usage-gv"> Giáo viên</label>
+                            <label><input type="checkbox" id="item-usage-hs"> Học sinh</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="item-unit">Đơn vị tính</label>
+                        <input type="text" id="item-unit">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-quota">Định mức</label>
+                        <input type="text" id="item-quota">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-quantity">Tổng số</label>
+                        <input type="number" id="item-quantity" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-broken">Hỏng</label>
+                        <input type="number" id="item-broken" value="0">
+                    </div>
+                </div>
+
+            </form>
+            <div class="modal-actions">
+                <button id="cancel-item-modal" class="btn-cancel">Hủy</button>
+                <button id="save-item-btn" class="btn-save">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal xác nhận xóa -->
     <div id="confirm-delete-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
-            <h2 id="confirm-delete-title">Xác nhận xóa</h2>
-            <p id="confirm-delete-message">Bạn có chắc chắn muốn xóa mục này không?</p>
+            <h2>Xác nhận xóa</h2>
+            <p id="confirm-delete-message">Bạn có chắc chắn muốn xóa mục này? Nếu đây là danh mục cha, tất cả các mục con cũng sẽ bị xóa.</p>
             <div class="modal-actions">
                 <button id="cancel-delete-btn" class="btn-cancel">Hủy</button>
                 <button id="confirm-delete-btn" class="btn-danger">Xóa</button>
@@ -86,9 +161,54 @@
         </div>
     </div>
 
+    <!-- Modal cho Nhập hàng loạt -->
+    <div id="bulk-import-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content large">
+            <h2 id="bulk-import-modal-title">Nhập thiết bị hàng loạt</h2>
+            <p class="modal-description">
+                Dán dữ liệu từ Excel vào ô bên dưới. Các cột phải theo đúng thứ tự, phân tách bằng phím <strong>Tab</strong>:
+                <br>
+                <code>STT | Chủ đề dạy học | Tên thiết bị | Mục đích sử dụng | Mô tả chi tiết | Đơn vị | Tổng số | Hỏng</code>
+            </p>
+            <div class="form-group">
+                <textarea id="bulk-import-input" class="bulk-import-input" placeholder="Ví dụ:&#10;1	Chủ đề 1	Máy chiếu	Dạy học	Mô tả A	Cái	10	1&#10;2	Chủ đề 1	Bảng tương tác	Dạy học	Mô tả B	Cái	5	0" rows="10"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-bulk-import-modal" class="btn-cancel">Hủy</button>
+                <button id="save-bulk-import-btn" class="btn-save">
+                    <span class="btn-text">Lưu dữ liệu</span>
+                    <span class="btn-spinner"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xem trước & Lỗi Nhập hàng loạt -->
+    <div id="bulk-import-preview-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content large">
+            <h2 id="bulk-import-preview-title">Xem trước dữ liệu nhập hàng loạt</h2>
+            <p>Vui lòng kiểm tra dữ liệu đã được phân tích. Các dòng có lỗi sẽ được tô đỏ và không được nhập.</p>
+            
+            <!-- Vùng hiển thị lỗi -->
+            <div id="bulk-import-error-section" class="error-list-container" style="display: none;">
+                <!-- Danh sách lỗi sẽ được chèn vào đây -->
+            </div>
+
+            <!-- Vùng xem trước dữ liệu -->
+            <div id="bulk-import-preview-container" class="table-container">
+                <!-- Bảng xem trước sẽ được chèn vào đây -->
+            </div>
+            <div class="modal-actions">
+                <button id="back-to-bulk-input-btn" class="btn-secondary">Quay lại</button>
+                <button id="confirm-bulk-import-btn" class="btn-save">Xác nhận nhập</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast-container"></div>
 
     <!-- Nạp các script cần thiết -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script type="module" src="js/auth-guard.js"></script>
     <script type="module" src="js/manager-nav.js"></script>
     <script type="module" src="js/toast.js"></script>
