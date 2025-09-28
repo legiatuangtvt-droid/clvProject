@@ -232,3 +232,22 @@
 .signature-block p {
     margin: 0;
 }
+
+/* --- Responsive Styles --- */
+@media (max-width: 768px) {
+    .report-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .report-content-area {
+        padding: 10px;
+        background-color: transparent;
+    }
+
+    #report-page {
+        width: 100%;
+        padding: 1cm;
+        box-shadow: none;
+    }
+}

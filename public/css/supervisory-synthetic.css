@@ -9,11 +9,14 @@
 /* Kế thừa các style từ manager-synthetic.css */
 @import url('manager-synthetic.css');
 
-@media (max-width: 768px) {
+/* Thêm các quy tắc responsive cụ thể cho supervisory nếu cần,
+   hoặc để đảm bảo layout mobile hoạt động đúng */
+@media (max-width: 1200px) { /* Đồng bộ breakpoint với manager-synthetic.css */
     .synthetic-layout-container {
-        grid-template-columns: 1fr;
+        flex-direction: column; /* Chuyển sang layout cột */
     }
     .synthetic-sidebar {
-        position: static;
+        position: static; /* Bỏ sticky trên mobile */
+        max-height: none;
     }
 }

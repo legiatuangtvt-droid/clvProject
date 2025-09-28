@@ -296,31 +296,25 @@ function setupScrollToTop() {
 function setupMenuToggle() {
     const sidebar = document.querySelector('.sidebar');
     const topBar = document.querySelector('.top-bar');
-    if (!sidebar || !topBar) return;
+    if (!sidebar || !topBar) return;    
 
     // Logic được chia làm 2 trường hợp: Mobile và Desktop
-    if (window.innerWidth > 768) {
-        // --- TRƯỜNG HỢP 1: DESKTOP ---
-        // Chỉ cần xử lý sự kiện hover để mở/đóng menu.
-        // Không cần tạo nút hamburger.
-        sidebar.addEventListener('mouseenter', () => {
-            sidebar.classList.add('expanded');
-        });
-
-        sidebar.addEventListener('mouseleave', () => {
-            sidebar.classList.remove('expanded');
-        });
-    }
-    else {
+    if (window.innerWidth <= 768) {
         // --- TRƯỜNG HỢP 2: MOBILE ---
         // Cần tạo nút hamburger và overlay để người dùng có thể click mở/đóng menu.
-        const menuToggleBtn = document.createElement('button');
-        menuToggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
-        menuToggleBtn.className = 'menu-toggle-btn icon-button';
-        menuToggleBtn.title = 'Mở menu';
-
-        // Chèn nút hamburger vào đầu top-bar
-        topBar.prepend(menuToggleBtn);
+        
+        // Cải tiến: Chỉ tạo nút nếu nó chưa tồn tại để tránh trùng lặp
+        let menuToggleBtn = topBar.querySelector('.menu-toggle-btn');
+        if (!menuToggleBtn) {
+            menuToggleBtn = document.createElement('button');
+            menuToggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
+            menuToggleBtn.className = 'menu-toggle-btn icon-button';
+            menuToggleBtn.title = 'Mở menu';
+    
+            // Chèn nút hamburger vào đầu top-bar
+            topBar.prepend(menuToggleBtn);
+            console.log('Đã thực thi thao tác chèn button hamburger.');
+        }
 
         const overlay = document.createElement('div');
         overlay.className = 'sidebar-overlay';
@@ -334,5 +328,17 @@ function setupMenuToggle() {
 
         menuToggleBtn.addEventListener('click', toggleMenu);
         overlay.addEventListener('click', toggleMenu);
+    }
+    else {
+        // --- TRƯỜNG HỢP 1: DESKTOP ---
+        // Chỉ cần xử lý sự kiện hover để mở/đóng menu.
+        // Không cần tạo nút hamburger.
+        sidebar.addEventListener('mouseenter', () => {
+            sidebar.classList.add('expanded');
+        });
+
+        sidebar.addEventListener('mouseleave', () => {
+            sidebar.classList.remove('expanded');
+        });
     }
 }

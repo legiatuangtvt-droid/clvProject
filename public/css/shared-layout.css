@@ -73,7 +73,14 @@
     color: #2c3e50;
 }
 
+/* Nút bật/tắt menu trên mobile */
+.menu-toggle-btn {
+    display: none; /* Ẩn trên desktop */
+    margin-right: 15px; /* Tạo khoảng cách với các thành phần khác */
+}
+
 /* --- Responsive Top Bar --- */
+/* Đồng bộ breakpoint với JS: Sử dụng max-width: 768px */
 @media (max-width: 768px) {
     .top-bar {
         padding: 10px 15px;
@@ -87,6 +94,11 @@
         text-align: center;
         margin-top: 5px;
         display: none; /* Tạm ẩn tiêu đề chính trên mobile để gọn hơn */
+    }
+
+    /* Hiển thị nút menu trên mobile */
+    .menu-toggle-btn {
+        display: flex;
     }
 }
 

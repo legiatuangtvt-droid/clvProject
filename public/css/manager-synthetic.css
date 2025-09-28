@@ -685,6 +685,13 @@
     .registration-info p {
         font-size: 0.9rem;
     }
+
+    /* Điều chỉnh modal cho màn hình nhỏ */
+    .bulk-import-modal .modal-content,
+    .equipment-stats-modal .modal-content {
+        width: 95vw;
+        max-width: none;
+    }
 }
 
 /* Đơn giản hóa selector */

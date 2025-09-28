@@ -127,11 +127,6 @@ body {
     border-bottom: 1px solid #e9ecef;
 }
 
-.menu-toggle-btn {
-    display: none; /* Ẩn trên desktop, sẽ được hiện ở media query */
-    font-size: 1.2rem;
-}
-
 .user-info {
     display: flex;
     align-items: center;
@@ -315,11 +310,7 @@ body {
         padding: 15px;
     }
 
-    .menu-toggle-btn {
-        display: block; /* Hiện nút hamburger */
-    }
-
-    .sidebar-overlay {
+     .sidebar-overlay {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
         background-color: rgba(0,0,0,0.5);

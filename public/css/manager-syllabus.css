@@ -187,7 +187,7 @@
     }
 
     .syllabus-table {
-        min-width: 600px; /* Ensure table has a minimum width to prevent cramping */
+        min-width: 700px; /* Tăng nhẹ để đảm bảo các cột không bị quá hẹp */
         font-size: 0.9rem;
     }
 

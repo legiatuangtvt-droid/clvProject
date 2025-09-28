@@ -259,4 +259,15 @@
     .report-actions {
         flex-direction: column;
     }
+
+    .report-preview-area {
+        padding: 10px; /* Giảm padding trên mobile */
+        background-color: transparent; /* Bỏ nền xám */
+    }
+
+    .report-page {
+        width: 100%; /* Chiếm toàn bộ chiều rộng */
+        padding: 1cm; /* Giảm lề */
+        box-shadow: none; /* Bỏ bóng đổ */
+    }
 }

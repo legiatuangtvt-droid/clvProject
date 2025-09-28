@@ -118,14 +118,6 @@ body {
     overflow-y: auto; /* Đảm bảo có thể cuộn nếu nội dung dài */
 }
 
-/* Nút hamburger menu */
-.menu-toggle-btn {
-    display: none; /* Ẩn trên desktop */
-    font-size: 1.2rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-}
 /* Modal Styles */
 .modal-overlay {
     position: fixed;
@@ -188,14 +180,6 @@ body {
 
     .sidebar.expanded {
         transform: translateX(0);
-    }
-
-    .top-bar {
-        padding: 10px 15px;
-    }
-
-    .top-bar h1 {
-        font-size: 1.2rem;
     }
 
     .main-content {
