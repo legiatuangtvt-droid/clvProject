@@ -74,12 +74,16 @@ body {
 
 .nav-link span {
     white-space: nowrap;
-    opacity: 0; /* Ẩn chữ mặc định */
-    transition: opacity 0.2s ease;
+    opacity: 0;
+    visibility: hidden; /* Ẩn hoàn toàn và không nhận sự kiện chuột */
+    width: 0; /* Không chiếm không gian */
+    transition: opacity 0.2s ease, width 0.2s ease, visibility 0.2s;
 }
 
 .sidebar.expanded .nav-link span {
-    opacity: 1; /* Hiện chữ khi mở rộng */
+    opacity: 1;
+    visibility: visible; /* Hiển thị lại */
+    width: auto; /* Chiếm không gian tự nhiên */
     transition-delay: 0.1s;
 }
 
