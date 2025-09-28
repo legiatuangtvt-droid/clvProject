@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const subjectRepairContainer = document.getElementById('subject-repair-results-container');
     const findMissingGroupIdBtn = document.getElementById('find-missing-groupid-btn');
     const groupIdRepairContainer = document.getElementById('groupid-repair-results-container');
+    const runAllRepairsBtn = document.getElementById('run-all-repairs-btn');
+    const allRepairsStatusContainer = document.getElementById('all-repairs-status-container');
     const rulesContainer = document.getElementById('rules-container');
     const saveRulesBtn = document.getElementById('save-rules-btn');
     const activeScheduleTitle = document.getElementById('active-schedule-title');
@@ -85,6 +87,37 @@ document.addEventListener('DOMContentLoaded', () => {
         return cleanedName.replace('Giáo dục thể chất - QP', placeholder)
                           .split(/\s*-\s*/)
                           .map(s => s.trim().replace(placeholder, 'Giáo dục thể chất - QP'));
+    };
+
+    // --- ALL REPAIRS FUNCTION ---
+    const runAllRepairs = async () => {
+        runAllRepairsBtn.disabled = true;
+        runAllRepairsBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Đang xử lý...`;
+        allRepairsStatusContainer.innerHTML = `<p>Bắt đầu quá trình sửa lỗi toàn bộ...</p>`;
+
+        try {
+            // Step 1: Orphaned Teacher IDs
+            allRepairsStatusContainer.innerHTML += `<p><i class="fas fa-spinner fa-spin"></i> 1/3: Đang quét lỗi Teacher ID mồ côi...</p>`;
+            await findAndRepairOrphanedRegs();
+            allRepairsStatusContainer.innerHTML += `<p class="success-message"><i class="fas fa-check-circle"></i> Hoàn thành quét lỗi Teacher ID.</p>`;
+
+            // Step 2: Subject Mismatches
+            allRepairsStatusContainer.innerHTML += `<p><i class="fas fa-spinner fa-spin"></i> 2/3: Đang quét lỗi sai môn học...</p>`;
+            await findAndRepairSubjectMismatches();
+            allRepairsStatusContainer.innerHTML += `<p class="success-message"><i class="fas fa-check-circle"></i> Hoàn thành quét lỗi sai môn học.</p>`;
+
+            // Step 3: Missing Group IDs
+            allRepairsStatusContainer.innerHTML += `<p><i class="fas fa-spinner fa-spin"></i> 3/3: Đang quét lỗi thiếu Group ID...</p>`;
+            await findAndRepairMissingGroupId();
+            allRepairsStatusContainer.innerHTML += `<p class="success-message"><i class="fas fa-check-circle"></i> Hoàn thành quét lỗi thiếu Group ID.</p>`;
+
+            allRepairsStatusContainer.innerHTML += `<h4 class="final-success-message"><i class="fas fa-flag-checkered"></i> Đã hoàn tất quá trình sửa lỗi. Vui lòng xem kết quả chi tiết ở từng mục bên dưới.</h4>`;
+        } catch (error) {
+            allRepairsStatusContainer.innerHTML += `<p class="error-message"><i class="fas fa-exclamation-triangle"></i> Quá trình đã bị dừng do có lỗi. Vui lòng kiểm tra console và thử lại.</p>`;
+        } finally {
+            runAllRepairsBtn.disabled = false;
+            runAllRepairsBtn.innerHTML = `<i class="fas fa-magic"></i> Chạy tất cả chức năng sửa lỗi`;
+        }
     };
     // --- DATA REPAIR FUNCTIONS ---
     const findAndRepairOrphanedRegs = async () => {
@@ -1320,6 +1353,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Sửa lỗi thiếu groupId ---
     findMissingGroupIdBtn.addEventListener('click', findAndRepairMissingGroupId);
+
+    // --- Chạy tất cả sửa lỗi ---
+    runAllRepairsBtn.addEventListener('click', runAllRepairs);
 
     // --- Áp dụng mùa ---
     applySummerBtn.addEventListener('click', () => applySeason('summer'));
