@@ -637,6 +637,40 @@
 .preview-table tbody tr:hover {
     background-color: #f1f5f9; /* Màu nền xám nhạt khi hover */
 }
+
+/* --- NEW: School Year Selector Header (manager-setting.html) --- */
+.school-year-selector-header {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+.selector-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    max-width: 500px; /* Giới hạn chiều rộng để trông gọn gàng hơn */
+}
+
+.selector-container #school-year-select {
+    flex-grow: 1; /* Cho phép select co giãn */
+    padding: 10px 15px;
+    font-size: 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    background-color: #fff;
+    font-weight: 500;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.selector-container #school-year-select:focus {
+    border-color: #1abc9c;
+    box-shadow: 0 0 0 0.2rem rgba(26, 188, 156, 0.25);
+    outline: none;
+}
+
 /* --- Mobile Schedule (Card View) --- */
 .mobile-schedule {
     display: none; /* Ẩn trên desktop */

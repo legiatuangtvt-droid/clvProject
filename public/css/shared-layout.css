@@ -252,6 +252,32 @@
 .btn-danger { background-color: #dc3545; color: white; border-color: #dc3545; }
 .btn-danger:hover { background-color: #c82333; border-color: #bd2130; }
 
+/* --- NEW: Button Loading Spinner --- */
+.btn-spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Khi nút có class 'loading' */
+.btn-save.loading, .btn-primary.loading {
+    pointer-events: none; /* Ngăn click nhiều lần */
+}
+
+.btn-save.loading .btn-text, .btn-primary.loading .btn-text {
+    display: none;
+}
+.btn-save.loading .btn-spinner, .btn-primary.loading .btn-spinner {
+    display: block;
+}
 /* --- Cải tiến Bộ chọn tuần (Week Selector) --- */
 .week-selector-wrapper {
     position: relative;

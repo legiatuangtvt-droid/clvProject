@@ -105,37 +105,38 @@
 /* --- Tab Navigation --- */
 .tab-nav {
     display: flex;
-    gap: 5px;
+    gap: 8px; /* Tăng khoảng cách giữa các tab */
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 25px;
+    flex-wrap: wrap; /* Cho phép các tab xuống dòng trên màn hình nhỏ */
 }
 
 .tab-link {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 18px;
+    padding: 10px 16px; /* Điều chỉnh padding */
     cursor: pointer;
     border: none;
-    border-bottom: 3px solid transparent;
+    border-bottom: 2px solid transparent; /* Giữ lại border-bottom để tạo hiệu ứng */
     background-color: transparent;
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-light);
-    transition: color 0.2s, border-color 0.2s, background-color 0.2s;
-    border-radius: 8px 8px 0 0;
-    margin-bottom: -1px; /* Dịch lên để đè lên border của container */
+    transition: all 0.25s ease-in-out; /* Hiệu ứng chuyển động mượt mà hơn */
+    border-radius: 8px; /* Bo tròn tất cả các góc */
+    margin-bottom: -1px; /* Dịch lên để đè lên border của .tab-nav */
 }
 
 .tab-link:hover {
-    background-color: #e9ecef;
+    background-color: #f1f5f9; /* Màu nền hover nhẹ nhàng hơn */
     color: var(--text-dark);
 }
 
 .tab-link.active {
     color: var(--primary-color);
-    border-color: var(--primary-color);
-    background-color: var(--background-light);
+    background-color: #e8f8f5; /* Màu nền xanh lá cây rất nhạt cho tab active */
+    border-bottom-color: var(--primary-color); /* Giữ lại đường gạch chân cho tab active */
 }
 
 .tab-link .mobile-text {
@@ -150,12 +151,30 @@
     display: block;
 }
 
-/* --- Data Repair Tab --- */
+/* --- NEW: Data Repair Tab Improvements --- */
+#data-repair-content {
+    display: flex;
+    flex-direction: column;
+    gap: 30px; /* Khoảng cách giữa các card chức năng */
+}
+
+.repair-section-card {
+    background-color: var(--background-light);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    box-shadow: var(--card-shadow);
+    transition: box-shadow 0.2s ease-in-out;
+}
+.repair-section-card:hover {
+    box-shadow: var(--card-shadow-hover);
+}
+
 .instruction-text {
     background-color: #f8f9fa;
-    border-left: 4px solid #6c757d;
+    border-left: 4px solid var(--primary-color);
     padding: 15px;
-    margin: 20px 0;
+    margin-bottom: 25px;
     border-radius: 0 8px 8px 0;
     color: #495057;
     font-size: 0.9rem;
@@ -169,12 +188,10 @@
     margin-bottom: 10px;
 }
 
-.data-repair-results-container {
+.data-repair-results-container,
+#subject-repair-results-container,
+#groupid-repair-results-container {
     margin-top: 25px;
-    padding: 20px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background-color: #fcfdff;
 }
 
 .repair-header {
@@ -205,6 +222,11 @@
     border: 1px solid var(--border-color);
     border-radius: 10px;
     background-color: var(--background-light);
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.repair-item:hover {
+    background-color: #f8f9fa;
 }
 
 .repair-info p {
@@ -233,6 +255,11 @@
     background-color: var(--background-light);
     box-sizing: border-box;
     transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.repair-action select.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(26, 188, 156, 0.25);
 }
 
 /* --- Container chứa các tổ --- */
@@ -423,13 +450,26 @@
     cursor: grabbing;
 }
 
-
 /* --- CSS cho chức năng thu gọn --- */
 .teacher-list, .add-teacher-btn {
     transition: all 0.4s ease-in-out;
     overflow: hidden;
 }
 
+/* --- NEW: Cải thiện Form trong Modal Giáo viên --- */
+#teacher-modal .form-group textarea,
+#teacher-modal .form-group select {
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#teacher-modal .form-group textarea:focus,
+#teacher-modal .form-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(26, 188, 156, 0.25);
+    outline: none;
+}
+
+/* --- Ghi chú trong Modal --- */
 .group-card.collapsed .teacher-list {
     max-height: 0;
     padding-top: 0;
@@ -447,15 +487,13 @@
     transform: rotate(-90deg);
 }
 
-/* --- Ghi chú trong Modal --- */
 .form-note {
-    margin-top: 20px;
-    padding: 12px;
-    background-color: #fef3cd;
-    border: 1px solid #ffeeba;
-    border-radius: 8px;
+    margin-top: 8px; /* Giảm khoảng cách với trường select */
+    padding: 0;
+    background-color: transparent;
+    border: none;
     font-size: 0.85rem;
-    color: #856404;
+    color: var(--text-light); /* Màu chữ nhẹ nhàng hơn */
 }
 
 .form-note p {
@@ -534,29 +572,60 @@
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    border-radius: var(--border-radius); /* Bo góc cho bảng */
+    overflow: hidden; /* Đảm bảo bo góc hoạt động với border-collapse */
+    box-shadow: var(--card-shadow); /* Thêm bóng đổ nhẹ */
 }
 
 .weekly-plan-table th,
 .weekly-plan-table td {
-    padding: 12px 15px;
-    text-align: left;
+    padding: 10px 15px; /* Giảm padding để bảng gọn hơn */
+    text-align: center;
     border-bottom: 1px solid var(--border-color);
+    vertical-align: middle; /* Căn giữa theo chiều dọc */
 }
 
 .weekly-plan-table th {
     background-color: #f8f9fa;
     font-weight: 600;
     color: var(--text-dark);
+    text-align: center; /* Căn giữa tiêu đề */
 }
 
 .weekly-plan-table tbody tr:hover {
     background-color: #f1f5f9;
 }
 
+.weekly-plan-table td:nth-child(1), /* Tuần */
+.weekly-plan-table td:nth-child(2), /* Học kỳ */
+.weekly-plan-table td:nth-child(3), /* Tháng báo cáo */
+.weekly-plan-table td:nth-child(6) { /* Hành động */
+    text-align: center;
+}
+
 .weekly-plan-table td input[type="date"] {
     padding: 6px 10px;
     border: 1px solid #ced4da;
     border-radius: 6px;
+    font-size: 0.9rem; /* Đồng bộ font size */
+    box-sizing: border-box; /* Đảm bảo kích thước chính xác */
+}
+
+/* Nút chỉnh sửa trong bảng */
+.weekly-plan-table .edit-week-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-light);
+    font-size: 1rem;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.weekly-plan-table .edit-week-btn:hover {
+    background-color: #e9ecef;
+    color: var(--primary-color);
 }
 
 /* --- Dashboard Grid --- */
@@ -608,31 +677,87 @@
     gap: 15px;
     margin-top: 20px;
 }
-
 .rule-option {
     display: flex;
     align-items: flex-start;
     gap: 15px;
     padding: 15px;
     border: 1px solid var(--border-color);
-    border-radius: 10px;
+    border-radius: var(--border-radius);
     background-color: #fff;
     cursor: pointer;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+    position: relative; /* Cần thiết cho pseudo-element */
 }
 
 .rule-option:hover {
     border-color: var(--primary-color);
+    background-color: #fcfdff;
 }
 
 .rule-option input[type="radio"] {
-    margin-top: 3px;
+    /* Ẩn radio button mặc định */
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #adb5bd;
+    border-radius: 50%;
+    margin-top: 2px;
     flex-shrink: 0;
+    transition: border-color 0.2s, background-color 0.2s;
+    display: grid;
+    place-content: center;
+}
+
+.rule-option input[type="radio"]::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    transform: scale(0);
+    transition: transform 0.2s ease-in-out;
+}
+
+.rule-option input[type="radio"]:checked {
+    border-color: var(--primary-color);
+}
+.rule-option input[type="radio"]:checked::before {
+    transform: scale(1);
 }
 
 .rule-option label p {
     margin: 0;
     color: var(--text-light);
+}
+
+.rule-option input[type="radio"]:checked + label strong {
+    color: var(--primary-color);
+}
+
+.rule-option input[type="radio"]:checked ~ .rule-selected-icon {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Thêm style cho thẻ div chứa các quy tắc khi một quy tắc được chọn */
+.rule-option:has(input[type="radio"]:checked) {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(26, 188, 156, 0.2);
+    background-color: #f0f9f8;
+}
+
+/* Icon check khi một quy tắc được chọn */
+.rule-selected-icon {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    transform: translateY(-5px);
 }
 
 /* --- Class Timings Tab --- */
@@ -762,63 +887,73 @@
     justify-content: center; /* Căn giữa nội dung của nút */
 }
 
-.btn-apply-season .fa-sun { color: #f39c12; }
-.btn-apply-season .fa-snowflake { color: #3498db; }
-
 /* --- New Styles for Timings Configuration --- */
 .timings-config-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
-    margin-top: 20px;
+    margin-bottom: 25px; /* Thêm khoảng cách dưới */
 }
 
 .config-card {
-    background-color: #fdfdff;
+    background-color: #f8f9fa;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     padding: 20px;
 }
 
 .config-card h4 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--text-dark);
+    margin: 0 0 20px 0;
 }
 
 .config-card .form-group {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 15px;
 }
 
-@media (max-width: 992px) {
-    .timings-container {
-        grid-template-columns: 1fr; /* Chuyển thành 1 cột trên màn hình nhỏ hơn */
-    }
+.config-card .btn-apply-season {
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px;
 }
+
+.btn-apply-season .fa-sun { color: #f39c12; }
+.btn-apply-season .fa-snowflake { color: #3498db; }
+
 /* --- Responsive Styles for Mobile --- */
 @media (max-width: 768px) {
     /* --- General Layout --- */
     .content-card {
         padding: 15px;
     }
-
-    .page-header {
+    .page-header, .content-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
     }
-
-    .page-header h2 {
+    .page-header h2, .content-header h2 {
         font-size: 1.5rem;
     }
 
+    /* --- School Year Selector --- */
+    .school-year-selector-header {
+        padding: 15px;
+        border-bottom: none; /* Bỏ border dưới trên mobile */
+    }
+    .selector-container {
+        flex-direction: column;
+        align-items: stretch;
+        max-width: 100%;
+    }
+    .selector-container #add-school-year-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
     /* --- Tab Navigation --- */
+    .tab-nav { gap: 5px; }
     .tab-nav {
         overflow-x: auto;
         white-space: nowrap;
@@ -856,43 +991,71 @@
         max-height: 85vh; /* Giảm chiều cao tối đa để vừa vặn hơn */
     }
 
-    .tab-link .desktop-text {
-        display: none; /* Ẩn văn bản desktop trên mobile */
-    }
-
-    .tab-link .mobile-text {
-        display: inline; /* Hiển thị văn bản mobile */
-    }
-}
-
-/* --- Responsive Styles --- */
-@media (max-width: 768px) {
-    .tab-nav {
-        gap: 5px;
-    }
-    .tab-link {
-        padding: 10px;
-        font-size: 0.8rem;
-    }
-    .tab-link .desktop-text { display: none; }
-    .tab-link .mobile-text { display: inline; }
-
-    .group-card .group-header {
-        flex-wrap: wrap;
-    }
-    .group-title-container {
-        flex-basis: 100%;
-        margin-bottom: 10px;
-    }
-
+    /* --- Time Plan & Class Timings Tab --- */
     .time-plan-setup-card .form-row,
     .timings-config-grid {
         flex-direction: column;
         grid-template-columns: 1fr;
     }
+    .time-plan-setup-card .form-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
 
-    .repair-header {
+    /* --- Data Repair Tab --- */
+    .repair-header, .repair-item {
         flex-direction: column;
         align-items: stretch;
+        gap: 15px;
     }
+    .repair-action {
+        width: 100%;
+    }
+
+    /* --- Class Timings Tab --- */
+    .timings-container {
+        grid-template-columns: 1fr; /* Chuyển thành 1 cột trên màn hình nhỏ hơn */
+    }
+
+    .config-card .form-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}
+
+/* --- NEW: Modal Header Icons --- */
+.modal-content h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-content h2::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+/* Specific icons for each modal */
+#group-modal .modal-content h2::before {
+    content: '\f0c0'; /* fa-users */
+}
+#method-modal .modal-content h2::before {
+    content: '\f0eb'; /* fa-lightbulb */
+}
+#school-year-modal .modal-content h2::before {
+    content: '\f271'; /* fa-calendar-plus */
+}
+#teacher-modal .modal-content h2::before {
+    content: '\f234'; /* fa-user-plus */
+}
+#week-edit-modal .modal-content h2::before {
+    content: '\f044'; /* fa-edit */
+}
+#confirm-delete-modal .modal-content h2::before {
+    content: '\f182'; /* fa-exclamation-triangle */
+    color: #dc3545; /* Màu đỏ cho cảnh báo xóa */
 }

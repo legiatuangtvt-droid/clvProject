@@ -56,7 +56,7 @@
                     <div class="tab-nav">
                         <button class="tab-link active" data-tab="groups-teachers"><i class="fas fa-users"></i><span class="desktop-text">Tổ chuyên môn & Giáo viên</span><span class="mobile-text">Tổ & GV</span></button>
                         <button class="tab-link" data-tab="teaching-methods"><i class="fas fa-lightbulb"></i><span class="desktop-text">Phương pháp dạy học</span><span class="mobile-text">PPDH</span></button>
-                        <button class="tab-link" data-tab="data-repair-content"><i class="fas fa-tools"></i><span class="desktop-text">Sửa lỗi dữ liệu</span><span class="mobile-text">Sửa lỗi</span></button>
+                        <button class="tab-link" data-tab="data-repair"><i class="fas fa-tools"></i><span class="desktop-text">Sửa lỗi dữ liệu</span><span class="mobile-text">Sửa lỗi</span></button>
                         <button class="tab-link" data-tab="time-plan"><i class="fas fa-calendar-alt"></i><span class="desktop-text">Kế hoạch thời gian</span><span class="mobile-text">Kế hoạch</span></button>
                         <button class="tab-link" data-tab="registration-rules"><i class="fas fa-gavel"></i><span class="desktop-text">Quy tắc Đăng ký</span><span class="mobile-text">Quy tắc</span></button>
                         <button class="tab-link" data-tab="class-timings"><i class="fas fa-clock"></i><span class="desktop-text">Thời gian tiết học</span><span class="mobile-text">Tiết học</span></button>
@@ -77,43 +77,52 @@
                             </div>
                             <div id="methods-container"><p>Vui lòng chọn một năm học để xem dữ liệu.</p></div>
                         </div>
-                        
+
                         <!-- Tab Sửa lỗi dữ liệu -->
-                        <div id="data-repair-content" class="tab-content">
-                            <div class="content-header">
-                                <h2>Sửa lỗi Teacher ID (Tài khoản bị xóa)</h2>
-                                <button id="find-orphaned-regs-btn" class="btn-primary"><i class="fas fa-user-slash"></i> Quét ID giáo viên mồ côi</button>
-                            </div>
-                            <div class="instruction-text">
-                                <p><i class="fas fa-info-circle"></i> Chức năng này sẽ quét toàn bộ các lượt đăng ký để tìm những đăng ký có `teacherId` không còn tồn tại trong danh sách giáo viên hiện tại (do tài khoản giáo viên đã bị xóa và tạo lại).</p>
-                                <p>Sau khi quét, bạn có thể chọn giáo viên mới để gán lại cho các lượt đăng ký bị "mồ côi" này.</p>
-                            </div>
-                            <div id="data-repair-results-container">
-                                <!-- Kết quả quét sẽ được hiển thị ở đây -->
-                            </div>
-
-                            <div class="content-header" style="margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 25px;">
-                                <h2>Sửa lỗi sai môn học</h2>
-                                <button id="find-subject-mismatch-btn" class="btn-primary"><i class="fas fa-book"></i> Quét môn học không khớp</button>
-                            </div>
-                            <div class="instruction-text">
-                                <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tìm các lượt đăng ký có môn học không khớp với môn học chính của giáo viên. Bạn có thể tự động sửa tất cả các lỗi này về đúng môn học đã được phân công.</p>
-                                <p><strong>Ngoại lệ:</strong> GV môn <strong>Sinh học</strong> được phép dạy <strong>Công nghệ nông nghiệp</strong>. GV môn <strong>Vật lí</strong> được phép dạy <strong>Công nghệ công nghiệp</strong>.</p>
-                            </div>
-                            <div id="subject-repair-results-container">
-                                <!-- Kết quả quét lỗi môn học sẽ hiển thị ở đây -->
+                        <div id="data-repair" class="tab-content">
+                            <!-- Card cho chức năng sửa Teacher ID -->
+                            <div class="repair-section-card">
+                                <div class="content-header">
+                                    <h2>Sửa lỗi Teacher ID (Tài khoản bị xóa)</h2>
+                                    <button id="find-orphaned-regs-btn" class="btn-primary"><i class="fas fa-user-slash"></i> Quét ID giáo viên mồ côi</button>
+                                </div>
+                                <div class="instruction-text">
+                                    <p><i class="fas fa-info-circle"></i> Chức năng này sẽ quét toàn bộ các lượt đăng ký để tìm những đăng ký có `teacherId` không còn tồn tại trong danh sách giáo viên hiện tại (do tài khoản giáo viên đã bị xóa và tạo lại).</p>
+                                    <p>Sau khi quét, bạn có thể chọn giáo viên mới để gán lại cho các lượt đăng ký bị "mồ côi" này.</p>
+                                </div>
+                                <div id="data-repair-results-container">
+                                    <!-- Kết quả quét sẽ được hiển thị ở đây -->
+                                </div>
                             </div>
 
-                            <div class="content-header" style="margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 25px;">
-                                <h2>Sửa lỗi thiếu ID Tổ chuyên môn</h2>
-                                <button id="find-missing-groupid-btn" class="btn-primary"><i class="fas fa-sitemap"></i> Quét đăng ký thiếu ID Tổ</button>
+                            <!-- Card cho chức năng sửa Môn học -->
+                            <div class="repair-section-card">
+                                <div class="content-header">
+                                    <h2>Sửa lỗi sai môn học</h2>
+                                    <button id="find-subject-mismatch-btn" class="btn-primary"><i class="fas fa-book"></i> Quét môn học không khớp</button>
+                                </div>
+                                <div class="instruction-text">
+                                    <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tìm các lượt đăng ký có môn học không khớp với môn học chính của giáo viên. Bạn có thể tự động sửa tất cả các lỗi này về đúng môn học đã được phân công.</p>
+                                    <p><strong>Ngoại lệ:</strong> GV môn <strong>Sinh học</strong> được phép dạy <strong>Công nghệ nông nghiệp</strong>. GV môn <strong>Vật lí</strong> được phép dạy <strong>Công nghệ công nghiệp</strong>.</p>
+                                </div>
+                                <div id="subject-repair-results-container">
+                                    <!-- Kết quả quét lỗi môn học sẽ hiển thị ở đây -->
+                                </div>
                             </div>
-                            <div class="instruction-text">
-                                <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tìm các lượt đăng ký không được lưu `groupId` (thường là dữ liệu cũ). Việc thiếu `groupId` có thể khiến báo cáo hiển thị sai tổ chuyên môn nếu giáo viên đã chuyển tổ.</p>
-                                <p>Sau khi quét, bạn có thể tự động cập nhật `groupId` chính xác cho các lượt đăng ký này dựa trên thông tin tổ của giáo viên tại thời điểm quét.</p>
-                            </div>
-                            <div id="groupid-repair-results-container">
-                                <!-- Kết quả quét lỗi groupId sẽ hiển thị ở đây -->
+
+                            <!-- Card cho chức năng sửa Group ID -->
+                            <div class="repair-section-card">
+                                <div class="content-header">
+                                    <h2>Sửa lỗi thiếu ID Tổ chuyên môn</h2>
+                                    <button id="find-missing-groupid-btn" class="btn-primary"><i class="fas fa-sitemap"></i> Quét đăng ký thiếu ID Tổ</button>
+                                </div>
+                                <div class="instruction-text">
+                                    <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tìm các lượt đăng ký không được lưu `groupId` (thường là dữ liệu cũ). Việc thiếu `groupId` có thể khiến báo cáo hiển thị sai tổ chuyên môn nếu giáo viên đã chuyển tổ.</p>
+                                    <p>Sau khi quét, bạn có thể tự động cập nhật `groupId` chính xác cho các lượt đăng ký này dựa trên thông tin tổ của giáo viên tại thời điểm quét.</p>
+                                </div>
+                                <div id="groupid-repair-results-container">
+                                    <!-- Kết quả quét lỗi groupId sẽ hiển thị ở đây -->
+                                </div>
                             </div>
                         </div>
 
@@ -245,7 +254,10 @@
             <div class="modal-actions">
                 <div class="modal-actions-right">
                     <button id="cancel-group-modal" class="btn-cancel">Hủy</button>
-                    <button id="save-group-btn" class="btn-save">Lưu</button>
+                    <button id="save-group-btn" class="btn-save">
+                        <span class="btn-text">Lưu</span>
+                        <span class="btn-spinner"></span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -262,7 +274,10 @@
             <div class="modal-actions">
                 <div class="modal-actions-right">
                     <button id="cancel-method-modal" class="btn-cancel">Hủy</button>
-                    <button id="save-method-btn" class="btn-save">Lưu</button>
+                    <button id="save-method-btn" class="btn-save">
+                        <span class="btn-text">Lưu</span>
+                        <span class="btn-spinner"></span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -279,7 +294,10 @@
             <div class="modal-actions">
                 <div class="modal-actions-right">
                     <button id="cancel-school-year-modal" class="btn-cancel">Hủy</button>
-                    <button id="save-school-year-btn" class="btn-save">Lưu</button>
+                    <button id="save-school-year-btn" class="btn-save">
+                        <span class="btn-text">Lưu</span>
+                        <span class="btn-spinner"></span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -307,7 +325,10 @@
             <div class="modal-actions">
                 <div class="modal-actions-right">
                     <button id="cancel-teacher-modal" class="btn-cancel">Hủy</button>
-                    <button id="save-teacher-btn" class="btn-save">Lưu</button>
+                    <button id="save-teacher-btn" class="btn-save">
+                        <span class="btn-text">Lưu</span>
+                        <span class="btn-spinner"></span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -328,7 +349,10 @@
             <div class="modal-actions">
                 <div class="modal-actions-right">
                     <button id="cancel-week-edit-modal" class="btn-cancel">Hủy</button>
-                    <button id="save-week-btn" class="btn-save">Lưu</button>
+                    <button id="save-week-btn" class="btn-save">
+                        <span class="btn-text">Lưu</span>
+                        <span class="btn-spinner"></span>
+                    </button>
                 </div>
             </div>
         </div>

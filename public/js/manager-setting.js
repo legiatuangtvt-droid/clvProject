@@ -412,6 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <strong>${rule.title}</strong>
                         <p>${rule.description}</p>
                     </label>
+                    <span class="rule-selected-icon"><i class="fas fa-check-circle"></i></span>
                 </div>
             `).join('');
 
@@ -442,6 +443,18 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Lỗi khi lưu quy tắc:", error);
             showToast('Không thể lưu quy tắc. Vui lòng thử lại.', 'error');
+        }
+    };
+
+    // --- Helper for Button Loading State ---
+    const setButtonLoading = (button, isLoading) => {
+        if (!button) return;
+        if (isLoading) {
+            button.disabled = true;
+            button.classList.add('loading');
+        } else {
+            button.disabled = false;
+            button.classList.remove('loading');
         }
     };
 
@@ -1017,11 +1030,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Lưu Năm học mới
     document.getElementById('save-school-year-btn').addEventListener('click', async () => {
+        const saveBtn = document.getElementById('save-school-year-btn');
         const yearName = document.getElementById('school-year-name-input').value.trim();
         if (!yearName.match(/^\d{4}-\d{4}$/)) {
             showToast('Vui lòng nhập năm học đúng định dạng (VD: 2024-2025).', 'error');
             return;
         }
+
+        setButtonLoading(saveBtn, true);
 
         try {
             await addDoc(collection(firestore, 'schoolYears'), { schoolYear: yearName });
@@ -1031,16 +1047,21 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Lỗi khi lưu năm học:", error);
             showToast('Đã có lỗi xảy ra khi lưu năm học.', 'error');
+        } finally {
+            setButtonLoading(saveBtn, false);
         }
     });
 
     // Lưu Tổ (Thêm mới hoặc Cập nhật)
     document.getElementById('save-group-btn').addEventListener('click', async () => {
+        const saveBtn = document.getElementById('save-group-btn');
         const group_name = document.getElementById('group-name-input').value.trim();
         if (!group_name) {
             showToast('Vui lòng nhập tên tổ.', 'error');
             return;
         }
+
+        setButtonLoading(saveBtn, true);
 
         try {
             if (currentEditingId) { // Cập nhật
@@ -1078,11 +1099,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Lỗi khi lưu tổ:", error);
             showToast('Đã có lỗi xảy ra khi lưu tổ.', 'error');
+        } finally {
+            setButtonLoading(saveBtn, false);
         }
     });
 
     // Lưu Phương pháp dạy học (Thêm mới hoặc Cập nhật)
     document.getElementById('save-method-btn').addEventListener('click', async () => {
+        const saveBtn = document.getElementById('save-method-btn');
         const methodName = document.getElementById('method-name-input').value.trim();
         if (!methodName) {
             showToast('Vui lòng nhập tên phương pháp.', 'error');
@@ -1092,6 +1116,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Vui lòng chọn một năm học trước.', 'error');
             return;
         }
+
+        setButtonLoading(saveBtn, true);
 
         try {
             const data = {
@@ -1110,12 +1136,17 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Lỗi khi lưu phương pháp dạy học:", error);
             showToast('Đã có lỗi xảy ra khi lưu.', 'error');
+        } finally {
+            setButtonLoading(saveBtn, false);
         }
     });
 
     // Lưu Giáo viên (Thêm mới hoặc Cập nhật)
     document.getElementById('save-teacher-btn').addEventListener('click', async () => {
+        const saveBtn = document.getElementById('save-teacher-btn');
         const isEditMode = !!currentEditingId;
+        setButtonLoading(saveBtn, true);
+
         try {
             if (isEditMode) { // Cập nhật thông tin giáo viên
                 const teacher_name = document.getElementById('teacher-names-input').value.trim();
@@ -1161,11 +1192,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Lỗi khi lưu giáo viên:", error.code, error.message);
             showToast('Đã có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.', 'error');
+        } finally {
+            setButtonLoading(saveBtn, false);
         }
     });
 
     // Tạo kế hoạch thời gian
     document.getElementById('generate-plan-btn').addEventListener('click', async () => {
+        const generateBtn = document.getElementById('generate-plan-btn');
         const startDateString = document.getElementById('school-year-start-date').value;
         const reportDay = parseInt(document.getElementById('report-day-input').value);
         const semester1EndWeek = parseInt(document.getElementById('semester-end-week-input').value);
@@ -1184,6 +1218,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        setButtonLoading(generateBtn, true);
+
         try {
             const planCollectionRef = collection(firestore, 'timePlans');
             // Kiểm tra xem kế hoạch đã tồn tại chưa
@@ -1199,6 +1235,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 showToast('Đã cập nhật cấu hình kế hoạch.', 'success');
                 await loadTimePlan(currentSchoolYear);
+                setButtonLoading(generateBtn, false);
                 return;
             }
 
@@ -1231,15 +1268,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Lỗi khi tạo kế hoạch thời gian:", error);
             showToast('Đã có lỗi xảy ra khi tạo kế hoạch.', 'error');
+        } finally {
+            setButtonLoading(generateBtn, false);
         }
-    });
-
-    // Lưu chỉnh sửa tuần
-    document.getElementById('save-week-btn').addEventListener('click', async () => {
-        const newStartDate = document.getElementById('week-start-date-input').value;
-        const newEndDate = document.getElementById('week-end-date-input').value;
-        // Logic lưu tuần sẽ được thêm vào event listener của container
-        // Đây chỉ là ví dụ, logic thực tế sẽ nằm trong event delegation
     });
 
     // Xử lý chuyển tab
@@ -1502,6 +1533,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Lưu thay đổi của tuần
     document.getElementById('save-week-btn').addEventListener('click', async () => {
+        const saveBtn = document.getElementById('save-week-btn');
         if (!currentEditingWeekId || !currentSchoolYear) return;
 
         const newStartDate = document.getElementById('week-start-date-input').value;
@@ -1511,6 +1543,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Vui lòng nhập đầy đủ ngày bắt đầu và kết thúc.', 'error');
             return;
         }
+
+        setButtonLoading(saveBtn, true);
 
         try {
             // 1. Lấy ID của document kế hoạch
@@ -1573,6 +1607,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             showToast('Lỗi khi cập nhật tuần.', 'error');
             console.error("Lỗi khi cập nhật tuần:", error);
+        } finally {
+            setButtonLoading(saveBtn, false);
         }
     });
 

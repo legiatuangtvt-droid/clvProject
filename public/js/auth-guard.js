@@ -313,7 +313,6 @@ function setupMenuToggle() {
     
             // Chèn nút hamburger vào đầu top-bar
             topBar.prepend(menuToggleBtn);
-            console.log('Đã thực thi thao tác chèn button hamburger.');
         }
 
         const overlay = document.createElement('div');
