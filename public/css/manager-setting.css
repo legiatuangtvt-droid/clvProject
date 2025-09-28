@@ -49,27 +49,45 @@
 
 /* --- Header của trang & Selector Năm học --- */
 .school-year-selector-header {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    margin-bottom: 25px;
-    padding-bottom: 25px;
+    padding: 15px;
+    background-color: #f8f9fa;
     border-bottom: 1px solid var(--border-color);
+    margin-bottom: 20px;
+    border-radius: 8px;
 }
 
 .selector-container {
     display: flex;
-    gap: 10px;
     align-items: center;
+    gap: 15px;
+    max-width: 500px; /* Giới hạn chiều rộng để trông gọn gàng hơn */
 }
 
-.school-year-select {
-    min-width: 150px;
-    padding: 8px 12px;
-    border-radius: 8px;
+.selector-container label {
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+.selector-container #school-year-select {
+    min-width: 130px; /* Đặt độ rộng tối thiểu thay vì co giãn */
+    padding: 10px 15px;
+    font-size: 1rem;
     border: 1px solid #ced4da;
+    border-radius: 6px;
+    background-color: #fff;
+    font-weight: 500;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.selector-container #school-year-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(26, 188, 156, 0.25);
+    outline: none;
+}
+
+/* Kế thừa style từ shared-layout.css cho nút */
+.selector-container .btn-secondary {
+    flex-shrink: 0; /* Ngăn nút bị co lại */
 }
 
 /* --- Header của trang --- */
