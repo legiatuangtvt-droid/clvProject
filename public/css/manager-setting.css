@@ -1043,6 +1043,18 @@
         background-color: #ccc;
         border-radius: 2px;
     }
+    .tab-link {
+        padding: 8px 10px; /* Giảm padding cho gọn hơn */
+        gap: 5px; /* Giảm khoảng cách giữa icon và text */
+    }
+
+    .tab-link .desktop-text {
+        display: none; /* Ẩn text dài trên mobile */
+    }
+
+    .tab-link .mobile-text {
+        display: inline; /* Hiện text ngắn trên mobile */
+    }
 
     /* --- Groups & Teachers Tab --- */
     .groups-container {
