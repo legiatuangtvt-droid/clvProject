@@ -456,9 +456,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         desktopHTML += `</tbody></table></div>`;
-        // Mobile view can be added here if needed, similar to teacher-main.js
 
-        scheduleContainer.innerHTML = desktopHTML;
+        // --- MOBILE VIEW ---
+        let mobileHTML = `<div class="mobile-schedule">`;
+        weekDates.forEach((date, index) => {
+            mobileHTML += `
+                <div class="mobile-day-card">
+                    <div class="mobile-day-header">${daysOfWeek[index]} - ${formatDate(date)}</div>
+                    <div class="mobile-day-body">`;
+            
+            let hasRegsThisDay = false;
+            for (let period = 1; period <= 10; period++) {
+                const regsInSlot = filteredRegistrations.filter(r => r.date === date && r.period === period);
+                if (regsInSlot.length > 0) {
+                    hasRegsThisDay = true;
+                    const session = period <= 5 ? 'Sáng' : 'Chiều';
+                    const displayPeriod = period <= 5 ? period : period - 5;
+
+                    mobileHTML += `<div class="mobile-slot" data-date="${date}" data-period="${period}">`;
+                    mobileHTML += `<div class="mobile-period-info">Tiết ${displayPeriod}<br/>(${session})</div>`;
+                    // Tái sử dụng hàm renderSlotSummary cho giao diện mobile
+                    mobileHTML += `<div class="mobile-slot-summary-container">`;
+                    mobileHTML += renderSlotSummary(regsInSlot);
+                    mobileHTML += `</div></div>`;
+                }
+            }
+
+            if (!hasRegsThisDay) {
+                mobileHTML += `<p class="no-registrations-mobile">Không có lượt đăng ký nào.</p>`;
+            }
+
+            mobileHTML += `</div></div>`;
+        });
+        mobileHTML += `</div>`;
+
+        // Combine both views into the container
+        scheduleContainer.innerHTML = desktopHTML + mobileHTML;
     };
 
     // --- NEW: Slot Detail Modal ---
@@ -1037,7 +1070,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Schedule clicks
         scheduleContainer.addEventListener('click', (e) => {
             const slot = e.target.closest('.slot');
-            if (slot) { // Click on any slot
+            const mobileSlot = e.target.closest('.mobile-slot');
+            if (slot || mobileSlot) { // Click on any slot on desktop or mobile
                 openSlotDetailModal(slot.dataset.date, slot.dataset.period);
             } 
         });

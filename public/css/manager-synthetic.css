@@ -708,16 +708,23 @@
     .mobile-day-card { background-color: #fff; border: 1px solid #e9ecef; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }
     .mobile-day-header { padding: 12px 15px; background-color: #f8f9fa; font-weight: 600; border-bottom: 1px solid #e9ecef; }
     .mobile-day-body { padding: 15px; display: flex; flex-direction: column; gap: 15px; }
-    .mobile-slot { display: flex; align-items: flex-start; gap: 10px; }
-    .mobile-period-info { background-color: #f1f5f9; padding: 5px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; color: #6c757d; white-space: nowrap; }
-    .mobile-slot .registration-info { flex-grow: 1; }
+    .mobile-slot { display: flex; align-items: baseline; gap: 10px; }
+    .mobile-slot:hover { background-color: #e7f3ff; }
+    .mobile-period-info { background-color: #f1f5f9; padding: 5px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; color: #6c757d; white-space: nowrap; text-align: center; }
+    .mobile-slot-summary-container {
+        flex-grow: 1;
+        background-color: #e6f7f4;
+        border: 1px solid #e9ecef;        
+        padding: 5px;
+        border-radius: 8px;
+        align-items: center;
+        justify-content: space-around;
+    }
+
     .no-registrations-mobile { text-align: center; color: #999; font-style: italic; padding: 10px 0; }
     .mobile-day-footer { padding: 10px 15px; border-top: 1px solid #e9ecef; background-color: #fcfcfc; }
     .add-registration-mobile-btn { width: 100%; padding: 10px; background-color: #e7f3ff; border: 1px dashed #b8d9ff; color: #007bff; font-weight: 600; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-
-    .registration-info p {
-        font-size: 0.9rem;
-    }
+    
 
     /* Điều chỉnh modal cho màn hình nhỏ */
     .bulk-import-modal .modal-content,
