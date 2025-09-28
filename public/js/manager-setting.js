@@ -88,23 +88,46 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     // --- DATA REPAIR FUNCTIONS ---
     const findAndRepairOrphanedRegs = async () => {
-        dataRepairContainer.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Đang quét dữ liệu, vui lòng chờ...</p>`;
-
+        const container = dataRepairContainer;
+        container.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Đang quét dữ liệu, vui lòng chờ...</p>`;
+    
         try {
-            // 1. Lấy tất cả giáo viên hiện tại và tạo một Set các UID hợp lệ
+            // 1. Lấy tất cả giáo viên và tạo map/set cần thiết
             const teachersQuery = query(collection(firestore, 'teachers'));
             const teachersSnapshot = await getDocs(teachersQuery);
             const allCurrentTeachers = teachersSnapshot.docs.map(doc => ({ uid: doc.data().uid, name: doc.data().teacher_name, ...doc.data() }));
             const validTeacherUids = new Set(allCurrentTeachers.map(t => t.uid).filter(Boolean));
-
-            // 2. Lấy tất cả các lượt đăng ký
-            const regsQuery = query(collection(firestore, 'registrations'));
-            const regsSnapshot = await getDocs(regsQuery);
-
-            // 3. Tìm các đăng ký "mồ côi"
+    
+            // 2. Tối ưu hóa: Đếm tổng số đăng ký và số đăng ký hợp lệ
+            const totalRegsSnapshot = await getDocs(collection(firestore, 'registrations'));
+            const totalRegsCount = totalRegsSnapshot.size;
+    
+            const validUidsArray = Array.from(validTeacherUids);
+            const CHUNK_SIZE = 30; // Giới hạn của Firestore cho 'in' query
+            const chunks = [];
+            for (let i = 0; i < validUidsArray.length; i += CHUNK_SIZE) {
+                chunks.push(validUidsArray.slice(i, i + CHUNK_SIZE));
+            }
+    
+            const queryPromises = chunks.map(chunk => 
+                getDocs(query(collection(firestore, 'registrations'), where('teacherId', 'in', chunk)))
+            );
+            const snapshots = await Promise.all(queryPromises);
+            const validRegsCount = snapshots.reduce((acc, snapshot) => acc + snapshot.size, 0);
+    
+            // 3. Nếu số lượng khớp, không cần quét sâu hơn
+            if (totalRegsCount === validRegsCount) {
+                container.innerHTML = `<p class="success-message"><i class="fas fa-check-circle"></i> Không tìm thấy lượt đăng ký nào bị lỗi Teacher ID. Dữ liệu của bạn đã nhất quán!</p>`;
+                return;
+            }
+    
+            // 4. Nếu có sự chênh lệch, thực hiện quét sâu để tìm ra các đăng ký mồ côi
+            container.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Phát hiện sự không nhất quán. Đang phân tích chi tiết...</p>`;
             const orphanedRegs = new Map(); // Map: oldTeacherId -> { name, regs: [regDoc] }
-            regsSnapshot.forEach(doc => {
+    
+            totalRegsSnapshot.forEach(doc => {
                 const regData = doc.data();
+                // Chỉ kiểm tra những đăng ký có teacherId nhưng không nằm trong danh sách hợp lệ
                 if (regData.teacherId && !validTeacherUids.has(regData.teacherId)) {
                     const oldId = regData.teacherId;
                     if (!orphanedRegs.has(oldId)) {
@@ -113,22 +136,23 @@ document.addEventListener('DOMContentLoaded', () => {
                             regs: []
                         });
                     }
-                    orphanedRegs.get(oldId).regs.push({id: doc.id, ...regData});
+                    orphanedRegs.get(oldId).regs.push({ id: doc.id, ...regData });
                 }
             });
-
+    
             renderRepairUI(orphanedRegs, allCurrentTeachers);
-
+    
         } catch (error) {
-            console.error("Lỗi khi quét dữ liệu:", error);
-            dataRepairContainer.innerHTML = `<p class="error-message">Đã có lỗi xảy ra trong quá trình quét. Vui lòng thử lại.</p>`;
+            console.error("Lỗi khi quét dữ liệu mồ côi:", error);
+            container.innerHTML = `<p class="error-message">Đã có lỗi xảy ra trong quá trình quét. Vui lòng thử lại.</p>`;
             showToast('Quét dữ liệu thất bại!', 'error');
         }
     };
 
     const renderRepairUI = (orphanedMap, allCurrentTeachers) => {
+        const container = dataRepairContainer;
         if (orphanedMap.size === 0) {
-            dataRepairContainer.innerHTML = `<p class="success-message"><i class="fas fa-check-circle"></i> Không tìm thấy lượt đăng ký nào bị lỗi Teacher ID. Dữ liệu của bạn đã nhất quán!</p>`;
+            container.innerHTML = `<p class="success-message"><i class="fas fa-check-circle"></i> Không tìm thấy lượt đăng ký nào bị lỗi Teacher ID. Dữ liệu của bạn đã nhất quán!</p>`;
             return;
         }
 
@@ -165,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         html += `</div>`;
-        dataRepairContainer.innerHTML = html;
+        container.innerHTML = html;
 
         document.getElementById('execute-repair-btn').addEventListener('click', () => executeRepair(orphanedMap));
     };
@@ -205,50 +229,48 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- SUBJECT MISMATCH REPAIR FUNCTIONS ---
     const findAndRepairSubjectMismatches = async () => {
         subjectRepairContainer.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Đang quét dữ liệu môn học, vui lòng chờ...</p>`;
-
+    
         try {
-            // 1. Lấy tất cả giáo viên và tạo map UID -> teacherData
+            // 1. Lấy tất cả giáo viên có môn học chính được gán
             const teachersQuery = query(collection(firestore, 'teachers'));
             const teachersSnapshot = await getDocs(teachersQuery);
-            const teacherMap = new Map();
-            teachersSnapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.uid) { // Chỉ xử lý giáo viên đã có tài khoản
-                    teacherMap.set(data.uid, data);
-                }
+            const teachersWithSubject = teachersSnapshot.docs
+                .map(doc => doc.data())
+                .filter(t => t.uid && t.subject);
+    
+            if (teachersWithSubject.length === 0) {
+                subjectRepairContainer.innerHTML = `<p>Không có giáo viên nào được gán môn học chính để kiểm tra.</p>`;
+                return;
+            }
+    
+            // 2. Tối ưu hóa: Tạo các truy vấn song song cho mỗi giáo viên
+            // Tìm các đăng ký có môn học KHÁC với môn chính của họ
+            const queryPromises = teachersWithSubject.map(teacher => {
+                const regsQuery = query(
+                    collection(firestore, 'registrations'),
+                    where('teacherId', '==', teacher.uid),
+                    where('subject', '!=', teacher.subject)
+                );
+                return getDocs(regsQuery).then(snapshot => ({ teacher, snapshot }));
             });
-
-            // 2. Lấy tất cả lượt đăng ký
-            const regsQuery = query(collection(firestore, 'registrations'));
-            const regsSnapshot = await getDocs(regsQuery);
-
-            // 3. Tìm các lượt đăng ký có môn học không khớp
+    
+            const results = await Promise.all(queryPromises);
+    
+            // 3. Lọc và tổng hợp các kết quả không khớp
             const mismatches = [];
-            regsSnapshot.forEach(doc => {
-                const regData = doc.data();
-                const regId = doc.id;
-                const teacher = teacherMap.get(regData.teacherId);
-
-                // Chỉ kiểm tra nếu tìm thấy giáo viên và giáo viên đó có môn học chính được gán
-                if (teacher && teacher.subject && regData.subject !== teacher.subject) {
-                    // Kiểm tra các trường hợp ngoại lệ
+            for (const { teacher, snapshot } of results) {
+                snapshot.forEach(doc => {
+                    const regData = doc.data();
+                    // Kiểm tra các trường hợp ngoại lệ sau khi đã có kết quả
                     const isBioException = teacher.subject === 'Sinh học' && regData.subject === 'Công nghệ nông nghiệp';
                     const isPhysicsException = teacher.subject === 'Vật lí' && regData.subject === 'Công nghệ công nghiệp';
-
+    
                     if (!isBioException && !isPhysicsException) {
-                        mismatches.push({
-                            regId,
-                            teacherName: teacher.teacher_name,
-                            date: regData.date,
-                            period: regData.period,
-                            className: regData.className,
-                            wrongSubject: regData.subject,
-                            correctSubject: teacher.subject
-                        });
+                        mismatches.push({ regId: doc.id, teacherName: teacher.teacher_name, correctSubject: teacher.subject, ...regData });
                     }
-                }
-            });
-
+                });
+            }
+    
             renderSubjectMismatchUI(mismatches);
 
         } catch (error) {
@@ -301,30 +323,33 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MISSING GROUPID REPAIR FUNCTIONS ---
     const findAndRepairMissingGroupId = async () => {
         groupIdRepairContainer.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Đang quét dữ liệu, vui lòng chờ...</p>`;
-
+    
         try {
-            // 1. Lấy tất cả giáo viên và tạo map UID -> teacherData
+            // 1. Lấy tất cả giáo viên và tạo map UID -> group_id để tra cứu
             const teachersQuery = query(collection(firestore, 'teachers'));
             const teachersSnapshot = await getDocs(teachersQuery);
-            const teacherMap = new Map();
+            const teacherToGroupMap = new Map();
             teachersSnapshot.forEach(doc => {
                 const data = doc.data();
-                if (data.uid) {
-                    teacherMap.set(data.uid, data);
+                if (data.uid && data.group_id) {
+                    teacherToGroupMap.set(data.uid, data.group_id);
                 }
             });
-
-            // 2. Lấy tất cả lượt đăng ký trong năm học hiện tại
-            const regsQuery = query(collection(firestore, 'registrations'), where('schoolYear', '==', currentSchoolYear));
+    
+            // 2. Tối ưu hóa: Chỉ truy vấn các đăng ký thiếu groupId trong năm học hiện tại
+            const regsQuery = query(
+                collection(firestore, 'registrations'),
+                where('schoolYear', '==', currentSchoolYear),
+                where('groupId', '==', null) // Chỉ lấy các doc không có trường groupId hoặc giá trị là null
+            );
             const regsSnapshot = await getDocs(regsQuery);
-
+    
             // 3. Tìm các lượt đăng ký thiếu `groupId`
             const missingGroupIdRegs = [];
             regsSnapshot.forEach(doc => {
                 const regData = doc.data();
-                if (!regData.groupId && regData.teacherId) {
-                    const teacher = teacherMap.get(regData.teacherId);
-                    if (teacher && teacher.group_id) {
+                const correctGroupId = teacherToGroupMap.get(regData.teacherId);
+                if (correctGroupId) { // Chỉ thêm vào danh sách nếu tìm thấy groupId đúng
                         missingGroupIdRegs.push({
                             regId: doc.id,
                             teacherName: teacher.teacher_name,
@@ -332,14 +357,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             period: regData.period,
                             className: regData.className,
                             subject: regData.subject,
-                            correctGroupId: teacher.group_id
+                        correctGroupId: correctGroupId
                         });
                     }
-                }
             });
-
+    
             renderMissingGroupIdUI(missingGroupIdRegs);
-
+    
         } catch (error) {
             console.error("Lỗi khi quét lỗi thiếu groupId:", error);
             groupIdRepairContainer.innerHTML = `<p class="error-message">Đã có lỗi xảy ra trong quá trình quét. Vui lòng thử lại.</p>`;
