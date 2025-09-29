@@ -1,5 +1,3 @@
-@import url('toast.css');
-
 /* --- Tái sử dụng và mở rộng từ manager-setting.css --- */
 .modal-content.large {
     max-width: 800px; /* Rộng hơn cho modal nhập hàng loạt */

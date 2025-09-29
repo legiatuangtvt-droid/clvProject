@@ -3,8 +3,6 @@
  * All rules are scoped under #manager-dashboard-page to prevent conflicts.
  */
 
-@import url('toast.css');
-
 /* Element: Nội dung của thẻ */
 #manager-dashboard-page .dashboard-card .card-content h3 {
     margin: 0;
