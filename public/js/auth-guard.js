@@ -298,10 +298,16 @@ function setupMenuToggle() {
     const topBar = document.querySelector('.top-bar');
     if (!sidebar || !topBar) return;    
 
+    // 1. Khôi phục trạng thái sidebar từ localStorage khi tải trang
+    const savedSidebarState = localStorage.getItem('sidebarExpandedState');
+    // Chỉ áp dụng trạng thái mở rộng trên màn hình desktop
+    if (window.innerWidth > 768 && savedSidebarState === 'true') {
+        sidebar.classList.add('expanded');
+    }
+
     // Logic được chia làm 2 trường hợp: Mobile và Desktop
     if (window.innerWidth <= 768) {
         // --- TRƯỜNG HỢP 2: MOBILE ---
-        // Cần tạo nút hamburger và overlay để người dùng có thể click mở/đóng menu.
         
         // Cải tiến: Chỉ tạo nút nếu nó chưa tồn tại để tránh trùng lặp
         let menuToggleBtn = topBar.querySelector('.menu-toggle-btn');
@@ -322,22 +328,22 @@ function setupMenuToggle() {
 
         const toggleMenu = () => {
             const isExpanded = sidebar.classList.toggle('expanded');
-            overlay.style.display = isExpanded ? 'block' : 'none';
+            overlay.style.display = isExpanded ? 'block' : 'none';            
         };
 
         menuToggleBtn.addEventListener('click', toggleMenu);
         overlay.addEventListener('click', toggleMenu);
     }
     else {
-        // --- TRƯỜNG HỢP 1: DESKTOP ---
-        // Chỉ cần xử lý sự kiện hover để mở/đóng menu.
-        // Không cần tạo nút hamburger.
+        // --- TRƯỜNG HỢP 1: DESKTOP ---        
         sidebar.addEventListener('mouseenter', () => {
             sidebar.classList.add('expanded');
+            localStorage.setItem('sidebarExpandedState', 'true'); // Lưu trạng thái
         });
 
         sidebar.addEventListener('mouseleave', () => {
             sidebar.classList.remove('expanded');
+            localStorage.setItem('sidebarExpandedState', 'false'); // Lưu trạng thái
         });
     }
 }
