@@ -6,6 +6,8 @@
     <title>Trang Quản lý</title>
     <!-- Nạp CSS layout chung -->
     <link rel="stylesheet" href="css/shared-layout.css"> <!-- Cấp 1: Dùng chung -->
+    <!-- Nạp CSS riêng cho trang này -->
+    <link rel="stylesheet" href="css/manager-main.css">
     <!-- Nạp Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" href="images/magnetic.png" type="image/png">
@@ -67,12 +69,14 @@
                 <div class="content-card">
                     <div class="page-header">
                         <h2><i class="fas fa-calendar-day"></i> Tình hình đăng ký hôm nay (<span id="today-date"></span>)</h2>
-                        <div class="filter-group">
-                            <label for="today-method-filter">PPDH:</label>
-                            <select id="today-method-filter">
-                                <option value="all">Tất cả PPDH</option>
-                                <!-- Các PPDH sẽ được JS tự động thêm vào đây -->
-                            </select>
+                        <div class="filter-controls">
+                            <div class="filter-group">
+                                <label for="today-method-filter">PPDH:</label>
+                                <select id="today-method-filter" class="filter-select filter-select-auto">
+                                    <option value="all">Tất cả PPDH</option>
+                                    <!-- Các PPDH sẽ được JS tự động thêm vào đây -->
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div id="today-registrations-container">

@@ -2,7 +2,7 @@
 :root {
     --primary-color: #1abc9c; /* Màu xanh lá cây chủ đạo */
     --primary-hover: #16a085;
-    --text-dark: #212529;
+    /* --text-dark: #212529; */
     --text-light: #6c757d;
     --background-light: #fff;
     --border-color: #e9ecef;

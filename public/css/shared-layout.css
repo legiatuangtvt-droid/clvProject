@@ -415,12 +415,13 @@
     flex-wrap: wrap;
     gap: 15px;
     align-items: center;
+    margin-bottom: 10px;
 }
 
 .filter-group {
     display: flex;
     align-items: center;
-    flex-grow: 1;
+    /* flex-grow: 1; */
     background-color: var(--surface-bg);
     border: 1px solid var(--border-color);
     border-radius: 10px;
@@ -448,26 +449,32 @@
 }
 
 .filter-select {
-    padding: 10px 30px 10px 15px; /* Thêm padding phải cho mũi tên */
-    border: none;
-    background-color: transparent;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--text-dark);
-    width: 100%; /* Thay min-width bằng width 100% để linh hoạt */
-    flex-grow: 1; /* Cho phép select co giãn */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
+    padding: 10px 30px 10px 15px; /* Khoảng trống bên trong: trên 10px, phải 30px (để chừa chỗ cho mũi tên), dưới 10px, trái 15px. */
+    border: none; /* Bỏ đường viền mặc định của trình duyệt. */
+    background-color: transparent; /* Làm cho nền trong suốt, để nền của thẻ cha (.filter-group) được hiển thị. */
+    font-size: 0.9rem; /* Cỡ chữ của các tùy chọn. */
+    font-weight: 500; /* Độ đậm của chữ. */
+    color: var(--text-dark); /* Màu chữ, sử dụng biến CSS đã định nghĩa. */
+    width: 100%; /* Chiếm 100% chiều rộng của thẻ cha. */
+    flex-grow: inherit; /* Cho phép thẻ select co giãn để lấp đầy không gian còn trống trong flex container (.filter-group). */
+    -webkit-appearance: none; /* Xóa giao diện mặc định của thẻ select trên trình duyệt Webkit (Chrome, Safari). */
+    -moz-appearance: none; /* Xóa giao diện mặc định của thẻ select trên trình duyệt Mozilla (Firefox). */
+    appearance: none; /* Xóa giao diện mặc định của thẻ select trên các trình duyệt khác, đây là thuộc tính chuẩn. */
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 16px 12px;
-    cursor: pointer;
+    background-repeat: no-repeat; /* Đảm bảo hình ảnh mũi tên không bị lặp lại. */
+    background-position: right 0.75rem center; /* Căn vị trí của mũi tên: cách bên phải 0.75rem và căn giữa theo chiều dọc. */
+    background-size: 16px 12px; /* Đặt kích thước cho hình ảnh mũi tên. */
+    cursor: pointer; /* Biến con trỏ chuột thành hình bàn tay khi di chuột qua. */
 }
 
 .filter-select:focus {
     outline: none;
+}
+
+/* NEW: Biến thể của filter-select với chiều rộng tự động */
+.filter-select-auto {
+    width: auto; /* Chiều rộng tự động theo nội dung. */
+    flex-grow: 0; /* Ngăn thẻ select co giãn để lấp đầy không gian. */
 }
 
 /* --- Profile Dropdown (Dùng chung) --- */
@@ -534,7 +541,7 @@
     background: var(--text-dark);
     color: var(--text-on-primary);
     display: flex;
-    flex-direction: column;
+    /* flex-direction: column; */
     flex-shrink: 0;
     transition: width 0.3s ease, transform 0.3s ease;
     z-index: 1100; /* Đảm bảo menu luôn ở trên cùng */
