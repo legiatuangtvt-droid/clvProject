@@ -502,6 +502,11 @@
     z-index: 1100; /* Đảm bảo menu luôn ở trên cùng */
 }
 
+/* --- NEW: Sidebar Expanded State --- */
+.sidebar.expanded {
+    width: 260px; /* Chiều rộng khi mở rộng */
+}
+
 .sidebar-header {
     padding: 20px;
     text-align: left;
@@ -578,4 +583,20 @@
     top: 0; left: 0; width: 100%; height: 100%;
     background-color: rgba(0,0,0,0.5);
     z-index: 1050;
+}
+
+/* --- NEW: Sidebar Responsive (Mobile) --- */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed; /* Chuyển sang fixed để nổi lên trên */
+        height: 100%;
+        transform: translateX(-100%); /* Ẩn sidebar mặc định sang bên trái */
+    }
+
+    .sidebar.expanded {
+        transform: translateX(0); /* Hiện sidebar khi có class 'expanded' */
+    }
+
+    /* Hiển thị overlay khi menu mở trên mobile */
+    .sidebar-overlay { display: block; }
 }
