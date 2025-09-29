@@ -923,3 +923,42 @@
     transform: translateY(-5px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
+
+/* --- Component: Instruction Text (Chuẩn hóa từ manager-setting.css) --- */
+.instruction-text {
+    background-color: var(--surface-subtle-bg);
+    border-left: 4px solid var(--primary-color);
+    padding: 15px;
+    margin-bottom: 25px;
+    border-radius: 0 8px 8px 0;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.instruction-text p {
+    margin: 0;
+}
+
+.instruction-text p:not(:last-child) {
+    margin-bottom: 10px;
+}
+
+.instruction-text i {
+    margin-right: 8px;
+    color: var(--primary-color);
+}
+
+/* --- Component: Card thống kê (Gộp từ manager-main.css & supervisory-main.css) --- */
+.card-icon {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    opacity: 0.8;
+}
+
+.card-content h3 {
+    margin: 0 0 5px 0;
+    font-size: 2.2rem;
+    color: var(--text-dark);
+}
+}

@@ -44,13 +44,6 @@
     text-align: center;
 }
 
-.instruction-text {
-    text-align: center;
-    color: var(--text-light);
-    font-style: italic;
-    margin-bottom: 15px;
-}
-
 /* Sắp xếp lại các bộ lọc trên trang giáo viên */
 .two-column-sidebar .filter-controls { /* Cập nhật selector */
     flex-direction: column;

@@ -83,13 +83,6 @@
     overflow-x: auto;
 }
 
-.instruction-text {
-    text-align: center;
-    color: var(--text-light);
-    font-style: italic;
-    margin: 0 0 15px 0;
-}
-
 .weekly-schedule-table .session-header {
     width: 30px; /* Độ rộng cố định cho cột Buổi */
     font-weight: bold;
