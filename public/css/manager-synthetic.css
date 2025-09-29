@@ -80,74 +80,6 @@
     transform: translateY(0);
 }
 
-/* --- Controls & Header & Week Selector --- */
-.controls-container {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0; /* Bỏ margin-bottom để header-controls xử lý */
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-/* --- Color Legend --- */
-.color-legend-container {
-    display: flex;
-    flex-direction: column; /* Sắp xếp các nhóm chú thích theo cột */
-    gap: 15px; /* Khoảng cách giữa các nhóm (Tổ, Môn, GV) */
-    margin-top: 0;
-    padding: 12px 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    background-color: var(--surface-bg);
-}
-
-.color-legend-container h4 {
-    margin: 0 0 5px 0;
-    font-size: 1.1rem;
-    width: 100%; /* Đảm bảo tiêu đề chiếm toàn bộ chiều rộng */
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
-}
-
-.legend-section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.legend-section h5 {
-    margin: 0;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-light);
-}
-
-.legend-items-wrapper {
-    display: flex;
-    flex-wrap: wrap; /* Cho phép các item xuống dòng nếu không đủ chỗ */
-    gap: 15px; /* Khoảng cách giữa các item chú thích */
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.85rem;
-}
-
-.legend-color-box {
-    width: 14px;
-    height: 14px;
-    border-radius: 4px;
-    border: 1px solid rgba(0,0,0,0.1);
-}
-
 /* --- Weekly Schedule Table --- */
 .schedule-container-weekly {
     overflow-x: auto;
@@ -158,29 +90,6 @@
     color: var(--text-light);
     font-style: italic;
     margin: 0 0 15px 0;
-}
-
-.weekly-schedule-table {
-    width: 100%;
-    border-collapse: collapse;
-    /* table-layout: fixed; */
-}
-
-.weekly-schedule-table th, .weekly-schedule-table td {
-    border: 1px solid var(--border-color-strong);
-    padding: 6px;
-    vertical-align: top;
-    min-height: 60px;
-}
-
-.weekly-schedule-table thead th {
-    background-color: var(--surface-subtle-bg);
-    font-weight: 600;
-    text-align: center;
-    padding: 12px 8px;
-    position: sticky; /* Cố định tiêu đề */
-    top: 0; /* Giữ ở trên cùng của vùng cuộn */
-    z-index: 1; /* Đảm bảo tiêu đề nằm trên nội dung bảng */
 }
 
 .weekly-schedule-table .session-header {
@@ -199,14 +108,6 @@
     text-align: center;
     vertical-align: middle;
     background-color: var(--surface-subtle-bg);
-}
-
-.weekly-schedule-table .session-separator td {
-    padding: 0;
-    height: 2px;
-    background-color: var(--primary-color);
-    opacity: 0.3;
-    border: none;
 }
 
 .slot {
@@ -656,102 +557,6 @@
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.2rem rgba(26, 188, 156, 0.25);
     outline: none;
-}
-
-/* --- Mobile Schedule (Card View) --- */
-.mobile-schedule {
-    display: none; /* Ẩn trên desktop */
-}
-
-/* --- Responsive Styles --- */
-@media (max-width: 1200px) { /* Kích hoạt chế độ mobile sớm hơn để tránh cuộn ngang */
-    .synthetic-layout-container {
-        flex-direction: column;
-    }
-
-    .synthetic-sidebar {
-        position: static;
-        max-width: 100%;
-        max-height: none;
-        overflow-y: visible;
-    }
-
-    .synthetic-main-content {
-        max-height: none;
-        overflow-y: visible;
-    }
-
-    .schedule-container-weekly .desktop-schedule {
-        display: none; /* Ẩn bảng trên mobile */
-    }
-
-    .mobile-schedule {
-        display: flex; /* Hiện layout card trên mobile */
-        flex-direction: column;
-        gap: 20px;
-        margin-top: 20px;
-    }
-
-    /* Tái sử dụng các style từ teacher-register.css cho card mobile */
-    .mobile-day-card {
-        background-color: var(--surface-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        overflow: hidden;
-        transition: background-color 0.2s;
-    }
-    .mobile-day-card[open] {
-        background-color: #fcfdff;
-    }
-    .mobile-day-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 15px;
-        background-color: var(--surface-subtle-bg);
-        font-weight: 600;
-        cursor: pointer;
-        list-style: none; /* Bỏ dấu tam giác mặc định */
-    }
-    .mobile-day-card[open] .mobile-day-header {
-        border-bottom: 1px solid var(--border-color);
-    }
-    .mobile-day-header::-webkit-details-marker { display: none; }
-    .mobile-day-header::after {
-        content: '\f078'; /* chevron-down */
-        font-family: "Font Awesome 6 Free"; font-weight: 900;
-        transition: transform 0.2s ease-in-out;
-    }
-    .mobile-day-card[open] .mobile-day-header::after { transform: rotate(-180deg); }    .day-name { flex-grow: 1; }
-    .day-summary-container { display: flex; align-items: center; gap: 10px; }
-    .day-summary-count { font-size: 0.9rem; font-weight: 600; color: var(--primary-dark); background-color: var(--primary-light); padding: 3px 8px; border-radius: 5px; }
-    .day-summary-icons { display: flex; gap: 8px; font-size: 1rem; }
-    .mobile-day-body { padding: 15px; display: flex; flex-direction: column; gap: 15px; }
-    .mobile-slot { display: flex; align-items: stretch; gap: 10px; cursor: pointer; transition: background-color 0.2s; border-radius: 8px; }
-    .mobile-slot:hover { background-color: var(--info-light); }
-    .mobile-period-info { background-color: var(--surface-hover-bg); padding: 5px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-light); white-space: nowrap; text-align: center; }
-    .mobile-slot-summary-container {
-        flex-grow: 1;
-        background-color: var(--primary-light);
-        border: 1px solid var(--border-color);        
-        padding: 5px;
-        border-radius: 8px;
-        align-items: center;
-        justify-content: space-around;
-    }
-
-    .no-registrations-mobile { text-align: center; color: var(--text-light); font-style: italic; padding: 10px 0; }
-    .mobile-day-footer { padding: 10px 15px; border-top: 1px solid var(--border-color); background-color: var(--surface-subtle-bg); }
-    .add-registration-mobile-btn { width: 100%; padding: 10px; background-color: var(--info-light); border: 1px dashed var(--info-color); color: var(--info-hover); font-weight: 600; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    
-
-    /* Điều chỉnh modal cho màn hình nhỏ */
-    .bulk-import-modal .modal-content,
-    .equipment-stats-modal .modal-content {
-        width: 95vw;
-        max-width: none;
-    }
 }
 
 /* Đơn giản hóa selector */
