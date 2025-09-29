@@ -676,3 +676,35 @@
         overflow-y: visible;
     }
 }
+
+/* --- NEW: Generic App Layout (Replaces manager-layout, teacher-layout) --- */
+.app-layout {
+    display: flex;
+    height: 100vh; /* Chiếm toàn bộ chiều cao màn hình */
+}
+
+.content-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    /* Thêm overflow-x: hidden để ngăn cuộn ngang không mong muốn */
+    overflow-x: hidden;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 20px; /* Thống nhất padding chung */
+    overflow-y: auto; /* Cho phép cuộn dọc khi nội dung dài */
+    background-color: var(--body-bg);
+}
+
+.content-card {
+    background-color: var(--surface-bg);
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    border: 1px solid var(--border-color);
+}
+.content-card:not(:last-child) {
+    margin-bottom: 20px;
+}
