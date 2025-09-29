@@ -217,6 +217,16 @@
     color: var(--text-light);
 }
 
+.form-group input {
+    width: auto;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: border-color 0.2s;
+    color: var(--text-dark);
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {

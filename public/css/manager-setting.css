@@ -520,6 +520,7 @@
 #teacher-modal .form-group textarea,
 #teacher-modal .form-group select {
     transition: border-color 0.2s, box-shadow 0.2s;
+    width: auto;
 }
 
 #teacher-modal .form-group textarea:focus,

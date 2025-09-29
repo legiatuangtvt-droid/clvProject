@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Cài đặt</title>
-    <!-- Nạp CSS theo đúng thứ tự ưu tiên -->
-    <link rel="stylesheet" href="css/shared-layout.css"> <!-- Cấp 1: Dùng chung -->
-    <!-- Nạp Font Awesome -->
+    <link rel="stylesheet" href="css/shared-layout.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <!-- Nạp CSS riêng cho trang này -->
     <link rel="stylesheet" href="css/manager-setting.css">
@@ -44,14 +42,14 @@
             <main id="main-content" class="main-content">
                 <!-- Nội dung chính của trang cài đặt -->
                 <div class="content-card" id="setting-management-content">
-                    <div class="school-year-selector-header">
-                        <div class="selector-container">
+                    <div class="filter-controls">
+                        <div class="filter-group">
                             <label for="school-year-select">Năm học</label>
-                            <select id="school-year-select"></select>
-                            <button id="add-school-year-btn" class="btn-secondary"><i class="fas fa-plus"></i> Năm học mới</button>
+                            <select id="school-year-select" class="filter-select"></select>
                         </div>
+                        <button id="add-school-year-btn" class="btn-primary"><i class="fas fa-plus"></i> Năm học mới</button>
                     </div>
-
+                    
                     <div class="tab-nav">
                         <button class="tab-link active" data-tab="groups-teachers"><i class="fas fa-users"></i><span class="desktop-text">Tổ chuyên môn & Giáo viên</span><span class="mobile-text">Tổ & GV</span></button>
                         <button class="tab-link" data-tab="teaching-methods"><i class="fas fa-lightbulb"></i><span class="desktop-text">Phương pháp dạy học</span><span class="mobile-text">PPDH</span></button>
@@ -326,8 +324,12 @@
                     <textarea id="teacher-names-input" placeholder="Nhập mỗi giáo viên trên một dòng..." rows="5"></textarea>
                 </div>
                 <div class="form-group" id="teacher-subject-group" style="display: none;">
-                    <label for="teacher-subject-input">Môn học chính</label>
-                    <select id="teacher-subject-input"></select>
+                    <div class="filter-controls">
+                        <div class="filter-group">
+                            <label for="teacher-subject-input">Môn học chính</label>
+                            <select id="teacher-subject-input" class="filter-select"></select>
+                        </div>
+                    </div>                    
                     <p class="form-note">Chỉ cần chọn khi giáo viên thuộc tổ chuyên môn ghép.</p>
                 </div>
                 <div class="form-group" style="display: none;">
