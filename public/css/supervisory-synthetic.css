@@ -7,16 +7,8 @@
 */
 
 /* Kế thừa các style từ manager-synthetic.css */
-@import url('manager-synthetic.css');
-
-/* Thêm các quy tắc responsive cụ thể cho supervisory nếu cần,
-   hoặc để đảm bảo layout mobile hoạt động đúng */
-@media (max-width: 1200px) { /* Đồng bộ breakpoint với manager-synthetic.css */
-    .synthetic-layout-container {
-        flex-direction: column; /* Chuyển sang layout cột */
-    }
-    .synthetic-sidebar {
-        position: static; /* Bỏ sticky trên mobile */
-        max-height: none;
-    }
-}
+/* 
+  LƯU Ý: `@import` đã bị xóa để tối ưu hiệu suất. 
+  Thay vào đó, hãy thêm thẻ <link> cho 'manager-synthetic.css' vào file HTML tương ứng,
+  đặt nó TRƯỚC thẻ <link> cho 'supervisory-synthetic.css'.
+*/
