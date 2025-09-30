@@ -23,19 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const subjectSelect = document.getElementById('subject-select');
     const gradeSelect = document.getElementById('grade-select');
     const typeSelect = document.getElementById('type-select');
-    const addSyllabusBtn = document.getElementById('add-syllabus-btn');
     const syllabusContainer = document.getElementById('syllabus-container');
- 
-    const syllabusModal = document.getElementById('syllabus-modal');
-    const syllabusModalTitle = document.getElementById('syllabus-modal-title');
-    const syllabusForm = document.getElementById('syllabus-form');
-    const modalSubjectSelect = document.getElementById('modal-subject-select');
-    const modalGradeSelect = document.getElementById('modal-grade-select');
-    const modalTypeSelect = document.getElementById('modal-type-select');
-    const lessonsInput = document.getElementById('lessons-input');
-    const cancelSyllabusModalBtn = document.getElementById('cancel-syllabus-modal');
-    const saveSyllabusBtn = document.getElementById('save-syllabus-btn');
-    const deleteSyllabusBtn = document.getElementById('delete-syllabus-btn');
  
     const confirmDeleteModal = document.getElementById('confirm-delete-modal');
     const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
@@ -49,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // State
     let currentSchoolYear = null;
     let allSubjects = []; // NEW: State to hold all subjects for the selected year
-    let currentEditingSyllabusId = null;
     let deleteFunction = null;
  
     // --- INITIALIZATION ---
@@ -59,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setControlsState = (enabled) => {
-        addSyllabusBtn.disabled = !enabled; // Chỉ quản lý nút Thêm PPCT
         subjectSelect.disabled = !enabled;
         gradeSelect.disabled = !enabled;
         typeSelect.disabled = !enabled;
@@ -107,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
  
     const loadFiltersForYear = async (schoolYear) => {
         subjectSelect.innerHTML = '<option value="">Tất cả</option>';
-        modalSubjectSelect.innerHTML = '<option value="">-- Chọn môn --</option>';
 
         // NEW: Load subjects directly from the 'subjects' collection
         const subjectsQuery = query(collection(firestore, 'subjects'), where("schoolYear", "==", schoolYear), orderBy('name'));
@@ -120,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         updateSubjectFilter(subjectSelect);
-        updateSubjectFilter(modalSubjectSelect, '-- Chọn môn --');
     };
  
     // --- BULK IMPORT LOGIC ---
@@ -311,7 +295,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             <tr>
                                 <th class="col-period">Tiết PPCT</th>
                                 <th>Tên bài học / Nội dung</th>
-                                <th class="col-actions">Hành động</th>
                             </tr>
                         </thead>
                         <tbody>`;
@@ -326,9 +309,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <tr data-syllabus-id="${lesson.syllabusId}">
                         <td class="col-period">${lesson.period}</td>
                         <td>${lesson.lessonName}${typeText}</td>
-                        <td class="col-actions item-actions">
-                            <button class="edit-syllabus-btn icon-button" title="Sửa PPCT"><i class="fas fa-pencil-alt"></i></button>
-                        </td>
                     </tr>
                 `;
             });
@@ -337,120 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
  
         syllabusContainer.innerHTML = html || '<p>Không có dữ liệu để hiển thị.</p>';
-    };
- 
-    // --- MODAL & FORM HANDLING ---
-    const openSyllabusModal = async (syllabusId = null) => {
-        syllabusForm.reset();
-        lessonsInput.value = '';
-        currentEditingSyllabusId = syllabusId;
- 
-        if (syllabusId) {
-            syllabusModalTitle.textContent = 'Chỉnh sửa Phân phối chương trình';
-            deleteSyllabusBtn.style.display = 'inline-block';
- 
-            const syllabusRef = doc(firestore, 'syllabuses', syllabusId);
-            const syllabusSnap = await getDoc(syllabusRef);
-            if (syllabusSnap.exists()) {
-                const data = syllabusSnap.data();
-                modalSubjectSelect.value = data.subject;
-                modalGradeSelect.value = data.grade;
-                modalTypeSelect.value = data.type;
- 
-                const lessonsString = data.lessons
-                    .sort((a, b) => a.period - b.period)
-                    .map(lesson => `${lesson.period}\t${lesson.lessonName}`)
-                    .join('\n');
-                lessonsInput.value = lessonsString;
-            }
-        } else {
-            syllabusModalTitle.textContent = 'Thêm Phân phối chương trình';
-            deleteSyllabusBtn.style.display = 'none';
-        }
- 
-        syllabusModal.style.display = 'flex';
-    };
- 
-    const saveSyllabus = async () => {
-        const subject = modalSubjectSelect.value;
-        const grade = parseInt(modalGradeSelect.value);
-        const type = modalTypeSelect.value;
- 
-        if (!subject || !grade) {
-            showToast('Vui lòng điền đầy đủ thông tin Tổ, Môn và Khối.', 'error');
-            return;
-        }
- 
-        const lessons = [];
-        const lines = lessonsInput.value.split('\n');
- 
-        for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (trimmedLine === '') continue;
- 
-            const parts = trimmedLine.split('\t');
-            if (parts.length < 2) {
-                showToast(`Dòng "${trimmedLine}" không đúng định dạng. Cần có Tiết và Tên bài học cách nhau bởi Tab.`, 'error');
-                return;
-            }
-
-            const period = parseInt(parts[0], 10);
-            const lessonName = parts[1].trim();
- 
-            if (isNaN(period) || !lessonName) {
-                showToast(`Dòng "${trimmedLine}" có dữ liệu không hợp lệ.`, 'error');
-                return;
-            }
-            lessons.push({ period, lessonName });
-        }
- 
-        if (lessons.length === 0) {
-            showToast('Nội dung PPCT không được để trống hoặc không hợp lệ.', 'error');
-            return;
-        }
- 
-        const syllabusData = {
-            schoolYear: currentSchoolYear,
-            subject,
-            grade,
-            type,
-            lessons
-        };
- 
-        try {
-            if (currentEditingSyllabusId) {
-                const syllabusRef = doc(firestore, 'syllabuses', currentEditingSyllabusId);
-                await updateDoc(syllabusRef, syllabusData);
-                showToast('Cập nhật thành công!', 'success');
-            } else {
-                await addDoc(collection(firestore, 'syllabuses'), syllabusData);
-                showToast('Thêm mới thành công!', 'success');
-            }
-            syllabusModal.style.display = 'none';
-            loadSyllabusData();
-        } catch (error) {
-            console.error("Lỗi khi lưu PPCT:", error);
-            showToast('Đã có lỗi xảy ra khi lưu.', 'error');
-        }
-    };
- 
-    const handleDeleteSyllabus = () => {
-        if (!currentEditingSyllabusId) return;
- 
-        confirmDeleteModal.style.display = 'flex';
-        document.getElementById('confirm-delete-message').textContent = "Bạn có chắc chắn muốn xóa Phân phối chương trình này?";
- 
-        deleteFunction = async () => {
-            try {
-                await deleteDoc(doc(firestore, 'syllabuses', currentEditingSyllabusId));
-                showToast('Đã xóa thành công.', 'success');
-                syllabusModal.style.display = 'none';
-                loadSyllabusData();
-            } catch (error) {
-                console.error("Lỗi khi xóa PPCT:", error);
-                showToast('Lỗi khi xóa.', 'error');
-            }
-        };
     };
     // --- EVENT LISTENERS ---
     const setupEventListeners = () => {
@@ -462,21 +328,6 @@ document.addEventListener('DOMContentLoaded', () => {
         [subjectSelect, gradeSelect, typeSelect].forEach(el => {
             el.addEventListener('change', loadSyllabusData);
         });
- 
-        addSyllabusBtn.addEventListener('click', () => openSyllabusModal());
- 
-        syllabusContainer.addEventListener('click', (e) => {
-            const editBtn = e.target.closest('.edit-syllabus-btn');
-            if (editBtn) {
-                const row = editBtn.closest('tr');
-                openSyllabusModal(row.dataset.syllabusId);
-            }
-        });
- 
-        // Modal listeners
-        cancelSyllabusModalBtn.addEventListener('click', () => syllabusModal.style.display = 'none');
-        saveSyllabusBtn.addEventListener('click', saveSyllabus);
-        deleteSyllabusBtn.addEventListener('click', handleDeleteSyllabus);
  
         // Bulk Import Listeners
         bulkImportBtn.addEventListener('click', openBulkImportModal);
