@@ -225,6 +225,37 @@ body {
     color: var(--text-light);
 }
 
+.input-group {
+    /* --- Đồng bộ với .filter-group --- */
+    display: flex;
+    align-items: center;
+    background-color: var(--surface-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.input-group:hover {
+    border-color: var(--secondary-color);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.input-group label {
+    /* --- Đồng bộ với .filter-group label --- */
+    padding: 0 15px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    background-color: var(--surface-subtle-bg);
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    border-right: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
 .form-group input {
     width: auto;
     padding: 10px 15px;
@@ -233,6 +264,14 @@ body {
     border-radius: 8px;
     transition: border-color 0.2s;
     color: var(--text-dark);
+}
+
+.input-group input {
+    /* --- Style riêng cho input bên trong .input-group --- */
+    border: none;
+    background-color: transparent;
+    flex-grow: 1; /* Cho phép input co giãn */
+    width: 100%;
 }
 
 .form-group input:focus,

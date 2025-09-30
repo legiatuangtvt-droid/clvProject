@@ -509,6 +509,7 @@ const initializeTeacherRegisterPage = (user) => {
             const weekContainer = document.getElementById('reg-week-container');
             const weekSelect = document.getElementById('reg-week');
             weekContainer.style.display = 'block';
+            weekSelect.className = 'filter-select'; // Đảm bảo có class
             weekSelect.innerHTML = '';
             timePlan.forEach(week => {
                 const option = document.createElement('option');
@@ -566,6 +567,7 @@ const initializeTeacherRegisterPage = (user) => {
 
         // Populate days
         daySelect.innerHTML = '';
+        daySelect.className = 'filter-select'; // Đảm bảo có class
         let currentDate = new Date(selectedWeek.startDate.replace(/-/g, '/'));
         const daysOfWeek = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
         const formatDateToYYYYMMDD = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -576,6 +578,7 @@ const initializeTeacherRegisterPage = (user) => {
         }
 
         // Populate periods
+        periodSelect.className = 'filter-select'; // Đảm bảo có class
         periodSelect.innerHTML = '<option value="">-- Chọn tiết --</option>';
         for (let i = 1; i <= 10; i++) {
             const session = i <= 5 ? 'Sáng' : 'Chiều';
