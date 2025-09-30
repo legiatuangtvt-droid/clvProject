@@ -147,6 +147,10 @@
 
 .scroll-to-top-btn:hover { background-color: var(--primary-hover, #16a085); }
 
+.bulk-lessons-input {
+    width: 100%;
+}
+
 /* --- Responsive Styles for Mobile --- */
 @media (max-width: 768px) {
     /* --- Layout & Filter Controls --- */
