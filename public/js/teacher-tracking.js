@@ -150,12 +150,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 break;
             case 'month':
-                const months = [...new Set(timePlan.map(week => week.startDate.substring(0, 7)))];
-                months.forEach(monthStr => {
-                    const [year, month] = monthStr.split('-');
+                const reportingMonths = new Map();
+                const reportDay = timePlan[0]?.planConfig?.reportDay || 23; // Lấy ngày chốt báo cáo
+
+                let currentReportingMonth;
+                let currentReportingYear;
+
+                if (timePlan.length > 0) {
+                    const firstWeekDate = new Date(timePlan[0].startDate.replace(/-/g, '/'));
+                    const firstWeekCutoff = new Date(firstWeekDate.getFullYear(), firstWeekDate.getMonth(), reportDay);
+
+                    if (firstWeekDate < firstWeekCutoff) {
+                        currentReportingMonth = firstWeekDate.getMonth() + 1;
+                        currentReportingYear = firstWeekDate.getFullYear();
+                    } else {
+                        currentReportingMonth = firstWeekDate.getMonth() + 2;
+                        if (currentReportingMonth > 12) {
+                            currentReportingMonth = 1;
+                            currentReportingYear = firstWeekDate.getFullYear() + 1;
+                        } else {
+                            currentReportingYear = firstWeekDate.getFullYear();
+                        }
+                    }
+                }
+
+                timePlan.forEach(week => {
+                    const weekStartDate = new Date(week.startDate.replace(/-/g, '/'));
+                    const cutoffDate = new Date(currentReportingYear, currentReportingMonth - 1, reportDay);
+
+                    if (weekStartDate >= cutoffDate) {
+                        currentReportingMonth++;
+                        if (currentReportingMonth > 12) {
+                            currentReportingMonth = 1;
+                            currentReportingYear++;
+                        }
+                    }
+                    const monthKey = `${currentReportingYear}-${String(currentReportingMonth).padStart(2, '0')}`;
+                    reportingMonths.set(monthKey, `Tháng ${currentReportingMonth}/${currentReportingYear}`);
+                });
+
+                reportingMonths.forEach((text, value) => {
                     const option = document.createElement('option');
-                    option.value = monthStr;
-                    option.textContent = `Tháng ${month}/${year}`;
+                    option.value = value;
+                    option.textContent = text;
                     filterValueSelect.appendChild(option);
                 });
                 break;
@@ -230,9 +267,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 endDate = weekData.endDate;
                 break;
             case 'month':
-                const [year, month] = filterValue.split('-');
-                startDate = `${filterValue}-01`;
-                endDate = new Date(year, month, 0).toISOString().split('T')[0];
+                const [reportYear, reportMonth] = filterValue.split('-').map(Number);
+                const reportDay = timePlan[0]?.planConfig?.reportDay || 23;
+
+                // Tháng báo cáo bắt đầu từ ngày `reportDay` của tháng trước
+                // và kết thúc vào ngày `reportDay - 1` của tháng báo cáo.
+                let startReportYear = reportYear;
+                let startReportMonth = reportMonth - 1;
+                if (startReportMonth === 0) {
+                    startReportMonth = 12;
+                    startReportYear--;
+                }
+                startDate = new Date(startReportYear, startReportMonth - 1, reportDay).toISOString().split('T')[0];
+
+                // Ngày kết thúc là ngày `reportDay - 1` của tháng báo cáo
+                let endReportDate = new Date(reportYear, reportMonth - 1, reportDay);
+                endReportDate.setDate(endReportDate.getDate() - 1);
+                endDate = endReportDate.toISOString().split('T')[0];
+
+                // Điều chỉnh để đảm bảo không vượt ra ngoài phạm vi của timePlan
+                const planStartDate = timePlan[0].startDate;
+                const planEndDate = timePlan[timePlan.length - 1].endDate;
+                if (startDate < planStartDate) startDate = planStartDate;
+                if (endDate > planEndDate) endDate = planEndDate;
                 break;
             case 'semester':
                 if (filterValue === '1') { // Học kỳ I (tuần 1-19)
@@ -254,6 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const allMethodsTemplate = {};
             const methodCounts = {};
             const methodsQuery = query(collection(firestore, 'teachingMethods'), where("schoolYear", "==", currentSchoolYear));
+            timePlan[0].planConfig = { reportDay: 23, semester1EndWeek: 19 };
             const methodsSnapshot = await getDocs(methodsQuery);
             methodsSnapshot.forEach(doc => {
                 methodCounts[doc.data().method] = 0; // Khởi tạo tất cả PPDH với 0 tiết
