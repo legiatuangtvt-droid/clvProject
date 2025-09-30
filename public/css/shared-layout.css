@@ -551,7 +551,7 @@
     background: var(--text-dark);
     color: var(--text-on-primary);
     display: flex;
-    /* flex-direction: column; */
+    flex-direction: column;
     flex-shrink: 0;
     transition: width 0.3s ease, transform 0.3s ease;
     z-index: 1100; /* Đảm bảo menu luôn ở trên cùng */
