@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filterTypeSelect = document.getElementById('time-filter-type');
     const filterValueSelect = document.getElementById('time-filter-value');
-    const viewReportBtn = document.querySelector('.view-report-btn');
     const filterContainer = document.querySelector('.filter-container'); // Container của các bộ lọc
     const reportContainer = document.querySelector('.report-container');
 
@@ -29,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let teachersInGroup = []; // Lưu các giáo viên trong cùng tổ
     let groupMap = new Map(); // Map: group_id -> group data
     let pieChartInstance = null; // Biến để lưu trữ biểu đồ, giúp hủy khi vẽ lại
+    let currentView = 'personal'; // 'personal' hoặc 'group'
 
     const initializePage = async () => {
         try {
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const generateReport = async () => {
+    const generateReport = async (isTabSwitch = false) => {
         const user = auth.currentUser;
         if (!user) {
             showToast('Không thể xác thực người dùng.', 'error');
@@ -202,13 +202,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Xác định tab đang được chọn
-        const activeTab = document.querySelector('.tab-link.active')?.dataset.tab || 'personal';
-        const isGroupView = activeTab === 'group';
+        // const activeTab = document.querySelector('.tab-link.active')?.dataset.tab || 'personal';
+        const isGroupView = currentView === 'group';
 
         reportContainer.innerHTML = '<p>Đang tổng hợp dữ liệu...</p>';
 
         const filterType = filterTypeSelect.value;
         const filterValue = filterValueSelect.value;
+
+        // Thêm kiểm tra giá trị bộ lọc
+        if (!filterValue) {
+            reportContainer.innerHTML = '<p class="instruction-text">Vui lòng chọn một giá trị từ bộ lọc để xem báo cáo.</p>';
+            return;
+        }
         let startDate, endDate;
 
         if (timePlan.length === 0) {
@@ -306,11 +312,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 4. Render báo cáo
             if (isGroupView) {
-                renderGroupReport(groupData, allMethodsTemplate);
+                await renderGroupReport(groupData, allMethodsTemplate);
             } else {
-                renderPersonalReport(methodCounts);
+                await renderPersonalReport(methodCounts);
             }
-
+            
         } catch (error) {
             console.error("Lỗi khi tạo báo cáo:", error);
             reportContainer.innerHTML = '<p class="error-message">Đã có lỗi xảy ra khi tạo báo cáo.</p>';
@@ -320,15 +326,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const renderPersonalReport = (methodCounts) => {
-        // Hủy biểu đồ cũ trước khi render giao diện mới
-        if (pieChartInstance) {
-            pieChartInstance.destroy();
+    const renderPersonalReport = async (methodCounts) => {
+        // Chỉ render lại cấu trúc HTML khi cần (lần đầu hoặc chuyển tab)
+        if (!document.getElementById('personal-report-table')) {
+            await createPersonalReportStructure(methodCounts);
         }
-
+        updatePersonalReportData(methodCounts);
         // Sắp xếp PPDH theo tên
         const sortedMethods = Object.keys(methodCounts).sort();
 
+        if (sortedMethods.length === 0) {
+            reportContainer.innerHTML = '<p>Chưa có phương pháp dạy học nào được cấu hình cho năm học này.</p>';
+            return;
+        }
+        // Vẽ hoặc cập nhật biểu đồ
+        renderPieChart(methodCounts, sortedMethods);
+    };
+
+    const createPersonalReportStructure = async (methodCounts) => {
+        const sortedMethods = Object.keys(methodCounts).sort();
         if (sortedMethods.length === 0) {
             reportContainer.innerHTML = '<p>Chưa có phương pháp dạy học nào được cấu hình cho năm học này.</p>';
             return;
@@ -347,31 +363,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 <tbody>
         `;
 
-        let totalUsages = 0;
         sortedMethods.forEach((method, index) => {
-            const count = methodCounts[method];
-            totalUsages += count;
-        });
-
-        sortedMethods.forEach((method, index) => {
-            const count = methodCounts[method];
-            // Tính tỷ lệ, nếu tổng số lần sử dụng là 0 thì tỷ lệ là 0
-            const percentage = totalUsages > 0 ? ((count / totalUsages) * 100).toFixed(1) : 0;
-
             tableHTML += `
-                <tr>
+                <tr data-method="${method}">
                     <td>${index + 1}</td>
                     <td>${method}</td>
-                    <td>${count}</td>
-                    <td>${percentage}%</td>
+                    <td class="count-cell">0</td>
+                    <td class="percentage-cell">0%</td>
                 </tr>
             `;
         });
 
+
         tableHTML += `
                 <tr class="total-row">
                     <td colspan="2">Tổng cộng</td>
-                    <td>${totalUsages}</td>
+                    <td>0</td>
                     <td>100%</td>
                 </tr>
             </tbody>
@@ -381,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Tạo layout chứa bảng và biểu đồ
         reportContainer.innerHTML = `
             <div class="report-layout">
-                <div class="report-table-container">
+                <div id="personal-report-table" class="report-table-container">
                     ${tableHTML}
                 </div>
                 <div class="report-chart-container">
@@ -390,25 +397,47 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        // Vẽ biểu đồ
-        renderPieChart(methodCounts, sortedMethods);
+        // Chờ một chút để DOM được cập nhật
+        return new Promise(resolve => setTimeout(resolve, 0));
     };
 
-    const renderGroupReport = (groupData, allMethodsTemplate) => {
-        // Hủy biểu đồ cũ trước khi render giao diện mới
-        if (pieChartInstance) {
-            pieChartInstance.destroy();
+    const updatePersonalReportData = (methodCounts) => {
+        const sortedMethods = Object.keys(methodCounts).sort();
+        let totalUsages = 0;
+        sortedMethods.forEach(method => {
+            totalUsages += methodCounts[method];
+        });
+
+        sortedMethods.forEach(method => {
+            const count = methodCounts[method];
+            const percentage = totalUsages > 0 ? ((count / totalUsages) * 100).toFixed(1) : 0;
+            const row = document.querySelector(`tr[data-method="${method}"]`);
+            if (row) {
+                row.querySelector('.count-cell').textContent = count;
+                row.querySelector('.percentage-cell').textContent = `${percentage}%`;
+            }
+        });
+
+        const totalRow = document.querySelector('.total-row');
+        if (totalRow) {
+            totalRow.children[1].textContent = totalUsages;
         }
+    };
 
+    const renderGroupReport = async (groupData, allMethodsTemplate) => {
+        // Chỉ render lại cấu trúc HTML khi cần (lần đầu hoặc chuyển tab)
+        if (!document.getElementById('group-report-table')) {
+            await createGroupReportStructure(groupData, allMethodsTemplate);
+        }
+        updateGroupReportData(groupData, allMethodsTemplate);
         const sortedMethods = Object.keys(allMethodsTemplate).sort();
+        const methodTotals = calculateGroupTotals(groupData, allMethodsTemplate);
+        renderPieChart(methodTotals, sortedMethods); // Tái sử dụng biểu đồ tròn cho tổng của tổ
+    };
 
-        // Sắp xếp danh sách giáo viên theo 'order' thay vì theo tên
-        const sortedTeachersFromSource = teachersInGroup
-            .filter(t => t.uid && groupData[t.uid]) // Chỉ lấy những GV có dữ liệu báo cáo
-            .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity)); // Sắp xếp theo 'order'
-
-        // Tạo mảng dữ liệu cuối cùng để render dựa trên thứ tự đã sắp xếp
-        const sortedTeachers = sortedTeachersFromSource.map(t => groupData[t.uid]);
+    const createGroupReportStructure = async (groupData, allMethodsTemplate) => {
+        const sortedMethods = Object.keys(allMethodsTemplate).sort();
+        const sortedTeachers = getSortedTeachers(groupData);
 
         if (sortedTeachers.length === 0) {
             reportContainer.innerHTML = '<p>Tổ chuyên môn này chưa có giáo viên nào.</p>';
@@ -423,35 +452,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         tableHTML += `<th>Tổng cộng</th></tr></thead><tbody>`;
 
-        const methodTotals = { ...allMethodsTemplate };
-
         // Lặp qua từng giáo viên để tạo hàng
         sortedTeachers.forEach(teacher => {
-            tableHTML += `<tr><td>${teacher.teacherName}</td>`;
+            tableHTML += `<tr data-teacher-uid="${teacher.uid}"><td>${teacher.teacherName}</td>`;
             // Lặp qua từng PPDH để điền số liệu
             sortedMethods.forEach(method => {
-                const count = teacher.methodCounts[method] || 0;
-                tableHTML += `<td>${count}</td>`;
-                methodTotals[method] += count; // Cộng dồn vào tổng của cột PPDH
+                tableHTML += `<td class="count-cell" data-method="${method}">0</td>`;
             });
             // Thêm cột tổng cộng của hàng (tổng số tiết của giáo viên)
-            tableHTML += `<td>${teacher.total}</td></tr>`;
+            tableHTML += `<td class="total-cell">0</td></tr>`;
         });
 
         // Dòng tổng cộng cuối bảng
         tableHTML += `<tr class="total-row"><td>Tổng cộng</td>`;
-        let grandTotal = 0;
         sortedMethods.forEach(method => {
-            tableHTML += `<td>${methodTotals[method]}</td>`;
-            grandTotal += methodTotals[method];
+            tableHTML += `<td class="total-cell" data-method="${method}">0</td>`;
         });
-        tableHTML += `<td>${grandTotal}</td></tr>`;
+        tableHTML += `<td class="grand-total-cell">0</td></tr>`;
         tableHTML += `</tbody></table>`;
 
         // --- Tạo layout và chèn biểu đồ ---
         reportContainer.innerHTML = `
             <div class="report-layout">
-                <div class="report-table-container">
+                <div id="group-report-table" class="report-table-container">
                     ${tableHTML}
                 </div>
                 <div class="report-chart-container">
@@ -461,22 +484,78 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        // --- Render các biểu đồ ---
-        renderPieChart(methodTotals, sortedMethods); // Tái sử dụng biểu đồ tròn cho tổng của tổ
+        // Chờ một chút để DOM được cập nhật
+        return new Promise(resolve => setTimeout(resolve, 0));
+    };
+
+    const updateGroupReportData = (groupData, allMethodsTemplate) => {
+        const sortedMethods = Object.keys(allMethodsTemplate).sort();
+        const sortedTeachers = getSortedTeachers(groupData);
+        const methodTotals = calculateGroupTotals(groupData, allMethodsTemplate);
+
+        // Cập nhật từng ô dữ liệu của giáo viên
+        sortedTeachers.forEach(teacher => {
+            const row = document.querySelector(`tr[data-teacher-uid="${teacher.uid}"]`);
+            if (row) {
+                sortedMethods.forEach(method => {
+                    const count = teacher.methodCounts[method] || 0;
+                    const cell = row.querySelector(`td.count-cell[data-method="${method}"]`);
+                    if (cell) cell.textContent = count;
+                });
+                const totalCell = row.querySelector('td.total-cell');
+                if (totalCell) totalCell.textContent = teacher.total;
+            }
+        });
+
+        // Cập nhật dòng tổng cộng
+        const totalRow = document.querySelector('tr.total-row');
+        if (totalRow) {
+            let grandTotal = 0;
+            sortedMethods.forEach(method => {
+                const total = methodTotals[method];
+                const cell = totalRow.querySelector(`td.total-cell[data-method="${method}"]`);
+                if (cell) cell.textContent = total;
+                grandTotal += total;
+            });
+            const grandTotalCell = totalRow.querySelector('td.grand-total-cell');
+            if (grandTotalCell) grandTotalCell.textContent = grandTotal;
+        }
+    };
+
+    const getSortedTeachers = (groupData) => {
+        return teachersInGroup
+            .filter(t => t.uid && groupData[t.uid])
+            .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
+            .map(t => ({ ...groupData[t.uid], uid: t.uid })); // Thêm uid vào data để dùng cho selector
+    };
+
+    const calculateGroupTotals = (groupData, allMethodsTemplate) => {
+        const methodTotals = { ...allMethodsTemplate };
+        Object.values(groupData).forEach(teacher => {
+            Object.keys(teacher.methodCounts).forEach(method => {
+                methodTotals[method] += teacher.methodCounts[method];
+            });
+        });
+        return methodTotals;
     };
 
     const renderPieChart = (methodCounts, sortedMethods) => {
-        const ctx = document.getElementById('methods-pie-chart').getContext('2d');
+        const chartCanvas = document.getElementById('methods-pie-chart');
+        if (!chartCanvas) return;
+        const ctx = chartCanvas.getContext('2d');
         const labels = sortedMethods;
         const data = sortedMethods.map(method => methodCounts[method]);
 
-        // Bảng màu đẹp và hài hòa hơn
         const professionalColors = [
             '#3498db', '#2ecc71', '#e74c3c', '#f1c40f', '#9b59b6',
             '#34495e', '#1abc9c', '#e67e22', '#ecf0f1', '#7f8c8d'
         ];
         const backgroundColors = labels.map((_, index) => professionalColors[index % professionalColors.length]);
 
+        // Hủy biểu đồ cũ nếu nó tồn tại trên canvas này để vẽ lại từ đầu
+        if (Chart.getChart(ctx)) {
+            Chart.getChart(ctx).destroy();
+        }
         pieChartInstance = new Chart(ctx, {
             type: 'doughnut', // Chuyển sang biểu đồ Doughnut hiện đại hơn
             data: {
@@ -525,8 +604,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Event Listeners ---
-    filterTypeSelect.addEventListener('change', updateFilterValueOptions);
-    viewReportBtn.addEventListener('click', generateReport);
+    filterTypeSelect.addEventListener('change', () => {
+        updateFilterValueOptions();
+        generateReport(); // Tự động tạo báo cáo khi thay đổi loại bộ lọc
+    });
+
+    // Tự động tạo báo cáo khi thay đổi giá trị bộ lọc
+    filterValueSelect.addEventListener('change', generateReport);
 
     // --- Khởi chạy ---
     initializePage();
