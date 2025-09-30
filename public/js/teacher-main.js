@@ -482,10 +482,12 @@ document.addEventListener('DOMContentLoaded', () => {
         renderFullLegend(filteredRegistrations);
     };
 
-    const renderFullLegend = (registrations) => {
+    const renderFullLegend = (filteredRegs) => {
         legendContainer.innerHTML = '<h4>Chú thích</h4>';
 
         const createLegendSection = (title, items, colorProperty, dataType, valueAccessor = item => item, displayAccessor = item => item) => {
+            if (!items || items.length === 0) return; // Không render section nếu không có item
+
             const section = document.createElement('div');
             section.className = 'legend-section';
             section.innerHTML = `<h5>${title}</h5>`;
@@ -521,19 +523,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Tạo map giáo viên để tra cứu tên từ uid, đưa ra ngoài để closure có thể truy cập
         const teacherNameMap = new Map(teachersInGroup.map(t => [t.uid, t.teacher_name]));
 
-        // Lấy tất cả môn học từ tên tổ
-        const groupName = document.getElementById('sidebar-group-name').textContent.replace('Tổ ', '');
-        const allSubjectsInGroup = getSubjectsFromGroupName(groupName);
+        // --- THAY ĐỔI: Chỉ lấy các mục có trong các lượt đăng ký của tuần ---
+        const usedMethods = [...new Set(filteredRegs.flatMap(reg => reg.teachingMethod || []))];
+        const usedSubjects = [...new Set(filteredRegs.map(reg => reg.subject))];
+        const usedTeachers = [...new Set(filteredRegs.map(reg => reg.teacherId))];
 
-        // Lấy tất cả giáo viên trong tổ
-        const allTeachersInGroup = teachersInGroup.map(t => t.uid).filter(Boolean);
-
-        // Lấy tất cả PPDH
-        const allAvailableMethods = [...allMethods];
-
-        createLegendSection('PPDH (Màu nền)', allAvailableMethods, 'bg', 'method');
-        createLegendSection('Môn học (Viền)', allSubjectsInGroup, 'border', 'subject');
-        createLegendSection('Giáo viên (Icon)', allTeachersInGroup, 'border', 'teacher', uid => uid, uid => teacherNameMap.get(uid) || 'N/A');
+        createLegendSection('PPDH (Màu nền)', usedMethods, 'bg', 'method');
+        createLegendSection('Môn học (Viền)', usedSubjects, 'border', 'subject');
+        createLegendSection('Giáo viên (Icon)', usedTeachers, 'border', 'teacher', uid => uid, uid => teacherNameMap.get(uid) || 'N/A');
     };
 
     const renderMobileSchedule = (week, allRegistrations, daysOfWeek, weekDates, teacherNameMap) => {
