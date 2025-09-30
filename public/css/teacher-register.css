@@ -416,3 +416,7 @@
 .conflict-info-container p .conflict-highlight {
     margin-right: 0;
 }
+
+.form-group label {
+    margin-bottom: 0px;
+}
