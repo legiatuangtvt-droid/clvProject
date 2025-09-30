@@ -20,18 +20,15 @@ document.addEventListener('DOMContentLoaded', () => {
  
     // DOM Elements
     const schoolYearSelect = document.getElementById('school-year-select');
-    const groupSelect = document.getElementById('group-select');
     const subjectSelect = document.getElementById('subject-select');
     const gradeSelect = document.getElementById('grade-select');
     const typeSelect = document.getElementById('type-select');
     const addSyllabusBtn = document.getElementById('add-syllabus-btn');
     const syllabusContainer = document.getElementById('syllabus-container');
  
-    // Modal Elements
     const syllabusModal = document.getElementById('syllabus-modal');
     const syllabusModalTitle = document.getElementById('syllabus-modal-title');
     const syllabusForm = document.getElementById('syllabus-form');
-    const modalGroupSelect = document.getElementById('modal-group-select');
     const modalSubjectSelect = document.getElementById('modal-subject-select');
     const modalGradeSelect = document.getElementById('modal-grade-select');
     const modalTypeSelect = document.getElementById('modal-type-select');
@@ -40,12 +37,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveSyllabusBtn = document.getElementById('save-syllabus-btn');
     const deleteSyllabusBtn = document.getElementById('delete-syllabus-btn');
  
-    // Confirm Delete Modal
     const confirmDeleteModal = document.getElementById('confirm-delete-modal');
     const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-
-    // Bulk Import Modal Elements
     const bulkImportBtn = document.getElementById('bulk-import-btn');
     const bulkImportModal = document.getElementById('bulk-import-modal');
     const bulkLessonsInput = document.getElementById('bulk-lessons-input');
@@ -76,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const setControlsState = (enabled) => {
         addSyllabusBtn.disabled = !enabled; // Chỉ quản lý nút Thêm PPCT
-        groupSelect.disabled = !enabled;
         subjectSelect.disabled = !enabled;
         gradeSelect.disabled = !enabled;
         typeSelect.disabled = !enabled;
@@ -123,9 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
  
     const loadFiltersForYear = async (schoolYear) => {
-        groupSelect.innerHTML = '<option value="">Tất cả</option>';
         subjectSelect.innerHTML = '<option value="">Tất cả</option>';
-        modalGroupSelect.innerHTML = '<option value="">-- Chọn tổ --</option>';
  
         const groupsQuery = query(collection(firestore, 'groups'), where("schoolYear", "==", schoolYear), orderBy('order'));
         const groupsSnapshot = await getDocs(groupsQuery);
@@ -136,14 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
             syllabusContainer.innerHTML = '<p>Năm học này chưa có tổ chuyên môn nào. Vui lòng thêm tổ trong trang "Quản lý thông tin năm học".</p>';
             return;
         }
- 
-        allGroups.forEach(group => {
-            const option = document.createElement('option');
-            option.value = group.id; // Sử dụng doc.id để dễ dàng tham chiếu
-            option.textContent = group.group_name;
-            groupSelect.appendChild(option.cloneNode(true));
-            modalGroupSelect.appendChild(option);
-        });
 
         updateSubjectFilter();
     };
@@ -151,13 +134,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- BULK IMPORT LOGIC ---
     const openBulkImportModal = () => {
         // Kiểm tra xem tất cả các bộ lọc cần thiết đã được chọn chưa
-        const selectedGroupId = groupSelect.value;
         const selectedSubject = subjectSelect.value;
         const selectedGrade = gradeSelect.value;
         const selectedType = typeSelect.value;
 
-        if (!selectedGroupId || !selectedSubject || !selectedGrade || !selectedType) {
-            showToast('Vui lòng chọn đầy đủ các bộ lọc: Tổ, Môn, Khối và Phân môn trước khi nhập hàng loạt.', 'error', 5000);
+        if (!selectedSubject || !selectedGrade || !selectedType) {
+            showToast('Vui lòng chọn đầy đủ các bộ lọc: Môn, Khối và Phân môn trước khi nhập hàng loạt.', 'error', 5000);
             return;
         }
 
@@ -174,7 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Lấy thông tin từ các bộ lọc
-        const groupId = groupSelect.value;
         const subject = subjectSelect.value;
         const grade = parseInt(gradeSelect.value);
         const type = typeSelect.value;
@@ -208,7 +189,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const syllabusData = {
             schoolYear: currentSchoolYear,
-            groupId,
             subject,
             grade,
             type,
@@ -218,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Kiểm tra xem PPCT đã tồn tại chưa
         const q = query(collection(firestore, 'syllabuses'),
             where('schoolYear', '==', currentSchoolYear),
-            where('groupId', '==', groupId),
             where('subject', '==', subject),
             where('grade', '==', grade),
             where('type', '==', type),
@@ -263,20 +242,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
-    const updateSubjectFilter = (selectElement = subjectSelect, groupId) => {
+    const updateSubjectFilter = (selectElement = subjectSelect) => {
         selectElement.innerHTML = '<option value="">Tất cả</option>';
         let subjects = new Set();
  
-        if (groupId) {
-            const group = allGroups.find(g => g.id === groupId);
-            if (group) {
-                getSubjectsFromGroupName(group.group_name).forEach(sub => subjects.add(sub));
-            }
-        } else { // All groups
-            allGroups.forEach(group => {
-                getSubjectsFromGroupName(group.group_name).forEach(sub => subjects.add(sub));
-            });
-        }
+        allGroups.forEach(group => {
+            getSubjectsFromGroupName(group.group_name).forEach(sub => subjects.add(sub));
+        });
  
         [...subjects].sort().forEach(subject => {
             const option = document.createElement('option');
@@ -288,13 +260,12 @@ document.addEventListener('DOMContentLoaded', () => {
  
     // --- DATA FETCHING & RENDERING ---
     const loadSyllabusData = async () => {
-        const selectedGroupId = groupSelect.value; // Đây là doc.id của group
         const selectedSubject = subjectSelect.value;
         const selectedGrade = gradeSelect.value;
         const selectedType = typeSelect.value;
 
         // Chỉ tải dữ liệu khi tất cả các bộ lọc đã được chọn
-        if (!selectedGroupId || !selectedSubject || !selectedGrade || !selectedType) {
+        if (!selectedSubject || !selectedGrade || !selectedType) {
             // Nếu có bất kỳ bộ lọc nào chưa được chọn, hiển thị thông báo hướng dẫn
             syllabusContainer.innerHTML = '<p>Hãy chọn Năm học/Tổ chuyên môn/Môn học/Khối/Phân môn để xem Phân phối chương trình tương ứng.</p>';
             return; // Dừng hàm tại đây
@@ -305,7 +276,6 @@ document.addEventListener('DOMContentLoaded', () => {
  
         try {
             let q = query(collection(firestore, 'syllabuses'), where('schoolYear', '==', currentSchoolYear));
-            if (selectedGroupId) q = query(q, where('groupId', '==', selectedGroupId));
             if (selectedSubject) q = query(q, where('subject', '==', selectedSubject));
             if (selectedGrade) q = query(q, where('grade', '==', parseInt(selectedGrade)));
             if (selectedType) q = query(q, where('type', '==', selectedType));
@@ -396,8 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const syllabusSnap = await getDoc(syllabusRef);
             if (syllabusSnap.exists()) {
                 const data = syllabusSnap.data();
-                modalGroupSelect.value = data.groupId;
-                updateModalSubjectSelect(data.groupId);
+                updateModalSubjectSelect();
                 modalSubjectSelect.value = data.subject;
                 modalGradeSelect.value = data.grade;
                 modalTypeSelect.value = data.type;
@@ -410,6 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             syllabusModalTitle.textContent = 'Thêm Phân phối chương trình';
+            updateModalSubjectSelect();
             deleteSyllabusBtn.style.display = 'none';
         }
  
@@ -417,12 +387,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
  
     const saveSyllabus = async () => {
-        const groupId = modalGroupSelect.value; // Đây là doc.id của group
         const subject = modalSubjectSelect.value;
         const grade = parseInt(modalGradeSelect.value);
         const type = modalTypeSelect.value;
  
-        if (!groupId || !subject || !grade) {
+        if (!subject || !grade) {
             showToast('Vui lòng điền đầy đủ thông tin Tổ, Môn và Khối.', 'error');
             return;
         }
@@ -457,7 +426,6 @@ document.addEventListener('DOMContentLoaded', () => {
  
         const syllabusData = {
             schoolYear: currentSchoolYear,
-            groupId,
             subject,
             grade,
             type,
@@ -500,15 +468,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     };
  
-    const updateModalSubjectSelect = async (groupId) => {
-        const group = allGroups.find(g => g.id === groupId);
+    const updateModalSubjectSelect = () => {
+        const subjects = new Set();
+        allGroups.forEach(group => getSubjectsFromGroupName(group.group_name).forEach(sub => subjects.add(sub)));
         modalSubjectSelect.innerHTML = '<option value="">-- Chọn môn --</option>';
-        if (!group) return;
-
-        const subjects = getSubjectsFromGroupName(group.group_name);
-        subjects.forEach(sub => {
-            modalSubjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
-        });
+        [...subjects].sort().forEach(sub => modalSubjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`);
     };
  
     // --- EVENT LISTENERS ---
@@ -516,11 +480,6 @@ document.addEventListener('DOMContentLoaded', () => {
         schoolYearSelect.addEventListener('change', async (e) => {
             currentSchoolYear = e.target.value;
             await loadFiltersForYear(currentSchoolYear);
-        });
- 
-        groupSelect.addEventListener('change', () => {
-            updateSubjectFilter(subjectSelect, groupSelect.value); // This is now async, but we don't need to await it here
-            loadSyllabusData();
         });
  
         [subjectSelect, gradeSelect, typeSelect].forEach(el => {
@@ -541,10 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelSyllabusModalBtn.addEventListener('click', () => syllabusModal.style.display = 'none');
         saveSyllabusBtn.addEventListener('click', saveSyllabus);
         deleteSyllabusBtn.addEventListener('click', handleDeleteSyllabus);
- 
-        modalGroupSelect.addEventListener('change', (e) => {
-            updateModalSubjectSelect(e.target.value); // This is now async, but we don't need to await it here
-        });
  
         // Bulk Import Listeners
         bulkImportBtn.addEventListener('click', openBulkImportModal);
