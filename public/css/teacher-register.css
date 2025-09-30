@@ -180,7 +180,7 @@
 #register-modal .form-group textarea {
     width: 100%;
     box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
-    min-height: 120px;      /* Đặt chiều cao tối thiểu, có thể điều chỉnh */
+    min-height: 139px;      /* Đặt chiều cao tối thiểu, có thể điều chỉnh */
     resize: vertical;       /* Chỉ cho phép người dùng thay đổi chiều cao */
 }
 
