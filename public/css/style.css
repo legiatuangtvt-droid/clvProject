@@ -264,7 +264,7 @@ body {
 
 /* --- Nút Đăng nhập --- */
 .harmony-button {
-  width: 100%;
+  /* width: 100%; */
   padding: 14px;
   border: none;
   border-radius: 12px;
