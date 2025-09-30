@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filterTypeSelect = document.getElementById('time-filter-type');
     const filterValueSelect = document.getElementById('time-filter-value');
+    const groupSubjectFilterContainer = document.getElementById('group-subject-filter-container');
     const filterContainer = document.querySelector('.filter-controls'); // Container của các bộ lọc
     const reportContainer = document.querySelector('.report-container');
 
@@ -29,6 +30,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let groupMap = new Map(); // Map: group_id -> group data
     let pieChartInstance = null; // Biến để lưu trữ biểu đồ, giúp hủy khi vẽ lại
     let currentView = 'personal'; // 'personal' hoặc 'group'
+
+    const getSubjectsFromGroupName = (groupName) => {
+        if (!groupName) return [];
+        const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
+        // Tạm thời thay thế "Giáo dục thể chất - QP" để không bị split sai
+        const placeholder = 'TDQP_PLACEHOLDER';
+        return cleanedName.replace('Giáo dục thể chất - QP', placeholder)
+                          .split(/\s*-\s*/).map(s => s.trim().replace(placeholder, 'Giáo dục thể chất - QP'));
+    };
 
     const initializePage = async () => {
         try {
@@ -224,11 +234,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tabContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('tab-link')) {
+                const newView = e.target.dataset.tab;
+                if (currentView === newView) return; // Không làm gì nếu click vào tab đang active
+
+                currentView = newView;
                 tabContainer.querySelector('.active').classList.remove('active');
                 e.target.classList.add('active');
+
+                // Ẩn/hiện bộ lọc môn học của tổ
+                if (currentView === 'group') {
+                    populateGroupSubjectFilter();
+                    groupSubjectFilterContainer.style.display = 'flex';
+                } else {
+                    groupSubjectFilterContainer.style.display = 'none';
+                }
+
                 generateReport(); // Tải lại báo cáo khi chuyển tab
             }
         });
+    };
+
+    const populateGroupSubjectFilter = () => {
+        const subjectFilter = document.getElementById('group-subject-filter');
+        const group = groupMap.get(currentTeacherInfo.group_id);
+        const subjects = group ? getSubjectsFromGroupName(group.group_name) : [];
+        subjectFilter.innerHTML = '<option value="all">Tất cả môn</option>';
+        subjects.forEach(sub => subjectFilter.innerHTML += `<option value="${sub}">${sub}</option>`);
     };
 
     const generateReport = async (isTabSwitch = false) => {
@@ -239,8 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Xác định tab đang được chọn
-        // const activeTab = document.querySelector('.tab-link.active')?.dataset.tab || 'personal';
-        const isGroupView = currentView === 'group';
+        const isGroupView = document.querySelector('.tab-link.active')?.dataset.tab === 'group';
 
         reportContainer.innerHTML = '<p>Đang tổng hợp dữ liệu...</p>';
 
@@ -323,6 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let regsQuery;
             let groupData = {}; // Dữ liệu tổng hợp cho từng GV trong tổ
 
+            const selectedGroupSubject = isGroupView ? document.getElementById('group-subject-filter').value : 'all';
             if (isGroupView && teachersInGroup.length > 0) {
                 const teacherUids = teachersInGroup.map(t => t.uid).filter(Boolean);
                 // Khởi tạo cấu trúc dữ liệu cho từng giáo viên
@@ -349,6 +380,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = doc.data();
                 if (!data.teachingMethod || !Array.isArray(data.teachingMethod)) return;
 
+                // Áp dụng bộ lọc môn học cho chế độ xem tổ
+                if (isGroupView && selectedGroupSubject !== 'all' && data.subject !== selectedGroupSubject) {
+                    return; // Bỏ qua nếu không khớp môn học
+                }
+
+
                 if (isGroupView) {
                     const teacherId = data.teacherId;
                     if (groupData[teacherId]) {
@@ -370,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 4. Render báo cáo
             if (isGroupView) {
-                await renderGroupReport(groupData, allMethodsTemplate);
+                await renderGroupReport(groupData, allMethodsTemplate, selectedGroupSubject);
             } else {
                 await renderPersonalReport(methodCounts);
             }
@@ -482,20 +519,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const renderGroupReport = async (groupData, allMethodsTemplate) => {
+    const renderGroupReport = async (groupData, allMethodsTemplate, selectedSubject) => {
         // Chỉ render lại cấu trúc HTML khi cần (lần đầu hoặc chuyển tab)
         if (!document.getElementById('group-report-table')) {
-            await createGroupReportStructure(groupData, allMethodsTemplate);
+            await createGroupReportStructure(groupData, allMethodsTemplate, selectedSubject);
         }
-        updateGroupReportData(groupData, allMethodsTemplate);
+        updateGroupReportData(groupData, allMethodsTemplate, selectedSubject);
         const sortedMethods = Object.keys(allMethodsTemplate).sort();
         const methodTotals = calculateGroupTotals(groupData, allMethodsTemplate);
         renderPieChart(methodTotals, sortedMethods); // Tái sử dụng biểu đồ tròn cho tổng của tổ
     };
 
-    const createGroupReportStructure = async (groupData, allMethodsTemplate) => {
+    const createGroupReportStructure = async (groupData, allMethodsTemplate, selectedSubject) => {
         const sortedMethods = Object.keys(allMethodsTemplate).sort();
-        const sortedTeachers = getSortedTeachers(groupData);
+        const sortedTeachers = getSortedTeachers(groupData, selectedSubject);
 
         if (sortedTeachers.length === 0) {
             reportContainer.innerHTML = '<p>Tổ chuyên môn này chưa có giáo viên nào.</p>';
@@ -546,9 +583,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Promise(resolve => setTimeout(resolve, 0));
     };
 
-    const updateGroupReportData = (groupData, allMethodsTemplate) => {
+    const updateGroupReportData = (groupData, allMethodsTemplate, selectedSubject) => {
         const sortedMethods = Object.keys(allMethodsTemplate).sort();
-        const sortedTeachers = getSortedTeachers(groupData);
+        const sortedTeachers = getSortedTeachers(groupData, selectedSubject);
         const methodTotals = calculateGroupTotals(groupData, allMethodsTemplate);
 
         // Cập nhật từng ô dữ liệu của giáo viên
@@ -580,8 +617,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const getSortedTeachers = (groupData) => {
-        return teachersInGroup
+    const getSortedTeachers = (groupData, selectedSubject) => {
+        let filteredTeachers = teachersInGroup;
+
+        // Lọc giáo viên theo môn học nếu một môn cụ thể được chọn
+        if (selectedSubject && selectedSubject !== 'all') {
+            filteredTeachers = teachersInGroup.filter(t => t.subject === selectedSubject);
+        }
+
+        return filteredTeachers
             .filter(t => t.uid && groupData[t.uid])
             .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
             .map(t => ({ ...groupData[t.uid], uid: t.uid })); // Thêm uid vào data để dùng cho selector
@@ -669,6 +713,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Tự động tạo báo cáo khi thay đổi giá trị bộ lọc
     filterValueSelect.addEventListener('change', generateReport);
+
+    // Thêm listener cho bộ lọc môn học của tổ
+    document.getElementById('group-subject-filter').addEventListener('change', generateReport);
 
     // --- Khởi chạy ---
     initializePage();
