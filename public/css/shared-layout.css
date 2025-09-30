@@ -36,6 +36,14 @@
     --border-color: #e9ecef;         /* Viền chính, phân cách */
     --border-color-strong: #dee2e6;  /* Viền đậm hơn một chút */
 }
+
+/* --- Thiết lập lại Body mặc định --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; /* Loại bỏ lề 8px mặc định của trình duyệt */
+    overflow: hidden; /* Ngăn không cho body có thanh cuộn */
+    background-color: var(--body-bg);
+}
 /* --- Shared Top Bar Styles --- */
 .top-bar {
     background: #fff;
@@ -666,7 +674,7 @@
 .two-column-sidebar {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 10px;
     position: sticky;
     top: 20px;
     max-height: calc(100vh - 120px); /* 100vh - (top-bar height + padding) */
@@ -704,8 +712,8 @@
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    /* Thêm overflow-x: hidden để ngăn cuộn ngang không mong muốn */
-    overflow-x: hidden;
+    /* Ngăn content-wrapper bị tràn ra ngoài app-layout, loại bỏ thanh cuộn của body */
+    overflow: hidden;
 }
 
 .main-content {
@@ -800,7 +808,7 @@
 .color-legend-container {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
     margin-top: 0;
     padding: 12px 15px;
     border: 1px solid var(--border-color);
@@ -814,12 +822,14 @@
     width: 100%;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 10px;
+    text-align: center; /* Căn giữa tiêu đề "Chú thích" */
 }
 
 .legend-section {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    margin-bottom: 10px;
 }
 
 .legend-section h5 {
