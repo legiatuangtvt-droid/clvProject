@@ -197,28 +197,22 @@ const initializeTeacherRegisterPage = (user) => {
 
     const populateModalSelectors = async (user) => {
         // Tải PPDH
+        const subjectSelect = document.getElementById('reg-subject');
+        subjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
+        if (currentUserInfo && currentUserInfo.group_name) {
+            // Ưu tiên môn học chính đã được phân công cho giáo viên
+            if (currentUserInfo.subject) {
+                subjectSelect.innerHTML += `<option value="${currentUserInfo.subject}" selected>${currentUserInfo.subject}</option>`;
+            } else { // Nếu chưa được phân công, hiển thị tất cả các môn trong tổ
+                const subjects = getSubjectsFromGroupName(currentUserInfo.group_name);
+                subjects.forEach(subject => {
+                    subjectSelect.innerHTML += `<option value="${subject}">${subject}</option>`;
+                });
+            }
+        }
+
         const methodsQuery = query(collection(firestore, 'teachingMethods'), where('schoolYear', '==', currentSchoolYear), orderBy('method'));
         const methodsSnapshot = await getDocs(methodsQuery);
-
-        // Tải Môn học
-        const subjectSelect = document.getElementById('reg-subject');
-        const subjectsQuery = query(collection(firestore, 'subjects'), where('schoolYear', '==', currentSchoolYear), orderBy('name'));
-        const subjectsSnapshot = await getDocs(subjectsQuery);
-
-        subjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
-        const subjectsFromGroup = getSubjectsFromGroupName(currentUserInfo.group_name);
-
-        subjectsSnapshot.forEach(doc => {
-            const subject = doc.data();
-            // Chỉ hiển thị môn học nếu nó là 'special' hoặc thuộc về tổ của giáo viên
-            if (subject.type === 'special' || subjectsFromGroup.includes(subject.name)) {
-                const option = document.createElement('option');
-                option.value = subject.name;
-                option.textContent = subject.name;
-                subjectSelect.appendChild(option);
-            }
-        });
-
         const methodContainer = document.getElementById('reg-method-container');
         methodContainer.innerHTML = ''; // Xóa nội dung cũ
 
@@ -509,7 +503,6 @@ const initializeTeacherRegisterPage = (user) => {
             const weekContainer = document.getElementById('reg-week-container');
             const weekSelect = document.getElementById('reg-week');
             weekContainer.style.display = 'block';
-            weekSelect.className = 'filter-select'; // Đảm bảo có class
             weekSelect.innerHTML = '';
             timePlan.forEach(week => {
                 const option = document.createElement('option');
@@ -567,7 +560,6 @@ const initializeTeacherRegisterPage = (user) => {
 
         // Populate days
         daySelect.innerHTML = '';
-        daySelect.className = 'filter-select'; // Đảm bảo có class
         let currentDate = new Date(selectedWeek.startDate.replace(/-/g, '/'));
         const daysOfWeek = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
         const formatDateToYYYYMMDD = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -578,7 +570,6 @@ const initializeTeacherRegisterPage = (user) => {
         }
 
         // Populate periods
-        periodSelect.className = 'filter-select'; // Đảm bảo có class
         periodSelect.innerHTML = '<option value="">-- Chọn tiết --</option>';
         for (let i = 1; i <= 10; i++) {
             const session = i <= 5 ? 'Sáng' : 'Chiều';
@@ -740,41 +731,44 @@ const initializeTeacherRegisterPage = (user) => {
         }
     });
     
+    // Tái cấu trúc event listener để xử lý đúng cho cả desktop và mobile
     scheduleContainer.addEventListener('click', (e) => {
-        const targetCell = e.target.closest('td');
-        if (!targetCell) return;
-
-        // Xử lý click vào đăng ký đã có để sửa
-        if (targetCell.querySelector('.registration-info')) {
-            const regInfo = e.target.closest('.registration-info');
-            if (regInfo) {
-                const regId = regInfo.dataset.regId;
-                const registration = allRegistrations.find(r => r.id === regId);
-                if (registration && registration.teacherId === user.uid) { // Chỉ cho phép sửa đăng ký của chính mình
-                    openRegisterModal(user, regId);
-                }
-            }
-        } 
-        // Xử lý click vào ô trống để đăng ký mới
-        else if (targetCell.classList.contains('empty-slot')) {
-            openRegisterModal(user, null, targetCell.dataset.date, targetCell.dataset.period);
-        }
-        // Ngăn không cho mở modal nếu ô bị vô hiệu hóa
-        if (targetCell.classList.contains('disabled-slot')) {
-            const title = targetCell.getAttribute('title');
-            showToast(title || 'Không thể thao tác trên ô này.', 'info');
-            return;
-        }
-
-        // Xử lý click nút "Đăng ký cho ngày này" trên mobile
+        // 1. Xử lý cho nút "Đăng ký cho ngày này" trên mobile
         const addBtnMobile = e.target.closest('.add-registration-mobile-btn');
         if (addBtnMobile) {
             const date = addBtnMobile.dataset.date;
-            // Mở modal, nhưng không chọn sẵn tiết nào
             openRegisterModal(user, null, date, null);
-            // Mở khóa selector ngày và tiết để người dùng tự chọn
             document.getElementById('reg-day').disabled = false;
             document.getElementById('reg-period').disabled = false;
+            return; // Đã xử lý, không cần làm gì thêm
+        }
+
+        // 2. Xử lý cho các ô trong bảng (desktop view)
+        const targetCell = e.target.closest('td');
+        if (targetCell) {
+            // Xử lý click vào đăng ký đã có để sửa
+            if (targetCell.querySelector('.registration-info')) {
+                const regInfo = e.target.closest('.registration-info');
+                if (regInfo) {
+                    const regId = regInfo.dataset.regId;
+                    const registration = allRegistrations.find(r => r.id === regId);
+                    if (registration && registration.teacherId === user.uid) { // Chỉ cho phép sửa đăng ký của chính mình
+                        openRegisterModal(user, regId);
+                    }
+                }
+            } 
+            // Xử lý click vào ô trống để đăng ký mới
+            else if (targetCell.classList.contains('empty-slot')) {
+                openRegisterModal(user, null, targetCell.dataset.date, targetCell.dataset.period);
+            }
+            
+            // Ngăn không cho mở modal nếu ô bị vô hiệu hóa
+            if (targetCell.classList.contains('disabled-slot')) {
+                const title = targetCell.getAttribute('title');
+                if (title) { // Chỉ hiển thị toast nếu có title
+                    showToast(title, 'info');
+                }
+            }
         }
     });
     // Thêm event listener cho nút sửa trên mobile
