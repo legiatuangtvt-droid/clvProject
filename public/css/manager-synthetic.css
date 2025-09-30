@@ -177,6 +177,73 @@
     color: var(--danger-color);
 }
 
+/* --- Modal Form (Copied from teacher-register.css) --- */
+.register-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 cột bằng nhau */
+    gap: 15px 20px; /* 15px khoảng cách dọc, 20px khoảng cách ngang */
+}
+
+/* Class để một form-group chiếm trọn 2 cột */
+.form-group-span-2 {
+    grid-column: span 2;
+}
+
+/* Ghi đè style cho các input/select trong modal để đồng bộ */
+#register-modal .form-group input:not([type="checkbox"]),
+#register-modal .form-group select {
+    width: 100%; /* Chiếm toàn bộ chiều rộng của .form-group */
+    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
+}
+
+#register-modal .form-group textarea {
+    width: 100%;
+    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
+    min-height: 139px;      /* Đặt chiều cao tối thiểu, có thể điều chỉnh */
+    resize: vertical;       /* Chỉ cho phép người dùng thay đổi chiều cao */
+}
+
+#register-modal .modal-content h2 i {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin-right: 5px;
+}
+
+@media (max-width: 768px) {
+    .register-form-grid {
+        grid-template-columns: 1fr; /* Chuyển về 1 cột trên mobile */
+    }
+    .form-group-span-2 { grid-column: span 1; }
+}
+
+/* --- Fieldset Group Styling (Copied from teacher-register.css) --- */
+.fieldset-group {
+    position: relative; /* Làm mốc định vị cho label */
+    padding: 25px 15px 15px 15px; /* Tăng padding-top để có chỗ cho label */
+    margin-top: 15px; /* Thêm khoảng cách trên */
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.fieldset-group > label {
+    position: absolute;
+    top: -12px; /* Dịch chuyển label lên trên, nằm trên đường viền */
+    left: 10px; /* Khoảng cách từ lề trái */
+    background-color: var(--surface-bg); /* Màu nền của label phải giống màu nền của modal */
+    padding: 0 5px; /* Tạo khoảng trống hai bên chữ để che đường viền */
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+/* Style cho selector bị vô hiệu hóa */
+#register-modal .form-group select:disabled,
+#register-modal .form-group input:disabled,
+#register-modal .form-group textarea:disabled {
+    background-color: #e9ecef; /* Màu nền xám nhạt */
+    cursor: not-allowed;
+}
+
 /* --- Modal Subtitle Actions --- */
 .modal-subtitle-actions {
     margin-top: -15px;
