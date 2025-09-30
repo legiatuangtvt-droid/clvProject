@@ -48,19 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
  
     // State
     let currentSchoolYear = null;
-    let allGroups = [];
+    let allSubjects = []; // NEW: State to hold all subjects for the selected year
     let currentEditingSyllabusId = null;
     let deleteFunction = null;
- 
-    // --- HELPERS ---
-    const getSubjectsFromGroupName = (groupName) => {
-        if (!groupName) return [];
-        const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
-        const placeholder = 'TDQP_PLACEHOLDER';
-        return cleanedName.replace('Giáo dục thể chất - QP', placeholder)
-                          .split(/\s*-\s*/)
-                          .map(s => s.trim().replace(placeholder, 'Giáo dục thể chất - QP'));
-    };
  
     // --- INITIALIZATION ---
     const initializePage = async () => {
@@ -117,18 +107,20 @@ document.addEventListener('DOMContentLoaded', () => {
  
     const loadFiltersForYear = async (schoolYear) => {
         subjectSelect.innerHTML = '<option value="">Tất cả</option>';
- 
-        const groupsQuery = query(collection(firestore, 'groups'), where("schoolYear", "==", schoolYear), orderBy('order'));
-        const groupsSnapshot = await getDocs(groupsQuery);
-        
-        allGroups = groupsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        modalSubjectSelect.innerHTML = '<option value="">-- Chọn môn --</option>';
 
-        if (allGroups.length === 0) {
-            syllabusContainer.innerHTML = '<p>Năm học này chưa có tổ chuyên môn nào. Vui lòng thêm tổ trong trang "Quản lý thông tin năm học".</p>';
+        // NEW: Load subjects directly from the 'subjects' collection
+        const subjectsQuery = query(collection(firestore, 'subjects'), where("schoolYear", "==", schoolYear), orderBy('name'));
+        const subjectsSnapshot = await getDocs(subjectsQuery);
+        allSubjects = subjectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        if (allSubjects.length === 0) {
+            syllabusContainer.innerHTML = '<p>Năm học này chưa có môn học nào được định nghĩa. Vui lòng thêm môn học trong trang "Quản lý thông tin năm học".</p>';
             return;
         }
 
-        updateSubjectFilter();
+        updateSubjectFilter(subjectSelect);
+        updateSubjectFilter(modalSubjectSelect, '-- Chọn môn --');
     };
  
     // --- BULK IMPORT LOGIC ---
@@ -242,18 +234,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
-    const updateSubjectFilter = (selectElement = subjectSelect) => {
-        selectElement.innerHTML = '<option value="">Tất cả</option>';
-        let subjects = new Set();
- 
-        allGroups.forEach(group => {
-            getSubjectsFromGroupName(group.group_name).forEach(sub => subjects.add(sub));
-        });
- 
-        [...subjects].sort().forEach(subject => {
+    // REFACTORED: This function now populates selects from the allSubjects array
+    const updateSubjectFilter = (selectElement, defaultOptionText = 'Tất cả') => {
+        selectElement.innerHTML = `<option value="">${defaultOptionText}</option>`;
+        allSubjects.sort((a, b) => a.name.localeCompare(b.name)).forEach(subject => { // Sắp xếp theo tên
             const option = document.createElement('option');
-            option.value = subject;
-            option.textContent = subject;
+            option.value = subject.name;
+            option.textContent = subject.name;
             selectElement.appendChild(option);
         });
     };
@@ -366,7 +353,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const syllabusSnap = await getDoc(syllabusRef);
             if (syllabusSnap.exists()) {
                 const data = syllabusSnap.data();
-                updateModalSubjectSelect();
                 modalSubjectSelect.value = data.subject;
                 modalGradeSelect.value = data.grade;
                 modalTypeSelect.value = data.type;
@@ -379,7 +365,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             syllabusModalTitle.textContent = 'Thêm Phân phối chương trình';
-            updateModalSubjectSelect();
             deleteSyllabusBtn.style.display = 'none';
         }
  
@@ -467,14 +452,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
     };
- 
-    const updateModalSubjectSelect = () => {
-        const subjects = new Set();
-        allGroups.forEach(group => getSubjectsFromGroupName(group.group_name).forEach(sub => subjects.add(sub)));
-        modalSubjectSelect.innerHTML = '<option value="">-- Chọn môn --</option>';
-        [...subjects].sort().forEach(sub => modalSubjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`);
-    };
- 
     // --- EVENT LISTENERS ---
     const setupEventListeners = () => {
         schoolYearSelect.addEventListener('change', async (e) => {
