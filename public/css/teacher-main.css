@@ -44,6 +44,13 @@
     grid-template-columns: minmax(0, 260px) 1fr; /* Sidebar tối đa 260px, co lại được; content chiếm phần còn lại */
 }
 
+/* Căn chỉnh khối tiêu đề trong sidebar */
+.sidebar-title-container {
+    text-align: center; /* Căn giữa toàn bộ nội dung */
+    padding-bottom: 15px; /* Tạo khoảng cách với bộ chọn tuần bên dưới */
+    border-bottom: 1px solid var(--border-color); /* Thêm đường kẻ phân cách */
+}
+
 .sidebar-main-title {
     font-size: 1.4rem;
     margin: 0;
