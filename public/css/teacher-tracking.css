@@ -29,27 +29,6 @@
     border-bottom-color: var(--primary-color);
 }
 
-/* --- Filter Controls --- */
-.filter-container {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    flex-wrap: wrap;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-}
-
-.filter-container select,
-.filter-container .view-report-btn {
-    padding: 10px 15px;
-    border: 1px solid #ced4da;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
 /* --- Report Subtitles --- */
 .report-subtitle {
     font-size: 1.1rem;

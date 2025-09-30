@@ -30,30 +30,33 @@
         <div class="content-wrapper">
             <div class="top-bar">
                 <h1>Theo dõi & Tổng hợp</h1>
-                <div class="user-info">
-                    <span>Chào, <span id="user-name">Giáo viên</span>!</span>
-                    <button id="edit-profile-button" class="icon-button" title="Chỉnh sửa thông tin">
-                        <i class="fas fa-pencil-alt"></i>
-                    </button>
+                <div class="top-bar-actions">
+                    <div class="user-info">
+                        <span>Chào, <span id="user-name">Giáo viên</span>!</span>
+                        <button id="edit-profile-button" class="icon-button" title="Chỉnh sửa thông tin">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                    </div>
+                    <button id="logout-button" class="logout-button">Đăng xuất</button>
                 </div>
-                <button id="logout-button" class="logout-button">Đăng xuất</button>
             </div>
             <main class="main-content">
                 <div class="content-card">
                     <div class="page-header">
-                        <div class="filter-container">
-                            <div class="form-group">
+                        <div class="filter-controls">
+                            <div class="filter-group">
                                 <label for="time-filter-type">Thống kê theo:</label>
-                                <select id="time-filter-type">
+                                <select id="time-filter-type" class="filter-select">
                                     <option value="week">Tuần</option>
                                     <option value="month">Tháng</option>
                                     <option value="semester">Học kỳ</option>
                                     <option value="year">Năm học</option>
                                 </select>
                             </div>
-                            <div class="form-group">
+                            <div class="filter-group">
                                 <label for="time-filter-value">Chọn giá trị:</label>
-                                <select id="time-filter-value"></select>
+                                <select id="time-filter-value" class="filter-select">
+                                    <option value="all">Tất cả</option></select>
                             </div>
                         </div>
                     </div>

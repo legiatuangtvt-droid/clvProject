@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filterTypeSelect = document.getElementById('time-filter-type');
     const filterValueSelect = document.getElementById('time-filter-value');
-    const filterContainer = document.querySelector('.filter-container'); // Container của các bộ lọc
+    const filterContainer = document.querySelector('.filter-controls'); // Container của các bộ lọc
     const reportContainer = document.querySelector('.report-container');
 
     let currentSchoolYear = null;
