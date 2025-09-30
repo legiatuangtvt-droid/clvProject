@@ -58,9 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
             schoolYearEl.textContent = `Năm học: ${latestSchoolYear}`;
 
             // Tải thông tin tổ và các giáo viên trong tổ
-            await loadGroupInfo();
+            await loadAllMethods(latestSchoolYear); // Nạp PPDH trước
+            await loadGroupInfo(); // Sau đó mới nạp thông tin tổ và khởi tạo bộ lọc
             await loadClassTimings(latestSchoolYear); // Tải thời gian tiết học
-            await loadAllMethods(latestSchoolYear);
 
             // 2. Tải kế hoạch thời gian và thiết lập tuần ban đầu
             await loadTimePlan(latestSchoolYear);
@@ -159,13 +159,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const loadAllMethods = async (schoolYear) => {
+    const loadAllMethods = async (schoolYear) => {        
         const methodsQuery = query(collection(firestore, 'teachingMethods'), where('schoolYear', '==', schoolYear), orderBy('method'));
         const methodsSnapshot = await getDocs(methodsQuery);
         allMethods.clear();
         methodsSnapshot.forEach(doc => {
             allMethods.add(doc.data().method);
-        });
+        });        
     };
 
     const loadClassTimings = async (schoolYear) => {
@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Cập nhật bộ lọc giáo viên sau khi có dữ liệu đăng ký
             updateTeacherFilter();
 
-            renderWeeklySchedule(week, currentRegistrations);
+            renderWeeklySchedule(week);
 
         } catch (error) {
             console.error("Lỗi khi tải lịch dạy:", error);
@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     };
 
-    const renderWeeklySchedule = async (week, allRegistrations) => {
+    const renderWeeklySchedule = async (week) => {
         const currentUser = auth.currentUser;
         // Create a map for easy lookup: uid -> name
         const teacherNameMap = new Map();
@@ -356,9 +356,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Sử dụng lại giao diện bảng từ trang đăng ký
-        let desktopHTML = `<div class="desktop-schedule"><table class="weekly-schedule-table"><thead><tr><th>Buổi</th><th>Tiết</th>`;
+        let desktopHTML = `<div class="desktop-schedule"><table class="weekly-schedule-table"><thead><tr><th class="col-session">Buổi</th><th class="col-period">Tiết</th>`;
         daysOfWeek.forEach((day, index) => {
-            desktopHTML += `<th>${day}<br>${formatDate(weekDates[index])}</th>`;
+            desktopHTML += `<th class="col-day">${day}<br>${formatDate(weekDates[index])}</th>`;
         });
         desktopHTML += `</tr></thead><tbody>`;
 
@@ -609,13 +609,13 @@ document.addEventListener('DOMContentLoaded', () => {
         filterSubjectSelect.addEventListener('change', () => {
             // Khi môn học thay đổi, cập nhật lại danh sách giáo viên và vẽ lại lịch
             updateTeacherFilter();
-            renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber), currentRegistrations); // Không cần await ở đây
+            renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber)); // Không cần await ở đây
         });
 
         // Gộp listener cho teacher và method
         [filterTeacherSelect, filterMethodSelect].forEach(select => {
             select.addEventListener('change', () => {
-                renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber), currentRegistrations); // Không cần await ở đây
+                renderWeeklySchedule(timePlan.find(w => w.weekNumber === selectedWeekNumber)); // Không cần await ở đây
             });
         });
         /* filterTeacherSelect.addEventListener('change', () => {

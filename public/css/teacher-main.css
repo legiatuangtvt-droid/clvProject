@@ -17,6 +17,28 @@
     position: relative;
 }
 
+/* --- Tùy chỉnh bảng lịch dạy của tổ --- */
+.weekly-schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    /* Thuộc tính quan trọng nhất để kiểm soát độ rộng cột */
+    table-layout: fixed;
+}
+
+/* Thiết lập độ rộng cho từng loại cột */
+.weekly-schedule-table .col-session {
+    width: 60px; /* Cột "Buổi" */
+}
+
+.weekly-schedule-table .col-period {
+    width: 50px; /* Cột "Tiết" */
+}
+
+.weekly-schedule-table .col-day {
+    /* 6 cột ngày sẽ chia đều không gian còn lại */
+    width: auto; 
+}
+
 /* --- CSS cho header của lịch --- */
 .two-column-layout { /* Sử dụng class dùng chung */
     grid-template-columns: minmax(0, 260px) 1fr; /* Sidebar tối đa 260px, co lại được; content chiếm phần còn lại */
