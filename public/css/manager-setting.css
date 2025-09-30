@@ -96,6 +96,12 @@
     margin-bottom: 25px;
 }
 
+.page-header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
 .page-header h2 { /* Đổi từ h1 sang h2 */
     margin: 0;
     font-size: 1.8rem;
@@ -1068,6 +1074,9 @@
 }
 #method-modal .modal-content h2::before {
     content: '\f0eb'; /* fa-lightbulb */
+}
+#subject-modal .modal-content h2::before {
+    content: '\f02d'; /* fa-book */
 }
 #school-year-modal .modal-content h2::before {
     content: '\f271'; /* fa-calendar-plus */

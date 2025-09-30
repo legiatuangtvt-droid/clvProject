@@ -197,22 +197,28 @@ const initializeTeacherRegisterPage = (user) => {
 
     const populateModalSelectors = async (user) => {
         // Tải PPDH
-        const subjectSelect = document.getElementById('reg-subject');
-        subjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
-        if (currentUserInfo && currentUserInfo.group_name) {
-            // Ưu tiên môn học chính đã được phân công cho giáo viên
-            if (currentUserInfo.subject) {
-                subjectSelect.innerHTML += `<option value="${currentUserInfo.subject}" selected>${currentUserInfo.subject}</option>`;
-            } else { // Nếu chưa được phân công, hiển thị tất cả các môn trong tổ
-                const subjects = getSubjectsFromGroupName(currentUserInfo.group_name);
-                subjects.forEach(subject => {
-                    subjectSelect.innerHTML += `<option value="${subject}">${subject}</option>`;
-                });
-            }
-        }
-
         const methodsQuery = query(collection(firestore, 'teachingMethods'), where('schoolYear', '==', currentSchoolYear), orderBy('method'));
         const methodsSnapshot = await getDocs(methodsQuery);
+
+        // Tải Môn học
+        const subjectSelect = document.getElementById('reg-subject');
+        const subjectsQuery = query(collection(firestore, 'subjects'), where('schoolYear', '==', currentSchoolYear), orderBy('name'));
+        const subjectsSnapshot = await getDocs(subjectsQuery);
+
+        subjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
+        const subjectsFromGroup = getSubjectsFromGroupName(currentUserInfo.group_name);
+
+        subjectsSnapshot.forEach(doc => {
+            const subject = doc.data();
+            // Chỉ hiển thị môn học nếu nó là 'special' hoặc thuộc về tổ của giáo viên
+            if (subject.type === 'special' || subjectsFromGroup.includes(subject.name)) {
+                const option = document.createElement('option');
+                option.value = subject.name;
+                option.textContent = subject.name;
+                subjectSelect.appendChild(option);
+            }
+        });
+
         const methodContainer = document.getElementById('reg-method-container');
         methodContainer.innerHTML = ''; // Xóa nội dung cũ
 

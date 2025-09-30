@@ -500,10 +500,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     };
  
-    const updateModalSubjectSelect = (groupId) => {
+    const updateModalSubjectSelect = async (groupId) => {
         const group = allGroups.find(g => g.id === groupId);
-        const subjects = getSubjectsFromGroupName(group?.group_name);
         modalSubjectSelect.innerHTML = '<option value="">-- Chọn môn --</option>';
+        if (!group) return;
+
+        const subjects = getSubjectsFromGroupName(group.group_name);
         subjects.forEach(sub => {
             modalSubjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
         });
@@ -517,7 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
  
         groupSelect.addEventListener('change', () => {
-            updateSubjectFilter(subjectSelect, groupSelect.value);
+            updateSubjectFilter(subjectSelect, groupSelect.value); // This is now async, but we don't need to await it here
             loadSyllabusData();
         });
  
@@ -541,7 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteSyllabusBtn.addEventListener('click', handleDeleteSyllabus);
  
         modalGroupSelect.addEventListener('change', (e) => {
-            updateModalSubjectSelect(e.target.value);
+            updateModalSubjectSelect(e.target.value); // This is now async, but we don't need to await it here
         });
  
         // Bulk Import Listeners

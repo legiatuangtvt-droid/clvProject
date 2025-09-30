@@ -65,15 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const LAST_BULK_IMPORT_DAY_KEY = 'lastBulkImportDay';
     const LAST_BULK_IMPORT_SESSION_KEY = 'lastBulkImportSession';
 
-    const getSubjectsFromGroupName = (groupName) => {
-        const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
-        // Tạm thời thay thế "Giáo dục thể chất - QP" để không bị split sai
-        const placeholder = 'TDQP_PLACEHOLDER';
-        return cleanedName.replace('Giáo dục thể chất - QP', placeholder)
-                          .split(/\s*-\s*/)
-                          .map(s => s.trim().replace(placeholder, 'Giáo dục thể chất - QP'));
-    };
-
     // --- INITIALIZATION ---
     const initializePage = async () => {
         try {
@@ -172,7 +163,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const populateModalSelectors = async () => {
-        // Populate PPDH
+        // --- NEW LOGIC: Load all subjects from the 'subjects' collection ---
+        const subjectsQuery = query(collection(firestore, 'subjects'), where('schoolYear', '==', currentSchoolYear), orderBy('name'));
+        const subjectsSnapshot = await getDocs(subjectsQuery);
+        allSubjects.clear();
+        subjectsSnapshot.forEach(doc => allSubjects.add(doc.data().name));
+
+        // Populate PPDH (no change needed here)
         const methodsQuery = query(collection(firestore, 'teachingMethods'), where('schoolYear', '==', currentSchoolYear), orderBy('method'));
         const methodsSnapshot = await getDocs(methodsQuery);
         const methodContainer = document.getElementById('reg-method-container');
@@ -188,16 +185,8 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         });
 
-        // Populate Subjects from all groups
-        const groupsQuery = query(collection(firestore, 'groups'), where('schoolYear', '==', currentSchoolYear));
-        const groupsSnapshot = await getDocs(groupsQuery);
         const subjectSelect = document.getElementById('reg-subject');
-        allSubjects.clear();
-        groupsSnapshot.forEach(doc => {
-            const groupName = doc.data().group_name;
-            getSubjectsFromGroupName(groupName).forEach(sub => allSubjects.add(sub.trim()));
-        });
-
+        // Populate subjects from the new `allSubjects` set
         subjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
         [...allSubjects].sort().forEach(subject => {
             subjectSelect.innerHTML += `<option value="${subject}">${subject}</option>`;
@@ -233,7 +222,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             const selectedGroup = allGroups.find(g => g.group_id === selectedGroupId);
             if (selectedGroup) {
-                getSubjectsFromGroupName(selectedGroup.group_name).forEach(sub => availableSubjects.add(sub.trim()));
+                // Lọc các môn học trong `allSubjects` dựa trên tên tổ
+                const subjectsInGroup = getSubjectsFromGroupName(selectedGroup.group_name);
+                allSubjects.forEach(sub => {
+                    if (subjectsInGroup.includes(sub)) availableSubjects.add(sub);
+                });
             }
         }
 

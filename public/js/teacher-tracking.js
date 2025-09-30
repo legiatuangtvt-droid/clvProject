@@ -31,15 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let pieChartInstance = null; // Biến để lưu trữ biểu đồ, giúp hủy khi vẽ lại
     let currentView = 'personal'; // 'personal' hoặc 'group'
 
-    const getSubjectsFromGroupName = (groupName) => {
-        if (!groupName) return [];
-        const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
-        // Tạm thời thay thế "Giáo dục thể chất - QP" để không bị split sai
-        const placeholder = 'TDQP_PLACEHOLDER';
-        return cleanedName.replace('Giáo dục thể chất - QP', placeholder)
-                          .split(/\s*-\s*/).map(s => s.trim().replace(placeholder, 'Giáo dục thể chất - QP'));
-    };
-
     const initializePage = async () => {
         try {
             // 1. Lấy năm học mới nhất
@@ -254,12 +245,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const populateGroupSubjectFilter = () => {
+    const populateGroupSubjectFilter = async () => {
         const subjectFilter = document.getElementById('group-subject-filter');
-        const group = groupMap.get(currentTeacherInfo.group_id);
-        const subjects = group ? getSubjectsFromGroupName(group.group_name) : [];
         subjectFilter.innerHTML = '<option value="all">Tất cả môn</option>';
-        subjects.forEach(sub => subjectFilter.innerHTML += `<option value="${sub}">${sub}</option>`);
+
+        if (!currentTeacherInfo?.group_id || !currentSchoolYear) return;
+
+        // --- NEW LOGIC: Load subjects from 'subjects' collection ---
+        const subjectsQuery = query(
+            collection(firestore, 'subjects'),
+            where('schoolYear', '==', currentSchoolYear)
+        );
+        const subjectsSnapshot = await getDocs(subjectsQuery);
+        const group = groupMap.get(currentTeacherInfo.group_id);
+        const subjectsFromGroupName = group ? getSubjectsFromGroupName(group.group_name) : [];
+
+        subjectsSnapshot.forEach(doc => {
+            const subject = doc.data();
+            if (subject.type === 'special' || subjectsFromGroupName.includes(subject.name)) {
+                subjectFilter.innerHTML += `<option value="${subject.name}">${subject.name}</option>`;
+            }
+        });
     };
 
     const generateReport = async (isTabSwitch = false) => {

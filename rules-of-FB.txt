@@ -68,6 +68,12 @@ service cloud.firestore {
       allow write: if isManager();
     }
 
+    // Manager có toàn quyền. Teacher và Supervisory có thể đọc.
+    match /subjects/{subjectId} {
+      allow read: if isManager() || isTeacher() || isSupervisory();
+      allow write: if isManager();
+    }
+
     // Kế hoạch thời gian và các tuần con bên trong
     match /timePlans/{planId} {
       allow read: if isManager() || isTeacher() || isSupervisory();

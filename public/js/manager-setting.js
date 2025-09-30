@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const teacherSubjectGroup = document.getElementById('teacher-subject-group');
     const methodModal = document.getElementById('method-modal');
     const methodsContainer = document.getElementById('methods-container');
+    const subjectModal = document.getElementById('subject-modal');
+    const subjectsContainer = document.getElementById('subjects-container');
+
     const weekEditModal = document.getElementById('week-edit-modal');
     const schoolYearSelect = document.getElementById('school-year-select');
     const weeklyPlanContainer = document.getElementById('weekly-plan-container');
@@ -87,6 +90,56 @@ document.addEventListener('DOMContentLoaded', () => {
         return cleanedName.replace('Giáo dục thể chất - QP', placeholder)
                           .split(/\s*-\s*/)
                           .map(s => s.trim().replace(placeholder, 'Giáo dục thể chất - QP'));
+    };
+
+    const syncSubjectsFromGroups = async () => {
+        if (!currentSchoolYear) {
+            showToast('Vui lòng chọn một năm học để đồng bộ.', 'error');
+            return;
+        }
+
+        const syncBtn = document.getElementById('sync-subjects-btn');
+        setButtonLoading(syncBtn, true);
+
+        try {
+            // 1. Lấy tất cả môn học hiện có trong collection 'subjects'
+            const subjectsQuery = query(collection(firestore, 'subjects'), where('schoolYear', '==', currentSchoolYear));
+            const subjectsSnapshot = await getDocs(subjectsQuery);
+            const existingSubjects = new Set(subjectsSnapshot.docs.map(doc => doc.data().name));
+
+            // 2. Lấy tất cả các tổ và trích xuất môn học từ tên tổ
+            const groupsQuery = query(collection(firestore, 'groups'), where('schoolYear', '==', currentSchoolYear));
+            const groupsSnapshot = await getDocs(groupsQuery);
+            const subjectsFromGroups = new Set();
+            groupsSnapshot.forEach(doc => {
+                const groupName = doc.data().group_name;
+                getSubjectsFromGroupName(groupName).forEach(subject => subjectsFromGroups.add(subject));
+            });
+
+            // 3. Tìm các môn học cần thêm mới
+            const subjectsToAdd = [...subjectsFromGroups].filter(subject => !existingSubjects.has(subject));
+
+            if (subjectsToAdd.length === 0) {
+                showToast('Tất cả môn học từ các tổ đã được đồng bộ.', 'info');
+                return;
+            }
+
+            // 4. Thêm các môn học mới vào batch
+            const batch = writeBatch(firestore);
+            subjectsToAdd.forEach(subjectName => {
+                const newSubjectRef = doc(collection(firestore, 'subjects'));
+                batch.set(newSubjectRef, { name: subjectName, type: 'regular', schoolYear: currentSchoolYear });
+            });
+
+            await batch.commit();
+            showToast(`Đồng bộ thành công! Đã thêm ${subjectsToAdd.length} môn học mới.`, 'success');
+            await loadSubjects(currentSchoolYear); // Tải lại danh sách môn học
+        } catch (error) {
+            console.error("Lỗi khi đồng bộ môn học:", error);
+            showToast('Đã có lỗi xảy ra trong quá trình đồng bộ.', 'error');
+        } finally {
+            setButtonLoading(syncBtn, false);
+        }
     };
 
     // --- ALL REPAIRS FUNCTION ---
@@ -767,6 +820,19 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     `;
 
+    const renderSubject = (subject, index) => `
+        <div class="item-card" data-subject-id="${subject.id}">
+            <div class="item-info">
+                <i class="fas fa-book method-icon"></i>
+                <span class="item-stt">${index + 1}.</span>
+                <span class="item-name">${subject.name} (${subject.type === 'special' ? 'Đặc biệt' : 'Thông thường'})</span>
+            </div>
+            <div class="item-actions">
+                <button class="edit-subject-btn" title="Sửa"><i class="fas fa-pencil-alt"></i></button>
+                <button class="delete-subject-btn" title="Xóa"><i class="fas fa-trash-alt"></i></button>
+            </div>
+        </div>
+    `;
     const renderWeeklyPlan = (weeks) => {
         if (weeks.length === 0) {
             weeklyPlanContainer.innerHTML = '<p>Chưa có kế hoạch thời gian cho năm học này. Hãy chọn ngày bắt đầu và tạo kế hoạch.</p>';
@@ -998,6 +1064,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const loadSubjects = async (schoolYear) => {
+        subjectsContainer.innerHTML = '<p>Đang tải danh sách...</p>';
+        try {
+            const subjectsQuery = query(
+                collection(firestore, 'subjects'),
+                where("schoolYear", "==", schoolYear),
+                orderBy('name')
+            );
+            const snapshot = await getDocs(subjectsQuery);
+
+            if (snapshot.empty) {
+                subjectsContainer.innerHTML = '<p>Chưa có môn học nào được cấu hình cho năm học này.</p>';
+            } else {
+                const subjects = [];
+                snapshot.forEach(doc => subjects.push({ id: doc.id, ...doc.data() }));
+                subjectsContainer.innerHTML = subjects.map((subject, index) => renderSubject(subject, index)).join('');
+            }
+        } catch (error) {
+            console.error("Lỗi khi tải môn học:", error);
+            let errorMessage = '<p class="error-message">Không thể tải dữ liệu môn học.</p>';
+            if (error.code === 'failed-precondition') {
+                errorMessage += `<p>Vui lòng tạo chỉ mục (index) cho collection 'subjects' trong Firestore.</p>`;
+            }
+            subjectsContainer.innerHTML = errorMessage;
+        }
+    };
+
     // --- Hàm tải và xử lý Năm học ---
     const loadSchoolYears = async () => {
         schoolYearSelect.innerHTML = '<option>Đang tải...</option>';
@@ -1026,6 +1119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentSchoolYear = schoolYearSelect.value;
                 await loadGroupsAndTeachers(currentSchoolYear);
                 await loadMethods(currentSchoolYear); // Tải PPDH khi chọn năm học
+                await loadSubjects(currentSchoolYear); // Tải Môn học khi chọn năm học
                 await loadTimePlan(currentSchoolYear);
                 await loadAndRenderRules(); // Tải quy tắc khi chọn năm học
             }
@@ -1046,6 +1140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentSchoolYear) {
             await loadGroupsAndTeachers(currentSchoolYear);
             await loadMethods(currentSchoolYear); // Tải lại PPDH khi đổi năm học
+            await loadSubjects(currentSchoolYear); // Tải lại Môn học khi đổi năm học
             await loadTimePlan(currentSchoolYear);
             await loadAndRenderRules();
             await loadAndRenderTimings();
@@ -1057,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModal = (modal) => modal.style.display = 'none';
 
     // Đóng modal khi click ra ngoài
-    [groupModal, teacherModal, confirmDeleteModal, schoolYearModal, methodModal, weekEditModal].forEach(modal => {
+    [groupModal, teacherModal, confirmDeleteModal, schoolYearModal, methodModal, subjectModal, weekEditModal].forEach(modal => {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeModal(modal);
         });
@@ -1069,6 +1164,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cancel-delete-btn').addEventListener('click', () => closeModal(confirmDeleteModal));
     document.getElementById('cancel-school-year-modal').addEventListener('click', () => closeModal(schoolYearModal));
     document.getElementById('cancel-method-modal').addEventListener('click', () => closeModal(methodModal));
+    document.getElementById('cancel-subject-modal').addEventListener('click', () => closeModal(subjectModal));
     document.getElementById('cancel-week-edit-modal').addEventListener('click', () => closeModal(weekEditModal));
 
     // --- Xử lý sự kiện ---
@@ -1094,6 +1190,18 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('method-name-input').value = '';
         openModal(methodModal);
     });
+
+    // Mở modal thêm Môn học
+    document.getElementById('add-subject-btn').addEventListener('click', () => {
+        currentEditingId = null;
+        document.getElementById('subject-modal-title').textContent = 'Thêm Môn học';
+        document.getElementById('subject-name-input').value = '';
+        document.getElementById('subject-type-select').value = 'regular';
+        openModal(subjectModal);
+    });
+
+    // Đồng bộ môn học từ Tổ
+    document.getElementById('sync-subjects-btn').addEventListener('click', syncSubjectsFromGroups);
 
     // Lưu Năm học mới
     document.getElementById('save-school-year-btn').addEventListener('click', async () => {
@@ -1202,6 +1310,46 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadMethods(currentSchoolYear);
         } catch (error) {
             console.error("Lỗi khi lưu phương pháp dạy học:", error);
+            showToast('Đã có lỗi xảy ra khi lưu.', 'error');
+        } finally {
+            setButtonLoading(saveBtn, false);
+        }
+    });
+
+    // Lưu Môn học (Thêm mới hoặc Cập nhật)
+    document.getElementById('save-subject-btn').addEventListener('click', async () => {
+        const saveBtn = document.getElementById('save-subject-btn');
+        const subjectName = document.getElementById('subject-name-input').value.trim();
+        const subjectType = document.getElementById('subject-type-select').value;
+
+        if (!subjectName) {
+            showToast('Vui lòng nhập tên môn học.', 'error');
+            return;
+        }
+        if (!currentSchoolYear) {
+            showToast('Vui lòng chọn một năm học trước.', 'error');
+            return;
+        }
+
+        setButtonLoading(saveBtn, true);
+
+        try {
+            const data = {
+                name: subjectName,
+                type: subjectType,
+                schoolYear: currentSchoolYear
+            };
+
+            if (currentEditingId) { // Cập nhật
+                const subjectRef = doc(firestore, 'subjects', currentEditingId);
+                await updateDoc(subjectRef, data);
+            } else { // Thêm mới
+                await addDoc(collection(firestore, 'subjects'), data);
+            }
+            closeModal(subjectModal);
+            await loadSubjects(currentSchoolYear);
+        } catch (error) {
+            console.error("Lỗi khi lưu môn học:", error);
             showToast('Đã có lỗi xảy ra khi lưu.', 'error');
         } finally {
             setButtonLoading(saveBtn, false);
@@ -1572,6 +1720,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error("Lỗi khi xóa phương pháp:", error);
                     showToast('Đã có lỗi xảy ra khi xóa.', 'error');
                 }
+            };
+            openModal(confirmDeleteModal);
+        }
+    });
+
+    // Xử lý click trong container của các môn học (delegation)
+    subjectsContainer.addEventListener('click', async (e) => {
+        const target = e.target;
+        const itemCard = target.closest('.item-card');
+        if (!itemCard) return;
+
+        const subjectId = itemCard.dataset.subjectId;
+
+        // Mở modal sửa Môn học
+        if (target.closest('.edit-subject-btn')) {
+            try {
+                const subjectRef = doc(firestore, 'subjects', subjectId);
+                const subjectSnap = await getDoc(subjectRef);
+                if (subjectSnap.exists()) {
+                    currentEditingId = subjectId;
+                    const data = subjectSnap.data();
+                    document.getElementById('subject-modal-title').textContent = 'Sửa Môn học';
+                    document.getElementById('subject-name-input').value = data.name;
+                    document.getElementById('subject-type-select').value = data.type;
+                    openModal(subjectModal);
+                }
+            } catch (error) {
+                showToast('Không thể lấy thông tin. Vui lòng thử lại.', 'error');
+            }
+        }
+
+        // Mở modal xác nhận xóa Môn học
+        if (target.closest('.delete-subject-btn')) {
+            const subjectName = itemCard.querySelector('.item-name').textContent;
+            document.getElementById('confirm-delete-message').textContent = `Bạn có chắc chắn muốn xóa môn học "${subjectName}"?`;
+            deleteFunction = async () => {
+                await deleteDoc(doc(firestore, 'subjects', subjectId));
+                closeModal(confirmDeleteModal);
+                await loadSubjects(currentSchoolYear);
             };
             openModal(confirmDeleteModal);
         }

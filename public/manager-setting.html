@@ -53,6 +53,7 @@
                     <div class="tab-nav">
                         <button class="tab-link active" data-tab="groups-teachers"><i class="fas fa-users"></i><span class="desktop-text">Tổ chuyên môn & Giáo viên</span><span class="mobile-text">Tổ & GV</span></button>
                         <button class="tab-link" data-tab="teaching-methods"><i class="fas fa-lightbulb"></i><span class="desktop-text">Phương pháp dạy học</span><span class="mobile-text">PPDH</span></button>
+                        <button class="tab-link" data-tab="subjects"><i class="fas fa-book"></i><span class="desktop-text">Môn học</span><span class="mobile-text">Môn học</span></button>
                         <button class="tab-link" data-tab="data-repair"><i class="fas fa-tools"></i><span class="desktop-text">Sửa lỗi dữ liệu</span><span class="mobile-text">Sửa lỗi</span></button>
                         <button class="tab-link" data-tab="time-plan"><i class="fas fa-calendar-alt"></i><span class="desktop-text">Kế hoạch thời gian</span><span class="mobile-text">Kế hoạch</span></button>
                         <button class="tab-link" data-tab="registration-rules"><i class="fas fa-gavel"></i><span class="desktop-text">Quy tắc Đăng ký</span><span class="mobile-text">Quy tắc</span></button>
@@ -73,6 +74,18 @@
                                 <button id="add-method-btn" class="btn-primary"><i class="fas fa-plus"></i> Thêm Phương pháp</button>
                             </div>
                             <div id="methods-container"><p>Vui lòng chọn một năm học để xem dữ liệu.</p></div>
+                        </div>
+
+                        <!-- Tab Môn học -->
+                        <div id="subjects" class="tab-content">
+                            <div class="page-header">
+                                <h2>Danh mục Môn học</h2>
+                                <div class="page-header-actions">
+                                    <button id="sync-subjects-btn" class="btn-secondary" title="Quét các tổ chuyên môn và tự động thêm các môn học còn thiếu vào danh sách này"><i class="fas fa-sync-alt"></i> Đồng bộ từ Tổ</button>
+                                    <button id="add-subject-btn" class="btn-primary"><i class="fas fa-plus"></i> Thêm Môn học</button>
+                                </div>
+                            </div>
+                            <div id="subjects-container"><p>Vui lòng chọn một năm học để xem dữ liệu.</p></div>
                         </div>
 
                         <!-- Tab Sửa lỗi dữ liệu -->
@@ -309,6 +322,30 @@
                         <span class="btn-text">Lưu</span>
                         <span class="btn-spinner"></span>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal cho Môn học -->
+    <div id="subject-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="subject-modal-title">Thêm Môn học</h2>
+            <div class="form-group">
+                <label for="subject-name-input">Tên môn học</label>
+                <input type="text" id="subject-name-input" placeholder="Ví dụ: Hoạt động trải nghiệm">
+            </div>
+            <div class="form-group">
+                <label for="subject-type-select">Loại môn học</label>
+                <select id="subject-type-select" class="filter-select">
+                    <option value="regular">Môn học thông thường (thuộc tổ chuyên môn)</option>
+                    <option value="special">Môn học đặc biệt (dành cho mọi giáo viên)</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <div class="modal-actions-right">
+                    <button id="cancel-subject-modal" class="btn-cancel">Hủy</button>
+                    <button id="save-subject-btn" class="btn-save"><span class="btn-text">Lưu</span><span class="btn-spinner"></span></button>
                 </div>
             </div>
         </div>

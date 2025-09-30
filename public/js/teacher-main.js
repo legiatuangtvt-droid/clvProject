@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedWeekNumber = null;
     let teachersInGroup = [];
     let allMethods = new Set();
+    let allSubjectsInGroup = new Set(); // <-- NEW: Lưu các môn học của tổ
     let currentRegistrations = []; // Lưu các đăng ký của tuần hiện tại
     let classTimings = null; // State để lưu thời gian tiết học
 
@@ -104,12 +105,24 @@ document.addEventListener('DOMContentLoaded', () => {
         teachersInGroup = teachersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         // Populate subject filter
-        const subjects = new Set();
-        const groupName = document.getElementById('sidebar-group-name').textContent.replace('Tổ ', '');
-        getSubjectsFromGroupName(groupName).forEach(sub => subjects.add(sub.trim()));
+        // --- NEW LOGIC: Load subjects from 'subjects' collection ---
+        allSubjectsInGroup.clear();
+        const subjectsQuery = query(
+            collection(firestore, 'subjects'),
+            where('schoolYear', '==', currentSchoolYear),
+            where('type', '==', 'regular') // Chỉ lấy các môn thông thường
+        );
+        const subjectsSnapshot = await getDocs(subjectsQuery);
+        const subjectsFromGroupName = getSubjectsFromGroupName(groupSnapshot.docs[0].data().group_name);
+        subjectsSnapshot.forEach(doc => {
+            const subject = doc.data();
+            if (subjectsFromGroupName.includes(subject.name)) {
+                allSubjectsInGroup.add(subject.name);
+            }
+        });
 
         filterSubjectSelect.innerHTML = '<option value="all">Tất cả môn</option>';
-        [...subjects].sort().forEach(subject => {
+        [...allSubjectsInGroup].sort().forEach(subject => {
             const option = document.createElement('option');
             option.value = subject;
             option.textContent = subject;
