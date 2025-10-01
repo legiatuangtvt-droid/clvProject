@@ -65,6 +65,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const LAST_BULK_IMPORT_DAY_KEY = 'lastBulkImportDay';
     const LAST_BULK_IMPORT_SESSION_KEY = 'lastBulkImportSession';
 
+    const getSubjectsFromGroupName = (groupName) => {
+        if (!groupName) return [];
+        const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
+        // Tạm thời thay thế "Giáo dục thể chất - QP" để không bị split sai
+        const placeholder = 'TDQP_PLACEHOLDER';
+        return cleanedName.replace('Giáo dục thể chất - QP', placeholder)
+                          .split(/\s*-\s*/)
+                          .map(s => s.trim().replace(placeholder, 'Giáo dục thể chất - QP'));
+    };
+
     // --- INITIALIZATION ---
     const initializePage = async () => {
         try {
@@ -243,16 +253,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const teacherSelect = filterTeacherSelect;
         const finalSelectedSubject = subjectSelect.value; // Lấy giá trị môn học mới nhất
         teacherSelect.innerHTML = '<option value="all">Tất cả</option>';
-        let teachersToShow = [];
-    
-        if (selectedGroupId === 'all') {
-            teachersToShow = allTeachers;
-        } else {
-            teachersToShow = allTeachers.filter(t => t.group_id === selectedGroupId);
+        let teachersToShow = allTeachers; // Bắt đầu với tất cả giáo viên
+
+        // Lọc theo Tổ chuyên môn nếu một tổ cụ thể được chọn
+        if (selectedGroupId !== 'all') {
+            teachersToShow = teachersToShow.filter(t => t.group_id === selectedGroupId);
         }
 
-        // Lọc thêm theo môn học
-        if (finalSelectedSubject !== 'all') {
+        // Lọc theo Môn học nếu một môn cụ thể được chọn
+        // Điều này sẽ hoạt động đúng ngay cả khi Tổ là "Tất cả"
+        if (finalSelectedSubject !== 'all') { 
             teachersToShow = teachersToShow.filter(t => t.subject === finalSelectedSubject);
         }
 
@@ -265,6 +275,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Giữ lại lựa chọn giáo viên nếu vẫn tồn tại
         if (teachersToShow.some(t => t.uid === currentTeacher)) {
             teacherSelect.value = currentTeacher;
+        }
+        // SỬA LỖI: Nếu giáo viên đã chọn không còn trong danh sách, đặt lại bộ lọc về "Tất cả"
+        else {
+            teacherSelect.value = 'all';
         }
     };
 
