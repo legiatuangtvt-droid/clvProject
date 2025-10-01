@@ -643,6 +643,45 @@ const initializeTeacherRegisterPage = (user) => {
             return;
         }
 
+        // --- LOGIC MỚI: KIỂM TRA PHÒNG HỌC BỘ MÔN KHI ĐĂNG KÝ THỰC HÀNH ---
+        let labUsage = null; // 'occupied' | 'in_class' | null
+        const subject = document.getElementById('reg-subject').value;
+
+        if (selectedMethods.includes('Thực hành')) {
+            // 1. Kiểm tra xem có phòng thực hành cho môn này không
+            const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), limit(1));
+            const labsSnapshot = await getDocs(labsQuery);
+
+            if (!labsSnapshot.empty) {
+                const labData = { id: labsSnapshot.docs[0].id, ...labsSnapshot.docs[0].data() };
+
+                // 2. Kiểm tra xem phòng đã bị chiếm dụng trong slot này chưa
+                const occupiedQuery = query(
+                    collection(firestore, 'registrations'),
+                    where('date', '==', date),
+                    where('period', '==', period),
+                    where('labUsage.labId', '==', labData.id) // Kiểm tra xem có ai đã chiếm phòng này chưa
+                );
+                const occupiedSnapshot = await getDocs(occupiedQuery);
+
+                let isOccupied = false;
+                // Nếu đang sửa, bỏ qua chính đăng ký hiện tại
+                if (currentEditingRegId) {
+                    if (occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId)) {
+                        isOccupied = true;
+                    }
+                } else {
+                    isOccupied = !occupiedSnapshot.empty;
+                }
+
+                if (isOccupied) {
+                    labUsage = { status: 'in_class', reason: `Phòng thực hành ${labData.name} đã được sử dụng.` };
+                } else {
+                    labUsage = { status: 'occupied', labId: labData.id, labName: labData.name };
+                }
+            }
+        }
+
         // Kiểm tra định dạng lớp: 10, 11, 12 + một chữ cái + một số. Ví dụ: 10A1, 12B4
         const classRegex = /^(10|11|12)[A-Z,a-z]\d{1,2}$/;
         if (!classRegex.test(className)) {
@@ -662,12 +701,13 @@ const initializeTeacherRegisterPage = (user) => {
             teacherId: user.uid,
             groupId: currentUserInfo.group_id, // Thêm groupId
             schoolYear: currentSchoolYear,
-            weekNumber: finalWeekNumber,
+            weekNumber: finalWeekNumber, 
             date: date,
             period: period,
-            subject: document.getElementById('reg-subject').value,
+            subject: subject,
             className: className.toUpperCase(), // Lưu tên lớp ở dạng chữ hoa
             lessonName: document.getElementById('reg-lesson-name').value,
+            labUsage: labUsage, // <-- DỮ LIỆU MỚI
             equipment: selectedEquipment,
             teachingMethod: selectedMethods,
             notes: '', // Giữ lại trường notes là rỗng để đảm bảo cấu trúc dữ liệu nhất quán
@@ -684,6 +724,11 @@ const initializeTeacherRegisterPage = (user) => {
                     createdAt: serverTimestamp() // Thêm thời gian tạo
                 }); 
                 showToast('Đăng ký thành công!', 'success');
+
+                // Hiển thị thông báo nếu thực hành trên lớp
+                if (labUsage?.status === 'in_class') {
+                    showToast(labUsage.reason + " Tiết của bạn được ghi nhận là 'Thực hành trên lớp'.", 'info', 8000);
+                }
             }
             registerModal.style.display = 'none';
             loadAndRenderSchedule(user);

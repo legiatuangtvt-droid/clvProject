@@ -409,6 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         `Lớp: ${reg.className}`,
                         `Môn: ${reg.subject}`,
                         `Bài dạy: ${reg.lessonName}`,
+                        reg.labUsage?.status === 'occupied' ? `PHBM: ${reg.labUsage.labName}` : (reg.labUsage?.status === 'in_class' ? 'PHBM: Thực hành trên lớp' : ''),
                         `Thiết bị: ${Array.isArray(reg.equipment) ? reg.equipment.join(', ') : ''}`,
                         `PPDH: ${Array.isArray(reg.teachingMethod) ? reg.teachingMethod.join(', ') : ''}`,
                         reg.notes ? `Ghi chú: ${reg.notes}` : ''
@@ -423,7 +424,10 @@ document.addEventListener('DOMContentLoaded', () => {
                              style="cursor: default; background-color: ${methodColor.bg}; border-left-color: ${subjectColor.border};" 
                              title="${tooltipText}">
                             <p><i class="fas ${isMyRegistration ? 'fa-chalkboard-teacher' : 'fa-user'}" style="color: ${teacherColor.border};"></i> ${isMyRegistration ? `Lớp ${reg.className}: ${reg.lessonName}` : `${teacherName} - Lớp ${reg.className}`}</p>
-                        </div>`;
+                            ${reg.labUsage?.status === 'occupied' ? `<span class="lab-usage-badge occupied"><i class="fas fa-flask"></i> PHBM</span>` : ''}
+                            ${reg.labUsage?.status === 'in_class' ? `<span class="lab-usage-badge in-class"><i class="fas fa-chalkboard"></i> Tại lớp</span>` : ''}
+                        </div>
+                        `;
                 });
                 desktopHTML += `</td>`;
             });
@@ -463,6 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         `Lớp: ${reg.className}`,
                         `Môn: ${reg.subject}`,
                         `Bài dạy: ${reg.lessonName}`,
+                        reg.labUsage?.status === 'occupied' ? `PHBM: ${reg.labUsage.labName}` : (reg.labUsage?.status === 'in_class' ? 'PHBM: Thực hành trên lớp' : ''),
                         `Thiết bị: ${Array.isArray(reg.equipment) ? reg.equipment.join(', ') : ''}`,
                         `PPDH: ${Array.isArray(reg.teachingMethod) ? reg.teachingMethod.join(', ') : ''}`,
                         reg.notes ? `Ghi chú: ${reg.notes}` : ''
@@ -477,7 +482,10 @@ document.addEventListener('DOMContentLoaded', () => {
                              style="cursor: default; background-color: ${methodColor.bg}; border-left-color: ${subjectColor.border};" 
                              title="${tooltipText}">
                             <p><i class="fas ${isMyRegistration ? 'fa-chalkboard-teacher' : 'fa-user'}" style="color: ${teacherColor.border};"></i> ${isMyRegistration ? `Lớp ${reg.className}: ${reg.lessonName}` : `${teacherName} - Lớp ${reg.className}`}</p>
-                        </div>`;
+                            ${reg.labUsage?.status === 'occupied' ? `<span class="lab-usage-badge occupied"><i class="fas fa-flask"></i> PHBM</span>` : ''}
+                            ${reg.labUsage?.status === 'in_class' ? `<span class="lab-usage-badge in-class"><i class="fas fa-chalkboard"></i> Tại lớp</span>` : ''}
+                        </div>
+                        `;
                 });
                 desktopHTML += `</td>`;
             });
