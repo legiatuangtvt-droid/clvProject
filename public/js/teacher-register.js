@@ -628,11 +628,12 @@ const initializeTeacherRegisterPage = (user) => {
                 }
 
                 const displayPeriod = conflictData.period > 5 ? conflictData.period - 5 : conflictData.period;
+                conflictWarningModal.querySelector('#conflict-warning-title').textContent = `Cảnh báo: Lớp đã được đăng ký`;
                 const conflictInfoContainer = conflictWarningModal.querySelector('.conflict-info-container');
                 conflictInfoContainer.innerHTML = `
-                    <p>Lớp <strong class="conflict-highlight">${conflictData.className}</strong>, <strong class="conflict-highlight">Tiết ${displayPeriod}</strong> đã được đăng ký bởi giáo viên <strong class="conflict-highlight">${conflictingTeacherName}</strong>.</p>
-                    <p>Vui lòng kiểm tra lại trên lịch tổng hợp.</p>
+                    <p><strong>Giáo viên:</strong> ${conflictingTeacherName}</p>
                     <p><strong>Môn học:</strong> ${conflictData.subject}</p>
+                    <p><strong>Lớp:</strong> ${conflictData.className} (Tiết ${displayPeriod}, ${formatDate(conflictData.date)})</p>
                 `;
                 conflictWarningModal.style.display = 'flex';
                 return; // Dừng việc lưu
@@ -937,6 +938,18 @@ const initializeTeacherRegisterPage = (user) => {
 
     // Đóng modal cảnh báo trùng lịch
     document.getElementById('close-conflict-modal').addEventListener('click', () => {
+        // --- LOGIC MỚI: TỰ ĐỘNG CẬP NHẬT TEXTAREA KHI ĐÓNG CẢNH BÁO TRÙNG PHÒNG HỌC ---
+        const labName = conflictWarningModal.dataset.labName;
+        if (labName) {
+            const equipmentInput = document.getElementById('reg-equipment-input');
+            const currentEquipment = equipmentInput.value;
+            const practiceText = `Thực hành tại ${labName}`;
+            if (currentEquipment.includes(practiceText)) {
+                equipmentInput.value = currentEquipment.replace(practiceText, 'Thực hành trên lớp');
+            }
+            // Xóa data attribute sau khi sử dụng
+            delete conflictWarningModal.dataset.labName;
+        }
         conflictWarningModal.style.display = 'none';
     });
 
@@ -987,6 +1000,56 @@ const initializeTeacherRegisterPage = (user) => {
         }
     });
 
+    const handlePracticeCheckboxChange = async (isChecked) => {
+        const equipmentInput = document.getElementById('reg-equipment-input');
+        let equipmentList = equipmentInput.value.trim() ? equipmentInput.value.split(',').map(item => item.trim()) : [];
+
+        // Luôn xóa các mục liên quan đến thực hành cũ trước khi thêm mới
+        equipmentList = equipmentList.filter(item => !item.startsWith('Thực hành tại') && item !== 'Thực hành trên lớp');
+
+        if (isChecked) {
+            const subject = document.getElementById('reg-subject').value;
+            const date = document.getElementById('reg-day').value;
+            const period = parseInt(document.getElementById('reg-period').value);
+
+            if (!subject || !date || isNaN(period)) {
+                equipmentList.push('Thực hành trên lớp');
+                equipmentInput.value = equipmentList.join(', ');
+                return;
+            }
+
+            // 1. Kiểm tra xem có phòng thực hành cho môn này không
+            const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), limit(1));
+            const labsSnapshot = await getDocs(labsQuery);
+
+            if (labsSnapshot.empty) {
+                equipmentList.push('Thực hành trên lớp');
+            } else {
+                const labData = { id: labsSnapshot.docs[0].id, ...labsSnapshot.docs[0].data() };
+
+                // 2. Kiểm tra xem phòng đã bị chiếm dụng trong slot này chưa
+                const occupiedQuery = query(
+                    collection(firestore, 'registrations'),
+                    where('date', '==', date),
+                    where('period', '==', period),
+                    where('labUsage.labId', '==', labData.id)
+                );
+                const occupiedSnapshot = await getDocs(occupiedQuery);
+
+                // Nếu đang sửa, bỏ qua chính đăng ký hiện tại
+                const isOccupied = occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId);
+
+                if (isOccupied) {
+                    equipmentList.push('Thực hành trên lớp');
+                } else {
+                    equipmentList.push(`Thực hành tại ${labData.name}`);
+                }
+            }
+        }
+
+        equipmentInput.value = equipmentList.join(', ');
+    };
+
     // Thêm sự kiện để tải gợi ý bài học khi thay đổi môn hoặc lớp
     document.getElementById('reg-subject').addEventListener('change', loadLessonSuggestions);
     document.getElementById('reg-class').addEventListener('input', loadLessonSuggestions);
@@ -994,6 +1057,11 @@ const initializeTeacherRegisterPage = (user) => {
     // Tự động thêm/xóa 'Tivi' khi chọn PPDH 'Công nghệ thông tin'
     const methodContainer = document.getElementById('reg-method-container');
     methodContainer.addEventListener('change', (e) => {
+        if (e.target.type === 'checkbox' && e.target.value === 'Thực hành') {
+            handlePracticeCheckboxChange(e.target.checked);
+            return; // Dừng lại để không chạy logic của 'Công nghệ thông tin' nếu không cần
+        }
+
         if (e.target.type === 'checkbox' && e.target.value === 'Công nghệ thông tin') {
             const equipmentInput = document.getElementById('reg-equipment-input');
             let equipmentList = equipmentInput.value.trim()
