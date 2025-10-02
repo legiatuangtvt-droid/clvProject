@@ -790,6 +790,65 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // --- KIỂM TRA GIẢ MẠO TRẠNG THÁI THỰC HÀNH TRƯỚC KHI LƯU ---
+        if (selectedMethods.includes('Thực hành')) {
+            const equipmentInput = document.getElementById('reg-equipment-input');
+            const currentEquipmentValue = equipmentInput.value;
+            const userPracticeText = currentEquipmentValue.split(',').map(s => s.trim()).find(s => s.startsWith('Thực hành'));
+
+            // Chỉ kiểm tra nếu người dùng có nhập thông tin thực hành
+            if (userPracticeText) {
+                const correctPracticeStatus = labUsage?.status; // 'occupied' hoặc 'in_class'
+                const correctPracticeText = correctPracticeStatus === 'occupied' ? `Thực hành tại ${labUsage.labName}` : 'Thực hành trên lớp';
+
+                // Nếu người dùng cố tình sửa đổi trạng thái thực hành
+                if (userPracticeText !== correctPracticeText) {
+                    let warningMessage = '';
+                    // Trường hợp 1: Phòng đã bị chiếm nhưng người dùng vẫn cố ghi là dùng phòng
+                    if (correctPracticeStatus === 'in_class' && userPracticeText.startsWith('Thực hành tại')) {
+                        // Tìm xem ai đã chiếm phòng để hiển thị thông báo
+                        const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), limit(1));
+                        const labsSnapshot = await getDocs(labsQuery);
+                        if (!labsSnapshot.empty) {
+                            const labData = { id: labsSnapshot.docs[0].id, ...labsSnapshot.docs[0].data() };
+                            const occupiedQuery = query(collection(firestore, 'registrations'), where('date', '==', date), where('period', '==', period), where('labUsage.labId', '==', labData.id));
+                            const occupiedSnapshot = await getDocs(occupiedQuery);
+                            const conflictReg = occupiedSnapshot.docs.find(doc => doc.id !== currentEditingRegId)?.data();
+                            const conflictingTeacherName = conflictReg ? (teacherMap.get(conflictReg.teacherId)?.teacher_name || 'GV khác') : 'GV khác';
+
+                            warningMessage = `Phòng học bộ môn <strong>${labData.name}</strong> đã được đăng ký sử dụng bởi <strong>${conflictingTeacherName}</strong>. Trạng thái đăng ký của bạn sẽ được tự động sửa thành "Thực hành trên lớp".`;
+                        }
+                    }
+                    // Trường hợp 2: Phòng trống nhưng người dùng lại ghi là thực hành trên lớp (ít xảy ra nhưng vẫn xử lý)
+                    else if (correctPracticeStatus === 'occupied' && userPracticeText === 'Thực hành trên lớp') {
+                        warningMessage = `Phòng học bộ môn <strong>${labUsage.labName}</strong> hiện đang trống. Trạng thái đăng ký của bạn sẽ được tự động sửa thành "Thực hành tại ${labUsage.labName}".`;
+                    }
+
+                    if (warningMessage) {
+                        conflictWarningModal.querySelector('#conflict-warning-title').textContent = `Cảnh báo sai thông tin thực hành`;
+                        conflictWarningModal.querySelector('.conflict-info-container').innerHTML = `<p>${warningMessage}</p>`;
+                        conflictWarningModal.style.display = 'flex';
+
+                        // Sửa lại textarea và dừng quá trình lưu
+                        const equipmentList = currentEquipmentValue.split(',').map(s => s.trim()).filter(Boolean);
+                        const filteredList = equipmentList.filter(item => !item.startsWith('Thực hành'));
+                        filteredList.unshift(correctPracticeText); // Thêm lại text đúng vào đầu
+                        equipmentInput.value = filteredList.join(', ');
+
+                        return; // Dừng hàm saveRegistration
+                    }
+                }
+            }
+        }
+
+        // --- CHUẨN HÓA LẠI DANH SÁCH THIẾT BỊ TRƯỚC KHI LƯU ---
+        let finalEquipmentList = equipmentValue.split(',').map(item => item.trim()).filter(Boolean);
+        // 1. Luôn xóa các mục liên quan đến thực hành do người dùng nhập để tránh giả mạo
+        finalEquipmentList = finalEquipmentList.filter(item => !item.startsWith('Thực hành tại') && item !== 'Thực hành trên lớp');
+        // 2. Thêm lại mục thực hành chính xác dựa trên kết quả kiểm tra `labUsage`
+        if (labUsage?.status === 'occupied') finalEquipmentList.push(`Thực hành tại ${labUsage.labName}`);
+        if (labUsage?.status === 'in_class') finalEquipmentList.push('Thực hành trên lớp');
+
         const weekSelect = document.getElementById('reg-week');
         const finalWeekNumber = currentEditingRegId ? parseInt(weekSelect.value) : selectedWeekNumber;
 
@@ -805,7 +864,7 @@ document.addEventListener('DOMContentLoaded', () => {
             className: className.toUpperCase(),
             lessonName: document.getElementById('reg-lesson-name').value,
             labUsage: labUsage, // <-- DỮ LIỆU MỚI
-            equipment: equipmentValue.split(',').map(item => item.trim()).filter(Boolean),
+            equipment: finalEquipmentList, // Sử dụng danh sách đã được chuẩn hóa
             teachingMethod: selectedMethods
         };
 
@@ -1383,7 +1442,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const period = parseInt(document.getElementById('reg-period').value);
     
             if (!subject || !date || isNaN(period)) {
-                equipmentList.push('Thực hành trên lớp');
+                equipmentList.unshift('Thực hành trên lớp');
                 equipmentInput.value = equipmentList.join(', ');
                 return;
             }
@@ -1393,7 +1452,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const labsSnapshot = await getDocs(labsQuery);
     
             if (labsSnapshot.empty) {
-                equipmentList.push('Thực hành trên lớp');
+                equipmentList.unshift('Thực hành trên lớp');
             } else {
                 const labData = { id: labsSnapshot.docs[0].id, ...labsSnapshot.docs[0].data() };
     
@@ -1410,6 +1469,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isOccupied = occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId);
     
                 if (isOccupied) {
+                    // Chỉ thêm nếu chưa có
+                    if (!equipmentList.includes('Thực hành trên lớp')) {
+                        equipmentList.unshift('Thực hành trên lớp');
+                    }
                     // HIỂN THỊ POPUP CẢNH BÁO NGAY LẬP TỨC
                     const conflictRegData = occupiedSnapshot.docs.find(doc => doc.id !== currentEditingRegId).data();
                     const conflictingTeacherName = teacherMap.get(conflictRegData.teacherId)?.teacher_name || 'một giáo viên khác';
@@ -1418,11 +1481,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     conflictWarningModal.querySelector('.conflict-info-container').innerHTML = `<p><strong>Giáo viên:</strong> ${conflictingTeacherName}</p>`;
                     conflictWarningModal.dataset.labName = labData.name; // Lưu tên phòng để xử lý khi đóng modal
                     conflictWarningModal.style.display = 'flex';
-
-                    // Vẫn cập nhật textarea để người dùng biết kết quả
-                    equipmentList.push('Thực hành trên lớp');
                 } else {
-                    equipmentList.push(`Thực hành tại ${labData.name}`);
+                    const practiceText = `Thực hành tại ${labData.name}`;
+                    // Chỉ thêm nếu chưa có
+                    if (!equipmentList.includes(practiceText)) {
+                        equipmentList.unshift(practiceText);
+                    }
                 }
             }
         }
