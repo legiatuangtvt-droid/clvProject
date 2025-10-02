@@ -13,7 +13,7 @@ import {
     deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { auth, firestore } from "./firebase-config.js";
-import { showToast } from "./toast.js";
+import { showToast, setButtonLoading } from "./toast.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!document.getElementById('schedule-container')) return;
@@ -850,6 +850,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (labUsage?.status === 'in_class') finalEquipmentList.push('Thực hành trên lớp');
 
         const weekSelect = document.getElementById('reg-week');
+        const saveBtn = document.getElementById('save-register-btn');
+        setButtonLoading(saveBtn, true);
+
         const finalWeekNumber = currentEditingRegId ? parseInt(weekSelect.value) : selectedWeekNumber;
 
         const registrationData = {

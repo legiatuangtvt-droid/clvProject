@@ -10,7 +10,7 @@ import {
     orderBy
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { firestore } from "./firebase-config.js";
-import { showToast } from "./toast.js";
+import { showToast, setButtonLoading } from "./toast.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!document.getElementById('device-explorer-layout')) {
@@ -376,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DATA OPERATIONS (CRUD) ---
     const saveItem = async () => {
-        saveItemBtn.disabled = true;
+        setButtonLoading(saveItemBtn, true);
         const name = document.getElementById('item-name').value.trim();
         if (!name) {
             showToast('Vui lòng nhập tên.', 'error');
@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Lỗi khi lưu:", error);
             showToast('Đã có lỗi xảy ra khi lưu.', 'error');
         } finally {
-            saveItemBtn.disabled = false;
+            setButtonLoading(saveItemBtn, false);
         }
     };
 
@@ -489,6 +489,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const saveBtn = document.getElementById('confirm-bulk-import-btn');
+        setButtonLoading(saveBtn, true);
         validRecordsToImport = []; // Reset mảng
         const previewRecords = [];
         const errors = [];
@@ -580,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        confirmBulkImportBtn.disabled = true;
+        setButtonLoading(confirmBulkImportBtn, true);
 
         try {
             const batch = writeBatch(firestore);
@@ -597,7 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Lỗi khi xác nhận nhập hàng loạt:", error);
             showToast('Đã có lỗi xảy ra khi lưu dữ liệu.', 'error');
         } finally {
-            confirmBulkImportBtn.disabled = false;
+            setButtonLoading(confirmBulkImportBtn, false);
         }
     };
 

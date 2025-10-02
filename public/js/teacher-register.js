@@ -14,8 +14,8 @@ import {
     deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-import { auth, firestore } from "./firebase-config.js";
-import { showToast } from "./toast.js";
+import { auth, firestore } from './firebase-config.js';
+import { showToast, setButtonLoading } from './toast.js';
 
 const initializeTeacherRegisterPage = (user) => {
     if (!document.getElementById('schedule-container')) return;
@@ -616,6 +616,9 @@ const initializeTeacherRegisterPage = (user) => {
             return;
         }
 
+        const saveBtn = document.getElementById('save-register-btn');
+        setButtonLoading(saveBtn, true);
+
         // --- KIỂM TRA TRÙNG LỊCH ---
         try {
             const q = query(
@@ -759,6 +762,9 @@ const initializeTeacherRegisterPage = (user) => {
         } catch (error) {
             console.error("Lỗi khi lưu đăng ký:", error);
             showToast('Đã có lỗi xảy ra khi lưu.', 'error');
+        } finally {
+            // Luôn đảm bảo nút được kích hoạt lại
+            setButtonLoading(saveBtn, false);
         }
     };
 
@@ -926,33 +932,8 @@ const initializeTeacherRegisterPage = (user) => {
             return;
         }
 
-        const saveBtn = document.getElementById('save-register-btn');
-        const originalBtnHTML = saveBtn.innerHTML;
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Đang ghi lại đăng ký...`;
-
-        // Wrap saveRegistration in a new async function to handle finally block
-        (async () => {
-            try {
-                await saveRegistration(user);
-            } catch (error) {
-                // Errors inside saveRegistration are already handled with toasts.
-                // This catch is for any unexpected errors during the async operation.
-                console.error("Lỗi không mong muốn trong quá trình lưu:", error);
-                showToast('Đã có lỗi không mong muốn xảy ra.', 'error');
-            } finally {
-                // This block will run whether saveRegistration succeeds or fails (returns early).
-                // A small delay to let the user see the success/error toast before the button resets.
-                setTimeout(() => {
-                    // Check if the modal is still open before resetting the button.
-                    // If save was successful, the modal closes and we don't need to reset.
-                    if (registerModal.style.display === 'flex') {
-                        saveBtn.disabled = false;
-                        saveBtn.innerHTML = originalBtnHTML;
-                    }
-                }, 300); // 300ms delay
-            }
-        })();
+        // Hàm saveRegistration giờ đã tự xử lý trạng thái loading
+        saveRegistration(user);
     });
     document.getElementById('cancel-register-modal').addEventListener('click', () => registerModal.style.display = 'none');
     // registerModal.addEventListener('click', (e) => {

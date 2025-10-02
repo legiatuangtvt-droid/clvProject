@@ -1,6 +1,6 @@
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, writeBatch, where, getDoc, limit } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { firestore } from "./firebase-config.js";
-import { showToast } from "./toast.js";
+import { showToast, setButtonLoading } from "./toast.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     // Chỉ thực thi code nếu element chính tồn tại
@@ -725,18 +725,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Lỗi khi lưu quy tắc:", error);
             showToast('Không thể lưu quy tắc. Vui lòng thử lại.', 'error');
-        }
-    };
-
-    // --- Helper for Button Loading State ---
-    const setButtonLoading = (button, isLoading) => {
-        if (!button) return;
-        if (isLoading) {
-            button.disabled = true;
-            button.classList.add('loading');
-        } else {
-            button.disabled = false;
-            button.classList.remove('loading');
         }
     };
 

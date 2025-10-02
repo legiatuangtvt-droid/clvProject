@@ -51,3 +51,23 @@ export function showToast(message, type = 'info', duration = 3000) {
         }
     }, duration);
 }
+
+/**
+ * Thiết lập trạng thái tải cho một nút.
+ * @param {HTMLElement} button - Phần tử nút cần thay đổi.
+ * @param {boolean} isLoading - True để hiển thị trạng thái tải, false để trở lại bình thường.
+ * @param {string} [loadingText=''] - Văn bản tùy chọn hiển thị khi đang tải.
+ */
+export function setButtonLoading(button, isLoading, loadingText = '') {
+    if (!button) return;
+    const textSpan = button.querySelector('.btn-text');
+
+    if (isLoading) {
+        button.disabled = true;
+        button.classList.add('loading');
+        if (textSpan && loadingText) textSpan.textContent = loadingText;
+    } else {
+        button.disabled = false;
+        button.classList.remove('loading');
+    }
+}
