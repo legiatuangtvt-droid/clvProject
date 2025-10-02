@@ -32,15 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterSubjectSelect = document.getElementById('filter-subject-select');
     const filterTeacherSelect = document.getElementById('filter-teacher-select');
     const filterMethodSelect = document.getElementById('filter-method-select');
-    const bulkImportModal = document.getElementById('bulk-import-modal');
-    const bulkImportBtn = document.getElementById('bulk-import-btn');
-    const processBulkImportBtn = document.getElementById('process-bulk-import-btn');
-    const cancelBulkImportBtn = document.getElementById('cancel-bulk-import-modal');
-    const bulkImportDaySelect = document.getElementById('bulk-import-day');
-    const bulkImportPreviewModal = document.getElementById('bulk-import-preview-modal');
-    const closeBulkPreviewModalBtn = document.getElementById('close-bulk-preview-modal');
-    const confirmBulkImportBtn = document.getElementById('confirm-bulk-import-btn');
-    const recheckBulkImportBtn = document.getElementById('recheck-bulk-import-btn');
     const equipmentStatsBtn = document.getElementById('equipment-stats-btn');
     const equipmentStatsModal = document.getElementById('equipment-stats-modal');
     const closeEquipmentStatsModalBtn = document.getElementById('close-equipment-stats-modal');
@@ -58,12 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedWeekNumber = null;
     let currentEditingRegId = null;
     let deleteFunction = null;
-    let validRegistrationsToCreate = []; // Lưu các đăng ký hợp lệ để chờ xác nhận
 
     const slotDetailModal = document.getElementById('slot-detail-modal');
-    // --- Constants for localStorage ---
-    const LAST_BULK_IMPORT_DAY_KEY = 'lastBulkImportDay';
-    const LAST_BULK_IMPORT_SESSION_KEY = 'lastBulkImportSession';
 
     const getSubjectsFromGroupName = (groupName) => {
         if (!groupName) return [];
@@ -1192,79 +1179,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         }, true); // Use capture phase to ensure this runs before other potential listeners
-        // Bulk import modal
-        bulkImportBtn.addEventListener('click', () => {
-            const bulkImportInput = document.getElementById('bulk-import-input');
-            if (bulkImportInput) bulkImportInput.value = ''; // Xóa nội dung cũ
-
-            // Luôn sử dụng tuần đang được chọn ở giao diện chính
-            if (selectedWeekNumber) {
-                populateBulkImportDaySelector(selectedWeekNumber);
-            }
-
-            // Tải và áp dụng các lựa chọn đã lưu từ lần trước
-            const lastDay = localStorage.getItem(LAST_BULK_IMPORT_DAY_KEY);
-            const lastSession = localStorage.getItem(LAST_BULK_IMPORT_SESSION_KEY);
-
-            // Nếu có ngày đã lưu và ngày đó tồn tại trong danh sách tùy chọn, hãy chọn nó.
-            // Ngược lại, mặc định là tùy chọn đầu tiên (Thứ Hai).
-            if (lastDay && Array.from(bulkImportDaySelect.options).some(opt => opt.value === lastDay)) {
-                bulkImportDaySelect.value = lastDay;
-            }
-
-            // Mặc định là 'sáng' nếu chưa có gì được lưu.
-            updateSessionToggle(lastSession || 'morning');
-
-            bulkImportModal.style.display = 'flex';
-        });
-        cancelBulkImportBtn.addEventListener('click', () => bulkImportModal.style.display = 'none');
-
-        // --- Logic cho nút Sáng/Chiều trong modal Nhập hàng loạt ---
-        const sessionToggleButton = document.getElementById('session-toggle-btn');
-        if (sessionToggleButton) {
-            sessionToggleButton.addEventListener('click', () => {
-                const currentSession = sessionToggleButton.dataset.session;
-                const nextSession = currentSession === 'morning' ? 'afternoon' : 'morning';
-                updateSessionToggle(nextSession);
-                // Lưu lựa chọn mới
-                localStorage.setItem(LAST_BULK_IMPORT_SESSION_KEY, nextSession);
-            });
-        }
-        function updateSessionToggle(session) {
-            const btn = document.getElementById('session-toggle-btn');
-            if (btn) {
-                btn.dataset.session = session;
-                btn.textContent = session === 'morning' ? 'Sáng' : 'Chiều';
-            }
-        }
-        cancelBulkImportBtn.addEventListener('click', () => bulkImportModal.style.display = 'none');
-        // Thêm sự kiện cho các control trong modal nhập hàng loạt
-        document.getElementById('prev-day-bulk-import').addEventListener('click', () => {
-            const currentIndex = bulkImportDaySelect.selectedIndex;
-            if (currentIndex > 0) {
-                bulkImportDaySelect.selectedIndex = currentIndex - 1;
-                localStorage.setItem(LAST_BULK_IMPORT_DAY_KEY, bulkImportDaySelect.value); // Lưu lựa chọn mới
-            }
-        });
-        document.getElementById('next-day-bulk-import').addEventListener('click', () => {
-            const currentIndex = bulkImportDaySelect.selectedIndex;
-            if (currentIndex < bulkImportDaySelect.options.length - 1) {
-                bulkImportDaySelect.selectedIndex = currentIndex + 1;
-                localStorage.setItem(LAST_BULK_IMPORT_DAY_KEY, bulkImportDaySelect.value); // Lưu lựa chọn mới
-            }
-        });
-        bulkImportDaySelect.addEventListener('change', () => {
-            localStorage.setItem(LAST_BULK_IMPORT_DAY_KEY, bulkImportDaySelect.value); // Lưu khi người dùng tự chọn
-        });
-        processBulkImportBtn.addEventListener('click', processBulkImport);
-
-        // Bulk Import Preview/Error Modal
-        closeBulkPreviewModalBtn.addEventListener('click', () => {
-            bulkImportPreviewModal.style.display = 'none'; // Ẩn modal xem trước
-            bulkImportModal.style.display = 'flex'; // Hiển thị lại modal nhập liệu
-        });
-
-        confirmBulkImportBtn.addEventListener('click', commitBulkImport);
 
         // --- NEW: Slot Detail Modal Listeners ---
         document.getElementById('close-slot-detail-modal').addEventListener('click', () => {

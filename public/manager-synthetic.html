@@ -76,7 +76,6 @@
                                     </div>
                                 </div>
                                 <div class="form-actions">
-                                    <button id="bulk-import-btn" class="btn-primary"><i class="fas fa-file-import"></i> Nhập hàng loạt</button>
                                     <button id="equipment-stats-btn" class="btn-info"><i class="fas fa-chart-bar"></i> Thống kê thiết bị</button>
                                 </div>
                             </div>
@@ -185,35 +184,6 @@
         </div>
     </div>
 
-    <!-- Modal cho Nhập hàng loạt -->
-    <div id="bulk-import-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content large bulk-import-modal">
-            <h2 id="bulk-import-modal-title">Nhập đăng ký hàng loạt</h2>
-            <p>Dán dữ liệu từ Excel vào ô bên dưới. Mỗi dòng là một lượt đăng ký. Các cột phải theo đúng thứ tự: <strong>Tên GV - Lớp - Tiết - Tên bài dạy - Thiết bị - PPDH</strong>.</p>
-            <div class="form-row bulk-import-form-row">
-                <div class="form-group" style="flex-grow: 2;">
-                    <label for="bulk-import-day">Chọn thứ:</label>
-                    <div class="day-selector-with-nav">
-                        <button type="button" id="prev-day-bulk-import" class="day-nav-btn prev-day-bulk-import" title="Ngày trước">&lt;</button>
-                        <select id="bulk-import-day" class="form-control"></select>
-                        <button type="button" id="next-day-bulk-import" class="day-nav-btn next-day-bulk-import" title="Ngày sau">&gt;</button>
-                    </div>
-                </div>
-                <div class="form-group" id="session-toggle-container">
-                    <label>Áp dụng cho buổi:</label>
-                    <button type="button" id="session-toggle-btn" data-session="morning">Sáng</button>
-                </div>
-            </div>
-            <div class="form-group">
-                <textarea id="bulk-import-input" class="bulk-import-input" placeholder="Ví dụ:&#10;Nguyễn Văn A	10A1	1	Bài 1: Giới thiệu	Máy chiếu, Laptop	Dạy học dự án&#10;Trần Thị B	11B2	2,3	Bài 2: Thực hành	Tivi	CNTT" rows="10"></textarea>
-            </div>
-            <div class="modal-actions">
-                <button id="cancel-bulk-import-modal" class="btn-cancel">Hủy</button>
-                <button id="process-bulk-import-btn" class="btn-save">Xử lý và Nhập</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal xác nhận xóa -->
     <div id="confirm-delete-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
@@ -247,28 +217,6 @@
             </div>
             <div class="modal-actions" style="justify-content: flex-end;">
                 <button id="close-equipment-stats-modal" class="btn-cancel">Đóng</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Xem trước & Lỗi Nhập hàng loạt -->
-    <div id="bulk-import-preview-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content large bulk-import-modal">
-            <h2 id="bulk-import-preview-title" class="bulk-import-modal-title">Xem trước dữ liệu nhập hàng loạt</h2>
-            <p id="bulk-import-preview-desc">Vui lòng kiểm tra dữ liệu đã được phân tích. Các dòng có lỗi sẽ được tô đỏ.</p>
-            <div id="bulk-import-error-section" class="error-list-container" style="display: none;">
-                <!-- Danh sách lỗi sẽ được chèn vào đây -->
-            </div>
-            <h4 id="bulk-import-preview-table-header">Bảng xem trước dữ liệu</h4>
-            <div id="bulk-import-preview-container" class="bulk-import-preview-container">
-                <!-- Bảng xem trước sẽ được chèn vào đây -->
-            </div>
-            <div class="modal-actions" style="justify-content: flex-end;">
-                <div class="modal-actions-right">
-                    <button id="close-bulk-preview-modal" class="btn-cancel">Hủy</button>
-                    <button id="recheck-bulk-import-btn" class="btn-primary">Kiểm tra lại</button>
-                    <button id="confirm-bulk-import-btn" class="btn-save" style="display: none;">Xác nhận và Nhập</button>
-                </div>
             </div>
         </div>
     </div>
