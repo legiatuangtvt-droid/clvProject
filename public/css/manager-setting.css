@@ -1091,3 +1091,113 @@
     content: '\f182'; /* fa-exclamation-triangle */
     color: #dc3545; /* Màu đỏ cho cảnh báo xóa */
 }
+
+/* Thêm vào cuối file manager-setting.css */
+.assignment-card {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.assignment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* --- NEW: Custom Tag-based Multi-select --- */
+#custom-select-wrapper {
+    position: relative;
+}
+
+.custom-select-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--border-color-strong);
+    border-radius: 8px;
+    cursor: text;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.custom-select-container:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
+}
+
+.tag-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.tag-remove-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--primary-dark);
+    opacity: 0.7;
+    font-size: 1rem;
+    padding: 0;
+}
+.tag-remove-btn:hover {
+    opacity: 1;
+}
+
+#subject-search-input {
+    flex-grow: 1;
+    border: none;
+    outline: none;
+    padding: 5px;
+    background-color: transparent;
+    min-width: 150px; /* Đảm bảo input có độ rộng tối thiểu */
+}
+
+.subject-dropdown-list {
+    position: absolute;
+    bottom: 100%; /* THAY ĐỔI: Hiển thị dropdown phía trên */
+    left: 0;
+    right: 0;
+    background-color: var(--surface-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    z-index: 10;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 5px; /* THAY ĐỔI: Tạo khoảng cách với input */
+}
+
+.subject-dropdown-list .dropdown-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.subject-dropdown-list .dropdown-item:hover {
+    background-color: var(--surface-hover-bg);
+}
+
+.subject-dropdown-list .dropdown-item.disabled {
+    background-color: #f8f9fa;
+    color: #adb5bd;
+    cursor: not-allowed;
+}
+
+/* --- NEW: Inline Form Group for Assignment Modal --- */
+.form-group-inline {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.form-group-inline label {
+    flex-shrink: 0; /* Ngăn label bị co lại */
+    margin-bottom: 0; /* Bỏ margin-bottom mặc định */
+    min-width: 120px; /* Đặt độ rộng tối thiểu cho label để thẳng hàng */
+}

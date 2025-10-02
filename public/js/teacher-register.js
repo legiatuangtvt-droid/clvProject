@@ -195,22 +195,45 @@ const initializeTeacherRegisterPage = (user) => {
         } catch (error) { console.warn("Không thể tải gợi ý bài học:", error); }
     };
 
-    const populateModalSelectors = async (user) => {
-        // Tải PPDH
+    const populateModalSelectors = async () => {
         const subjectSelect = document.getElementById('reg-subject');
         subjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
-        if (currentUserInfo && currentUserInfo.group_name) {
-            // Ưu tiên môn học chính đã được phân công cho giáo viên
-            if (currentUserInfo.subject) {
-                subjectSelect.innerHTML += `<option value="${currentUserInfo.subject}" selected>${currentUserInfo.subject}</option>`;
-            } else { // Nếu chưa được phân công, hiển thị tất cả các môn trong tổ
-                const subjects = getSubjectsFromGroupName(currentUserInfo.group_name);
-                subjects.forEach(subject => {
-                    subjectSelect.innerHTML += `<option value="${subject}">${subject}</option>`;
-                });
+
+        const allowedSubjects = new Set();
+
+        // 1. Thêm môn học chính của giáo viên
+        if (currentUserInfo?.subject) {
+            allowedSubjects.add(currentUserInfo.subject);
+        }
+
+        // 2. Lấy các môn học phụ được phân công cho môn chính
+        if (currentUserInfo?.subject) {
+            const q = query(collection(firestore, 'subjectAssignments'), where('schoolYear', '==', currentSchoolYear), where('primarySubject', '==', currentUserInfo.subject), limit(1));
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) {
+                snapshot.docs[0].data().secondarySubjects.forEach(sub => allowedSubjects.add(sub));
             }
         }
 
+        // 3. Lấy các môn học đặc biệt (dành cho tất cả mọi người)
+        const specialSubjectsQuery = query(collection(firestore, 'subjects'), where('schoolYear', '==', currentSchoolYear), where('type', '==', 'special'));
+        const specialSubjectsSnapshot = await getDocs(specialSubjectsQuery);
+        specialSubjectsSnapshot.forEach(doc => allowedSubjects.add(doc.data().name));
+
+        // 4. Populate danh sách môn học vào select
+        [...allowedSubjects].sort().forEach(subject => {
+            const isPrimary = subject === currentUserInfo?.subject;
+            subjectSelect.innerHTML += `<option value="${subject}" ${isPrimary ? 'selected' : ''}>${subject}</option>`;
+        });
+
+        // 5. Nếu không có môn nào, vẫn hiển thị các môn trong tổ làm phương án dự phòng
+        if (currentUserInfo && currentUserInfo.group_name) {
+            getSubjectsFromGroupName(currentUserInfo.group_name).forEach(sub => {
+                if (!allowedSubjects.has(sub)) subjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+            });
+        }
+
+        // 6. Tải PPDH (logic này không đổi)
         const methodsQuery = query(collection(firestore, 'teachingMethods'), where('schoolYear', '==', currentSchoolYear), orderBy('method'));
         const methodsSnapshot = await getDocs(methodsQuery);
         const methodContainer = document.getElementById('reg-method-container');
@@ -1112,7 +1135,7 @@ const initializeTeacherRegisterPage = (user) => {
             await loadTeachersInGroup();
             await loadRegistrationRule(); // Tải quy tắc đăng ký
             await loadTimePlan(user);
-            await populateModalSelectors(user);
+            await populateModalSelectors(); // Không cần truyền user
             await loadLastUsedSubject(user);
 
         } catch (error) {

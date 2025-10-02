@@ -1340,37 +1340,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
-    const updateSubjectSelectForTeacher = (teacherId) => {
+    const updateSubjectSelectForTeacher = async (teacherId) => {
         const modalSubjectSelect = document.getElementById('reg-subject');
+        modalSubjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
+    
         if (!teacherId) {
-            modalSubjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
             return;
         }
-
+    
         const teacher = teacherMap.get(teacherId);
-        if (!teacher || !teacher.subject) {
-            // Nếu không có môn chính, hiển thị tất cả môn của tổ
-            const group = groupMap.get(teacher.group_id);
-            const subjects = group ? getSubjectsFromGroupName(group.group_name) : [];
-            modalSubjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
-            subjects.forEach(sub => modalSubjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`);
-            return;
+        if (!teacher) return;
+    
+        const allowedSubjects = new Set();
+    
+        // 1. Lấy các môn học từ tổ chuyên môn của giáo viên
+        const group = groupMap.get(teacher.group_id);
+        if (group) {
+            getSubjectsFromGroupName(group.group_name).forEach(sub => allowedSubjects.add(sub));
         }
-
-        const primarySubject = teacher.subject;
-        const allowedSubjects = [primarySubject];
-
-        // Xử lý các trường hợp ngoại lệ
-        if (primarySubject === 'Vật Lí') {
-            allowedSubjects.push('Công nghệ công nghiệp');
-        } else if (primarySubject === 'Sinh học') {
-            allowedSubjects.push('Công nghệ nông nghiệp');
-        }
-
-        modalSubjectSelect.innerHTML = '';
-        allowedSubjects.forEach(subject => {
+    
+        // 2. Lấy các môn học đặc biệt từ collection 'subjects'
+        const specialSubjectsQuery = query(
+            collection(firestore, 'subjects'),
+            where('schoolYear', '==', currentSchoolYear),
+            where('type', '==', 'special')
+        );
+        const specialSubjectsSnapshot = await getDocs(specialSubjectsQuery);
+        specialSubjectsSnapshot.forEach(doc => allowedSubjects.add(doc.data().name));
+    
+        // 3. Populate danh sách môn học vào select
+        [...allowedSubjects].sort().forEach(subject => {
             modalSubjectSelect.innerHTML += `<option value="${subject}">${subject}</option>`;
         });
+    
+        // 4. Tự động chọn môn học chính của giáo viên nếu có
+        if (teacher.subject && allowedSubjects.has(teacher.subject)) {
+            modalSubjectSelect.value = teacher.subject;
+        }
     };
 
     const handlePracticeCheckboxChange = async (isChecked) => {

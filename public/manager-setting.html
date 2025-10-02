@@ -19,7 +19,6 @@
                 <li><a href="manager-setting.html" class="nav-link active"><i class="fas fa-calendar-alt"></i><span>Quản lý thông tin năm học</span></a></li>
                 <li><a href="manager-syllabus.html" class="nav-link"><i class="fas fa-book-open"></i><span>Phân phối chương trình</span></a></li>
                 <li><a href="manager-device.html" class="nav-link"><i class="fas fa-desktop"></i><span>Danh mục thiết bị</span></a></li>
-                <li><a href="manager-labs.html" class="nav-link"><i class="fas fa-flask"></i><span>Phòng học bộ môn</span></a></li>
                 <li><a href="manager-synthetic.html" class="nav-link"><i class="fas fa-chart-pie"></i><span>Tổng hợp</span></a></li>
                 <li><a href="manager-report.html" class="nav-link"><i class="fas fa-file-alt"></i><span>Báo cáo</span></a></li>
             </ul>
@@ -55,6 +54,7 @@
                         <button class="tab-link active" data-tab="groups-teachers"><i class="fas fa-users"></i><span class="desktop-text">Tổ chuyên môn & Giáo viên</span><span class="mobile-text">Tổ & GV</span></button>
                         <button class="tab-link" data-tab="teaching-methods"><i class="fas fa-lightbulb"></i><span class="desktop-text">Phương pháp dạy học</span><span class="mobile-text">PPDH</span></button>
                         <button class="tab-link" data-tab="subjects"><i class="fas fa-book"></i><span class="desktop-text">Môn học</span><span class="mobile-text">Môn học</span></button>
+                        <button class="tab-link" data-tab="subject-assignments"><i class="fas fa-sitemap"></i><span class="desktop-text">Phân công Môn học</span><span class="mobile-text">Phân công</span></button>
                         <button class="tab-link" data-tab="data-repair"><i class="fas fa-tools"></i><span class="desktop-text">Sửa lỗi dữ liệu</span><span class="mobile-text">Sửa lỗi</span></button>
                         <button class="tab-link" data-tab="time-plan"><i class="fas fa-calendar-alt"></i><span class="desktop-text">Kế hoạch thời gian</span><span class="mobile-text">Kế hoạch</span></button>
                         <button class="tab-link" data-tab="registration-rules"><i class="fas fa-gavel"></i><span class="desktop-text">Quy tắc Đăng ký</span><span class="mobile-text">Quy tắc</span></button>
@@ -87,6 +87,18 @@
                                 </div>
                             </div>
                             <div id="subjects-container"><p>Vui lòng chọn một năm học để xem dữ liệu.</p></div>
+                        </div>
+
+                        <!-- Tab Phân công Môn học -->
+                        <div id="subject-assignments" class="tab-content">
+                            <div class="page-header">
+                                <h2>Phân công Môn học Phụ</h2>
+                            </div>
+                            <div class="instruction-text">
+                                <p><i class="fas fa-info-circle"></i> Tại đây, bạn có thể quy định các môn học phụ mà một giáo viên có thể đăng ký dựa trên môn học chính của họ. Ví dụ: Giáo viên môn Vật lí có thể đăng ký thêm môn Công nghệ công nghiệp.</p>
+                                <p><strong>Lưu ý:</strong> Các môn học được đánh dấu là "Đặc biệt" (ví dụ: HĐTN) sẽ tự động hiển thị cho tất cả giáo viên mà không cần phân công tại đây.</p>
+                            </div>
+                            <div id="subject-assignments-container"><p>Vui lòng chọn một năm học để xem dữ liệu.</p></div>
                         </div>
 
                         <!-- Tab Sửa lỗi dữ liệu -->
@@ -348,6 +360,31 @@
                     <button id="cancel-subject-modal" class="btn-cancel">Hủy</button>
                     <button id="save-subject-btn" class="btn-save"><span class="btn-text">Lưu</span><span class="btn-spinner"></span></button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal cho Phân công Môn học -->
+    <div id="assignment-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="assignment-modal-title">Phân công môn học phụ</h2>
+            <div class="form-group form-group-inline">
+                <label>Môn học chính</label>
+                <input type="text" id="primary-subject-display" class="form-control" readonly>
+            </div>
+            <div class="form-group form-group-inline">
+                <label for="subject-search-input">Chọn các môn học phụ được phép đăng ký</label>
+                <div id="custom-select-wrapper">
+                    <div id="custom-select-container" class="custom-select-container">
+                        <!-- Các thẻ đã chọn sẽ được chèn vào đây -->
+                        <input type="text" id="subject-search-input" placeholder="Tìm và chọn môn học...">
+                    </div>
+                    <div id="subject-dropdown-list" class="subject-dropdown-list" style="display: none;"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-assignment-modal" class="btn-cancel">Hủy</button>
+                <button id="save-assignment-btn" class="btn-save"><span class="btn-text">Lưu</span><span class="btn-spinner"></span></button>
             </div>
         </div>
     </div>

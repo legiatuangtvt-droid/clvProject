@@ -398,3 +398,7 @@
     font-size: 0.8rem;
     letter-spacing: 0.5px;
 }
+
+.filter-group label {
+    margin: 0px;
+}

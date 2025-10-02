@@ -74,6 +74,14 @@ service cloud.firestore {
       allow write: if isManager();
     }
 
+    // QUY TẮC CHO PHÂN CÔNG MÔN HỌC (SUBJECT ASSIGNMENTS)
+    match /subjectAssignments/{assignmentId} {
+      // Manager, Teacher, Supervisory có quyền đọc
+      allow read: if isManager() || isTeacher() || isSupervisory();
+      // Chỉ Manager có quyền ghi
+      allow write: if isManager();
+    }
+    
     // QUY TẮC CHO PHÒNG HỌC BỘ MÔN (LABS)
     match /labs/{labId} {
       // Manager, Teacher, Supervisory có quyền đọc
