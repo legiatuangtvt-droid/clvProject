@@ -1533,18 +1533,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         equipmentList.unshift(practiceText);
                     }
                 } else {
-                    // --- KHÔNG CÓ PHÒNG NÀO TRỐNG -> BÁO LỖI NHƯ CŨ ---
+                    // --- KHÔNG CÓ PHÒNG NÀO TRỐNG -> HIỂN THỊ CHI TIẾT TẤT CẢ CÁC PHÒNG BỊ TRÙNG ---
                     if (!equipmentList.includes('Thực hành trên lớp')) {
                         equipmentList.unshift('Thực hành trên lớp');
                     }
-                    const firstOccupiedLab = labStatuses[0];
-                    const occupiedQuery = query(collection(firestore, 'registrations'), where('date', '==', date), where('period', '==', period), where('labUsage.labId', '==', firstOccupiedLab.id));
-                    const occupiedSnapshot = await getDocs(occupiedQuery);
-                    const conflictRegData = occupiedSnapshot.docs.find(doc => doc.id !== currentEditingRegId)?.data();
-                    const conflictingTeacherName = conflictRegData ? (teacherMap.get(conflictRegData.teacherId)?.teacher_name || 'GV khác') : 'GV khác';
+
                     conflictWarningModal.querySelector('#conflict-warning-title').textContent = `Cảnh báo: Tất cả phòng thực hành đã được sử dụng`;
-                    conflictWarningModal.querySelector('.conflict-info-container').innerHTML = `<p>Phòng <strong>${firstOccupiedLab.name}</strong> đã được đăng ký bởi <strong>${conflictingTeacherName}</strong>.</p>`;
-                    conflictWarningModal.dataset.labName = firstOccupiedLab.name;
+                    const conflictInfoContainer = conflictWarningModal.querySelector('.conflict-info-container');
+                    conflictInfoContainer.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Đang tải thông tin chi tiết...</p>`;
+
+                    // Lấy thông tin chi tiết của tất cả các phòng bị chiếm
+                    const occupiedLabs = labStatuses.filter(lab => lab.isOccupied);
+                    const conflictDetailsPromises = occupiedLabs.map(async (lab) => {
+                        const occupiedQuery = query(collection(firestore, 'registrations'), where('date', '==', date), where('period', '==', period), where('labUsage.labId', '==', lab.id));
+                        const occupiedSnapshot = await getDocs(occupiedQuery);
+                        const conflictReg = occupiedSnapshot.docs.find(doc => doc.id !== currentEditingRegId)?.data();
+                        const teacherName = conflictReg ? (teacherMap.get(conflictReg.teacherId)?.teacher_name || 'GV khác') : 'GV không xác định';
+                        return `<p>Phòng <strong>${lab.name}</strong> đã được đăng ký bởi <strong>${teacherName}</strong>.</p>`;
+                    });
+
+                    const conflictDetailsHTML = await Promise.all(conflictDetailsPromises);
+                    conflictInfoContainer.innerHTML = conflictDetailsHTML.join('');
+
+                    // Không cần gán dataset.labName nữa vì không còn ý nghĩa khi có nhiều phòng
+                    delete conflictWarningModal.dataset.labName;
                     conflictWarningModal.style.display = 'flex';
                 }
             }
