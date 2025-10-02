@@ -778,18 +778,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const conflictLabDoc = occupiedSnapshot.docs.find(doc => doc.id !== currentEditingRegId);
 
+                // THAY ĐỔI LOGIC: Không chặn lưu mà tự động chuyển thành "Thực hành trên lớp"
                 if (conflictLabDoc) {
-                    const conflictRegData = conflictLabDoc.data();
-                    const conflictingTeacherName = teacherMap.get(conflictRegData.teacherId)?.teacher_name || 'một giáo viên khác';
-
-                    conflictWarningModal.querySelector('#conflict-warning-title').textContent = `Cảnh báo: ${labData.name} đã được đăng ký sử dụng bởi:`;
-                    conflictWarningModal.querySelector('.conflict-info-container').innerHTML = `<p><strong>Giáo viên:</strong> ${conflictingTeacherName}</p>`;
-                    
-                    // Lưu tên phòng vào modal để sử dụng khi đóng
-                    conflictWarningModal.dataset.labName = labData.name;
-                    
-                    conflictWarningModal.style.display = 'flex';
-                    return; // Dừng việc lưu
+                    labUsage = { status: 'in_class', reason: `Phòng thực hành ${labData.name} đã được sử dụng.` };
                 } else {
                     labUsage = { status: 'occupied', labId: labData.id, labName: labData.name };
                 }
@@ -824,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Cập nhật đăng ký thành công!', 'success');
 
                 // Hiển thị thông báo nếu thực hành trên lớp do phòng đã có người dùng
-                if (labUsage?.status === 'in_class' && labUsage.reason) {
+                if (labUsage?.status === 'in_class' && labUsage.reason && labUsage.reason.includes('đã được sử dụng')) {
                     showToast(labUsage.reason + " Tiết học được ghi nhận là 'Thực hành trên lớp'.", 'info', 8000);
                 }
             } else {
@@ -1419,6 +1410,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isOccupied = occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId);
     
                 if (isOccupied) {
+                    // HIỂN THỊ POPUP CẢNH BÁO NGAY LẬP TỨC
+                    const conflictRegData = occupiedSnapshot.docs.find(doc => doc.id !== currentEditingRegId).data();
+                    const conflictingTeacherName = teacherMap.get(conflictRegData.teacherId)?.teacher_name || 'một giáo viên khác';
+
+                    conflictWarningModal.querySelector('#conflict-warning-title').textContent = `Cảnh báo: ${labData.name} đã được đăng ký sử dụng bởi:`;
+                    conflictWarningModal.querySelector('.conflict-info-container').innerHTML = `<p><strong>Giáo viên:</strong> ${conflictingTeacherName}</p>`;
+                    conflictWarningModal.dataset.labName = labData.name; // Lưu tên phòng để xử lý khi đóng modal
+                    conflictWarningModal.style.display = 'flex';
+
+                    // Vẫn cập nhật textarea để người dùng biết kết quả
                     equipmentList.push('Thực hành trên lớp');
                 } else {
                     equipmentList.push(`Thực hành tại ${labData.name}`);
