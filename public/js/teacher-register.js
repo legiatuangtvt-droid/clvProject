@@ -619,8 +619,8 @@ const initializeTeacherRegisterPage = (user) => {
         const saveBtn = document.getElementById('save-register-btn');
         setButtonLoading(saveBtn, true);
 
-        // --- KIỂM TRA TRÙNG LỊCH ---
         try {
+            // --- KIỂM TRA TRÙNG LỊCH ---
             const q = query(
                 collection(firestore, 'registrations'),
                 where('date', '==', date),
@@ -664,105 +664,101 @@ const initializeTeacherRegisterPage = (user) => {
                 conflictWarningModal.style.display = 'flex';
                 return; // Dừng việc lưu
             }
-        } catch (error) {
-            console.error("Lỗi khi kiểm tra trùng lịch:", error);
-            showToast('Không thể kiểm tra trùng lịch, vui lòng thử lại.', 'error');
-            return;
-        }
 
-        // --- LOGIC MỚI: KIỂM TRA PHÒNG HỌC BỘ MÔN KHI ĐĂNG KÝ THỰC HÀNH ---
-        let labUsage = null; // 'occupied' | 'in_class' | null
-        const subject = document.getElementById('reg-subject').value;
+            // --- LOGIC MỚI: KIỂM TRA PHÒNG HỌC BỘ MÔN KHI ĐĂNG KÝ THỰC HÀNH (Đã sửa) ---
+            let labUsage = null;
+            const subject = document.getElementById('reg-subject').value;
+            if (selectedMethods.includes('Thực hành')) {
+                const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), orderBy('name'));
+                const labsSnapshot = await getDocs(labsQuery);
 
-        if (selectedMethods.includes('Thực hành')) {
-            // 1. Kiểm tra xem có phòng thực hành cho môn này không
-            const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), limit(1));
-            const labsSnapshot = await getDocs(labsQuery);
+                if (labsSnapshot.empty) {
+                    labUsage = { status: 'in_class', reason: 'Môn học không có phòng thực hành riêng.' };
+                } else {
+                    const allLabsForSubject = labsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const userIntendedLabName = equipmentValue.split(',').map(s => s.trim()).find(s => s.startsWith('Thực hành tại'))?.replace('Thực hành tại ', '');
+                    const intendedLab = allLabsForSubject.find(lab => lab.name === userIntendedLabName);
 
-            if (!labsSnapshot.empty) {
-                const labData = { id: labsSnapshot.docs[0].id, ...labsSnapshot.docs[0].data() };
-
-                // 2. Kiểm tra xem phòng đã bị chiếm dụng trong slot này chưa
-                const occupiedQuery = query(
-                    collection(firestore, 'registrations'),
-                    where('date', '==', date),
-                    where('period', '==', period),
-                    where('labUsage.labId', '==', labData.id) // Kiểm tra xem có ai đã chiếm phòng này chưa
-                );
-                const occupiedSnapshot = await getDocs(occupiedQuery);
-
-                let isOccupied = false;
-                // Nếu đang sửa, bỏ qua chính đăng ký hiện tại
-                if (currentEditingRegId) {
-                    if (occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId)) {
-                        isOccupied = true;
+                    if (intendedLab) {
+                        const occupiedQuery = query(collection(firestore, 'registrations'), where('date', '==', date), where('period', '==', period), where('labUsage.labId', '==', intendedLab.id));
+                        const occupiedSnapshot = await getDocs(occupiedQuery);
+                        if (occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId)) {
+                            labUsage = { status: 'in_class', reason: `Phòng thực hành ${intendedLab.name} đã được sử dụng.` };
+                        } else {
+                            labUsage = { status: 'occupied', labId: intendedLab.id, labName: intendedLab.name };
+                        }
+                    } else {
+                        let foundAvailableLab = false;
+                        for (const lab of allLabsForSubject) {
+                            const occupiedQuery = query(collection(firestore, 'registrations'), where('date', '==', date), where('period', '==', period), where('labUsage.labId', '==', lab.id));
+                            const occupiedSnapshot = await getDocs(occupiedQuery);
+                            if (!occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId)) {
+                                labUsage = { status: 'occupied', labId: lab.id, labName: lab.name };
+                                foundAvailableLab = true;
+                                break;
+                            }
+                        }
+                        if (!foundAvailableLab) {
+                            labUsage = { status: 'in_class', reason: 'Tất cả phòng thực hành đã được sử dụng.' };
+                        }
                     }
-                } else {
-                    isOccupied = !occupiedSnapshot.empty;
-                }
-
-                if (isOccupied) {
-                    labUsage = { status: 'in_class', reason: `Phòng thực hành ${labData.name} đã được sử dụng.` };
-                } else {
-                    labUsage = { status: 'occupied', labId: labData.id, labName: labData.name };
                 }
             }
-        }
 
-        // Kiểm tra định dạng lớp: 10, 11, 12 + một chữ cái + một số. Ví dụ: 10A1, 12B4
-        const classRegex = /^(10|11|12)[A-Z,a-z]\d{1,2}$/;
-        if (!classRegex.test(className)) {
-            showToast('Định dạng lớp không hợp lệ. Ví dụ đúng: 10A1, 12B4.', 'error');
-            return;
-        }
+            // Kiểm tra định dạng lớp
+            const classRegex = /^(10|11|12)[A-Z,a-z]\d{1,2}$/;
+            if (!classRegex.test(className)) {
+                showToast('Định dạng lớp không hợp lệ. Ví dụ đúng: 10A1, 12B4.', 'error');
+                return;
+            }
 
-        if (equipmentValue === '') {
-            showToast('Vui lòng nhập ít nhất một thiết bị.', 'error');
-            return;
-        }
-                
-        const weekSelect = document.getElementById('reg-week');
-        const finalWeekNumber = currentEditingRegId ? parseInt(weekSelect.value) : selectedWeekNumber;
+            if (equipmentValue === '') {
+                showToast('Vui lòng nhập ít nhất một thiết bị.', 'error');
+                return;
+            }
 
-        const registrationData = {
-            teacherId: user.uid,
-            groupId: currentUserInfo.group_id, // Thêm groupId
-            schoolYear: currentSchoolYear,
-            weekNumber: finalWeekNumber, 
-            date: date,
-            period: period,
-            subject: subject,
-            className: className.toUpperCase(), // Lưu tên lớp ở dạng chữ hoa
-            lessonName: document.getElementById('reg-lesson-name').value,
-            labUsage: labUsage, // <-- DỮ LIỆU MỚI
-            equipment: selectedEquipment,
-            teachingMethod: selectedMethods,
-            notes: '', // Giữ lại trường notes là rỗng để đảm bảo cấu trúc dữ liệu nhất quán
-        };
+            const weekSelect = document.getElementById('reg-week');
+            const finalWeekNumber = currentEditingRegId ? parseInt(weekSelect.value) : selectedWeekNumber;
 
-        try {
-            if (currentEditingRegId) { // Cập nhật
+            const registrationData = {
+                teacherId: user.uid,
+                groupId: currentUserInfo.group_id,
+                schoolYear: currentSchoolYear,
+                weekNumber: finalWeekNumber,
+                date: date,
+                period: period,
+                subject: subject,
+                className: className.toUpperCase(),
+                lessonName: document.getElementById('reg-lesson-name').value,
+                labUsage: labUsage,
+                equipment: selectedEquipment,
+                teachingMethod: selectedMethods,
+                notes: '',
+            };
+
+            if (currentEditingRegId) {
                 const regRef = doc(firestore, 'registrations', currentEditingRegId);
                 await updateDoc(regRef, registrationData);
                 showToast('Cập nhật đăng ký thành công!', 'success');
-            } else { // Tạo mới
+            } else {
                 await addDoc(collection(firestore, 'registrations'), {
                     ...registrationData,
-                    createdAt: serverTimestamp() // Thêm thời gian tạo
-                }); 
+                    createdAt: serverTimestamp()
+                });
                 showToast('Đăng ký thành công!', 'success');
-
-                // Hiển thị thông báo nếu thực hành trên lớp
                 if (labUsage?.status === 'in_class') {
                     showToast(labUsage.reason + " Tiết của bạn được ghi nhận là 'Thực hành trên lớp'.", 'info', 8000);
                 }
             }
+
             registerModal.style.display = 'none';
             loadAndRenderSchedule(user);
+
         } catch (error) {
             console.error("Lỗi khi lưu đăng ký:", error);
             showToast('Đã có lỗi xảy ra khi lưu.', 'error');
-        } finally {
+        }
+        finally {
             // Luôn đảm bảo nút được kích hoạt lại
             setButtonLoading(saveBtn, false);
         }
@@ -1022,38 +1018,79 @@ const initializeTeacherRegisterPage = (user) => {
                 return;
             }
 
-            // 1. Kiểm tra xem có phòng thực hành cho môn này không
-            const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), limit(1));
+            // 1. Tìm tất cả các phòng thực hành cho môn này
+            const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), orderBy('name'));
             const labsSnapshot = await getDocs(labsQuery);
 
             if (labsSnapshot.empty) {
-                equipmentList.push('Thực hành trên lớp');
+                equipmentList.unshift('Thực hành trên lớp');
             } else {
-                const labData = { id: labsSnapshot.docs[0].id, ...labsSnapshot.docs[0].data() };
+                const allLabsForSubject = labsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                // 2. Kiểm tra xem phòng đã bị chiếm dụng trong slot này chưa
-                const occupiedQuery = query(
-                    collection(firestore, 'registrations'),
-                    where('date', '==', date),
-                    where('period', '==', period),
-                    where('labUsage.labId', '==', labData.id)
-                );
-                const occupiedSnapshot = await getDocs(occupiedQuery);
+                // 2. Kiểm tra tình trạng của từng phòng
+                const labStatusPromises = allLabsForSubject.map(async (lab) => {
+                    const occupiedQuery = query(
+                        collection(firestore, 'registrations'),
+                        where('date', '==', date),
+                        where('period', '==', period),
+                        where('labUsage.labId', '==', lab.id)
+                    );
+                    const occupiedSnapshot = await getDocs(occupiedQuery);
+                    const isOccupied = occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId);
+                    return { ...lab, isOccupied };
+                });
 
-                // Nếu đang sửa, bỏ qua chính đăng ký hiện tại
-                const isOccupied = occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId);
+                const labStatuses = await Promise.all(labStatusPromises);
+                const availableLabs = labStatuses.filter(lab => !lab.isOccupied);
 
-                if (isOccupied) {
-                    equipmentList.push('Thực hành trên lớp');
+                if (availableLabs.length > 1) {
+                    // --- CÓ NHIỀU PHÒNG TRỐNG -> HIỂN THỊ MODAL LỰA CHỌN ---
+                    const labSelectionModal = document.getElementById('lab-selection-modal');
+                    const optionsContainer = document.getElementById('lab-selection-options');
+                    optionsContainer.innerHTML = availableLabs.map((lab, index) => `
+                        <label class="radio-item">
+                            <input type="radio" name="lab-choice" value="${lab.name}" ${index === 0 ? 'checked' : ''}>
+                            ${lab.name}
+                        </label>
+                    `).join('');
+
+                    labSelectionModal.style.display = 'flex';
+
+                    document.getElementById('confirm-lab-selection-btn').onclick = () => {
+                        const selectedLabName = optionsContainer.querySelector('input[name="lab-choice"]:checked').value;
+                        const practiceText = `Thực hành tại ${selectedLabName}`;
+                        if (!equipmentList.includes(practiceText)) {
+                            equipmentList.unshift(practiceText);
+                        }
+                        equipmentInput.value = equipmentList.join(', ');
+                        labSelectionModal.style.display = 'none';
+                    };
+
+                    document.getElementById('cancel-lab-selection-btn').onclick = () => {
+                        labSelectionModal.style.display = 'none';
+                        // Bỏ check ô "Thực hành" nếu người dùng hủy
+                        document.querySelector('#reg-method-container input[value="Thực hành"]').checked = false;
+                    };
+
+                } else if (availableLabs.length === 1) {
+                    // --- CÓ ĐÚNG 1 PHÒNG TRỐNG -> TỰ ĐỘNG CHỌN ---
+                    const practiceText = `Thực hành tại ${availableLabs[0].name}`;
+                    if (!equipmentList.includes(practiceText)) {
+                        equipmentList.unshift(practiceText);
+                    }
                 } else {
-                    equipmentList.push(`Thực hành tại ${labData.name}`);
+                    // --- KHÔNG CÓ PHÒNG NÀO TRỐNG -> BÁO LỖI NHƯ CŨ ---
+                    if (!equipmentList.includes('Thực hành trên lớp')) {
+                        equipmentList.unshift('Thực hành trên lớp');
+                    }
+                    // Hiển thị toast thay vì modal vì giao diện GV đơn giản hơn
+                    showToast(`Tất cả phòng thực hành cho môn ${subject} đã được sử dụng.`, 'warning', 5000);
                 }
             }
         }
 
         equipmentInput.value = equipmentList.join(', ');
     };
-
     // Thêm sự kiện để tải gợi ý bài học khi thay đổi môn hoặc lớp
     document.getElementById('reg-subject').addEventListener('change', loadLessonSuggestions);
     document.getElementById('reg-class').addEventListener('input', loadLessonSuggestions);

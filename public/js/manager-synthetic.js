@@ -760,33 +760,49 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedMethods = Array.from(document.querySelectorAll('#reg-method-container input:checked')).map(cb => cb.value);
         const subject = document.getElementById('reg-subject').value;
         let labUsage = null;
-
+        
         if (selectedMethods.includes('Thực hành')) {
-            const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), limit(1));
+            // Query for labs associated with the subject
+            const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), orderBy('name'));
             const labsSnapshot = await getDocs(labsQuery);
 
-            if (!labsSnapshot.empty) {
-                const labData = { id: labsSnapshot.docs[0].id, ...labsSnapshot.docs[0].data() };
+            if (labsSnapshot.empty) {
+                labUsage = { status: 'in_class', reason: 'Môn học không có phòng thực hành riêng.' };
+            } else {
+                // The rest of the logic that uses labsSnapshot
+            // ... (rest of the code in this block is correct)
+            const allLabsForSubject = labsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const userIntendedLabName = equipmentValue.split(',').map(s => s.trim()).find(s => s.startsWith('Thực hành tại'))?.replace('Thực hành tại ', '');
+            const intendedLab = allLabsForSubject.find(lab => lab.name === userIntendedLabName);
 
-                const occupiedQuery = query(
-                    collection(firestore, 'registrations'),
-                    where('date', '==', date),
-                    where('period', '==', period),
-                    where('labUsage.labId', '==', labData.id)
-                );
+            if (intendedLab) {
+                // Người dùng đã chọn một phòng cụ thể, kiểm tra phòng đó
+                const occupiedQuery = query(collection(firestore, 'registrations'), where('date', '==', date), where('period', '==', period), where('labUsage.labId', '==', intendedLab.id));
                 const occupiedSnapshot = await getDocs(occupiedQuery);
+                const isOccupied = occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId);
 
-                const conflictLabDoc = occupiedSnapshot.docs.find(doc => doc.id !== currentEditingRegId);
-
-                // THAY ĐỔI LOGIC: Không chặn lưu mà tự động chuyển thành "Thực hành trên lớp"
-                if (conflictLabDoc) {
-                    labUsage = { status: 'in_class', reason: `Phòng thực hành ${labData.name} đã được sử dụng.` };
+                if (isOccupied) {
+                    labUsage = { status: 'in_class', reason: `Phòng thực hành ${intendedLab.name} đã được sử dụng.` };
                 } else {
-                    labUsage = { status: 'occupied', labId: labData.id, labName: labData.name };
+                    labUsage = { status: 'occupied', labId: intendedLab.id, labName: intendedLab.name };
                 }
             } else {
-                // Môn học không có phòng thực hành
-                labUsage = { status: 'in_class', reason: 'Môn học không có phòng thực hành riêng.' };
+                // Người dùng chưa chọn phòng nào (hoặc chỉ ghi "Thực hành"), hoặc phòng không tồn tại
+                // Hệ thống sẽ tự tìm phòng trống đầu tiên
+                let foundAvailableLab = false;
+                for (const lab of allLabsForSubject) {
+                    const occupiedQuery = query(collection(firestore, 'registrations'), where('date', '==', date), where('period', '==', period), where('labUsage.labId', '==', lab.id));
+                    const occupiedSnapshot = await getDocs(occupiedQuery);
+                    if (!occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId)) {
+                        labUsage = { status: 'occupied', labId: lab.id, labName: lab.name };
+                        foundAvailableLab = true;
+                        break; // Dừng lại khi tìm thấy phòng trống đầu tiên
+                    }
+                }
+                if (!foundAvailableLab) {
+                    labUsage = { status: 'in_class', reason: 'Tất cả phòng thực hành đã được sử dụng.' };
+                }
+            }
             }
         }
 
@@ -807,7 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Trường hợp 1: Phòng đã bị chiếm nhưng người dùng vẫn cố ghi là dùng phòng
                     if (correctPracticeStatus === 'in_class' && userPracticeText.startsWith('Thực hành tại')) {
                         // Tìm xem ai đã chiếm phòng để hiển thị thông báo
-                        const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), limit(1));
+                        const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), orderBy('name'));
                         const labsSnapshot = await getDocs(labsQuery);
                         if (!labsSnapshot.empty) {
                             const labData = { id: labsSnapshot.docs[0].id, ...labsSnapshot.docs[0].data() };
@@ -850,10 +866,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (labUsage?.status === 'in_class') finalEquipmentList.push('Thực hành trên lớp');
 
         const weekSelect = document.getElementById('reg-week');
+        const finalWeekNumber = currentEditingRegId ? parseInt(weekSelect.value) : selectedWeekNumber;
+
         const saveBtn = document.getElementById('save-register-btn');
         setButtonLoading(saveBtn, true);
-
-        const finalWeekNumber = currentEditingRegId ? parseInt(weekSelect.value) : selectedWeekNumber;
 
         const registrationData = {
             teacherId: teacherId,
@@ -1456,46 +1472,80 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
     
-            // 1. Kiểm tra xem có phòng thực hành cho môn này không
-            const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), limit(1));
+            // 1. Tìm tất cả các phòng thực hành cho môn này
+            const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), orderBy('name'));
             const labsSnapshot = await getDocs(labsQuery);
     
             if (labsSnapshot.empty) {
                 equipmentList.unshift('Thực hành trên lớp');
             } else {
-                const labData = { id: labsSnapshot.docs[0].id, ...labsSnapshot.docs[0].data() };
-    
-                // 2. Kiểm tra xem phòng đã bị chiếm dụng trong slot này chưa
-                const occupiedQuery = query(
-                    collection(firestore, 'registrations'),
-                    where('date', '==', date),
-                    where('period', '==', period),
-                    where('labUsage.labId', '==', labData.id)
-                );
-                const occupiedSnapshot = await getDocs(occupiedQuery);
-    
-                // Nếu đang sửa, bỏ qua chính đăng ký hiện tại
-                const isOccupied = occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId);
-    
-                if (isOccupied) {
-                    // Chỉ thêm nếu chưa có
-                    if (!equipmentList.includes('Thực hành trên lớp')) {
-                        equipmentList.unshift('Thực hành trên lớp');
-                    }
-                    // HIỂN THỊ POPUP CẢNH BÁO NGAY LẬP TỨC
-                    const conflictRegData = occupiedSnapshot.docs.find(doc => doc.id !== currentEditingRegId).data();
-                    const conflictingTeacherName = teacherMap.get(conflictRegData.teacherId)?.teacher_name || 'một giáo viên khác';
+                const allLabsForSubject = labsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                    conflictWarningModal.querySelector('#conflict-warning-title').textContent = `Cảnh báo: ${labData.name} đã được đăng ký sử dụng bởi:`;
-                    conflictWarningModal.querySelector('.conflict-info-container').innerHTML = `<p><strong>Giáo viên:</strong> ${conflictingTeacherName}</p>`;
-                    conflictWarningModal.dataset.labName = labData.name; // Lưu tên phòng để xử lý khi đóng modal
-                    conflictWarningModal.style.display = 'flex';
-                } else {
-                    const practiceText = `Thực hành tại ${labData.name}`;
-                    // Chỉ thêm nếu chưa có
+                // 2. Kiểm tra tình trạng của từng phòng
+                const labStatusPromises = allLabsForSubject.map(async (lab) => {
+                    const occupiedQuery = query(
+                        collection(firestore, 'registrations'),
+                        where('date', '==', date),
+                        where('period', '==', period),
+                        where('labUsage.labId', '==', lab.id)
+                    );
+                    const occupiedSnapshot = await getDocs(occupiedQuery);
+                    const isOccupied = occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId);
+                    return { ...lab, isOccupied };
+                });
+
+                const labStatuses = await Promise.all(labStatusPromises);
+                const availableLabs = labStatuses.filter(lab => !lab.isOccupied);
+
+                if (availableLabs.length > 1) {
+                    // --- CÓ NHIỀU PHÒNG TRỐNG -> HIỂN THỊ MODAL LỰA CHỌN ---
+                    const labSelectionModal = document.getElementById('lab-selection-modal');
+                    const optionsContainer = document.getElementById('lab-selection-options');
+                    optionsContainer.innerHTML = availableLabs.map((lab, index) => `
+                        <label class="radio-item">
+                            <input type="radio" name="lab-choice" value="${lab.name}" ${index === 0 ? 'checked' : ''}>
+                            ${lab.name}
+                        </label>
+                    `).join('');
+
+                    labSelectionModal.style.display = 'flex';
+
+                    document.getElementById('confirm-lab-selection-btn').onclick = () => {
+                        const selectedLabName = optionsContainer.querySelector('input[name="lab-choice"]:checked').value;
+                        const practiceText = `Thực hành tại ${selectedLabName}`;
+                        if (!equipmentList.includes(practiceText)) {
+                            equipmentList.unshift(practiceText);
+                        }
+                        equipmentInput.value = equipmentList.join(', ');
+                        labSelectionModal.style.display = 'none';
+                    };
+
+                    document.getElementById('cancel-lab-selection-btn').onclick = () => {
+                        labSelectionModal.style.display = 'none';
+                        // Bỏ check ô "Thực hành" nếu người dùng hủy
+                        document.querySelector('#reg-method-container input[value="Thực hành"]').checked = false;
+                    };
+
+                } else if (availableLabs.length === 1) {
+                    // --- CÓ ĐÚNG 1 PHÒNG TRỐNG -> TỰ ĐỘNG CHỌN ---
+                    const practiceText = `Thực hành tại ${availableLabs[0].name}`;
                     if (!equipmentList.includes(practiceText)) {
                         equipmentList.unshift(practiceText);
                     }
+                } else {
+                    // --- KHÔNG CÓ PHÒNG NÀO TRỐNG -> BÁO LỖI NHƯ CŨ ---
+                    if (!equipmentList.includes('Thực hành trên lớp')) {
+                        equipmentList.unshift('Thực hành trên lớp');
+                    }
+                    const firstOccupiedLab = labStatuses[0];
+                    const occupiedQuery = query(collection(firestore, 'registrations'), where('date', '==', date), where('period', '==', period), where('labUsage.labId', '==', firstOccupiedLab.id));
+                    const occupiedSnapshot = await getDocs(occupiedQuery);
+                    const conflictRegData = occupiedSnapshot.docs.find(doc => doc.id !== currentEditingRegId)?.data();
+                    const conflictingTeacherName = conflictRegData ? (teacherMap.get(conflictRegData.teacherId)?.teacher_name || 'GV khác') : 'GV khác';
+                    conflictWarningModal.querySelector('#conflict-warning-title').textContent = `Cảnh báo: Tất cả phòng thực hành đã được sử dụng`;
+                    conflictWarningModal.querySelector('.conflict-info-container').innerHTML = `<p>Phòng <strong>${firstOccupiedLab.name}</strong> đã được đăng ký bởi <strong>${conflictingTeacherName}</strong>.</p>`;
+                    conflictWarningModal.dataset.labName = firstOccupiedLab.name;
+                    conflictWarningModal.style.display = 'flex';
                 }
             }
         }
