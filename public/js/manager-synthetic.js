@@ -889,14 +889,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const deleteRegistration = (regId) => {
+    const deleteRegistration = (regId, callback = null) => {
         document.getElementById('confirm-delete-message').textContent = 'Bạn có chắc chắn muốn xóa lượt đăng ký này?';
         deleteFunction = async () => {
             try {
                 await deleteDoc(doc(firestore, 'registrations', regId));
                 showToast('Đã xóa đăng ký.', 'success');
                 registerModal.style.display = 'none';
-                loadAndRenderSchedule();
+                await loadAndRenderSchedule(); // Tải lại lịch chính
+                if (typeof callback === 'function') {
+                    callback(); // Gọi hàm callback để cập nhật lại modal chi tiết
+                }
             } catch (error) {
                 console.error("Lỗi khi xóa đăng ký:", error);
                 showToast('Lỗi khi xóa đăng ký.', 'error');
@@ -1246,12 +1249,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const deleteBtn = e.target.closest('.delete-reg-in-modal');
             const regId = e.target.closest('tr')?.dataset.regId;
 
+            const slot = e.target.closest('.modal-content').querySelector('#add-new-in-slot-modal-btn');
+
             if (editBtn && regId) {
                 slotDetailModal.style.display = 'none';
                 openRegisterModal(regId);
             }
             if (deleteBtn && regId) {
-                deleteRegistration(regId); // Hàm này đã có sẵn và sẽ hiển thị modal xác nhận
+                // Khi xóa từ modal chi tiết, truyền vào một callback để cập nhật lại chính modal đó
+                deleteRegistration(regId, () => openSlotDetailModal(slot.dataset.date, slot.dataset.period));
             }
         });
 
