@@ -1,56 +1,34 @@
-/* --- Tái sử dụng và mở rộng từ manager-setting.css --- */
-.modal-content.large {
-    max-width: 800px; /* Rộng hơn cho modal nhập hàng loạt */
-}
-
-.header-actions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.header-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    padding: 12px 15px;
-    background-color: var(--surface-subtle-bg);
-    border-radius: 8px;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-color);
-}
-
 /* --- Bố cục cột cho trang Tổng hợp --- */
 .two-column-layout { /* Sử dụng class dùng chung */
     grid-template-columns: minmax(0, 320px) 1fr; /* Sidebar tối đa 320px, co lại được; content chiếm phần còn lại */
     margin-top: 15px;
 }
 
-.two-column-sidebar { /* Sử dụng class dùng chung */
-    gap: 15px; /* Ghi đè khoảng cách mặc định nếu cần */
-}
-
-/* Điều chỉnh các control bên trong sidebar */
-.synthetic-sidebar .header-controls {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 15px;
-    margin-bottom: 0;
-}
-
-.synthetic-sidebar .filter-controls {
+.two-column-sidebar .filter-controls {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
 }
 
-.synthetic-sidebar .header-actions {
-    margin-top: 20px;
+/* NEW: Cho phép các nhóm bộ lọc trên trang này co giãn để lấp đầy không gian */
+.two-column-sidebar .filter-group {
+    flex-grow: 1;
+}
+
+/* NEW: Style for form-actions to stack buttons vertically */
+.form-actions {
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
+    gap: 10px; /* Khoảng cách giữa các nút */
+    align-items: stretch; /* Các nút sẽ có chiều rộng bằng nhau (chiếm 100% container) */
+    margin-top: 15px; /* Tăng khoảng cách với bộ lọc */
+}
+
+/* Đảm bảo các nút bên trong .form-actions chiếm 100% chiều rộng */
+.form-actions .btn-primary,
+.form-actions .btn-info {
     width: 100%;
+    box-sizing: border-box; /* Đảm bảo padding không làm ảnh hưởng đến width */
 }
 
 /* --- Cải tiến cho các nút hành động --- */

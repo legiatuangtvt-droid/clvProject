@@ -215,6 +215,15 @@ document.addEventListener('DOMContentLoaded', () => {
         [...allMethods].sort().forEach(method => {
             filterMethodSelect.innerHTML += `<option value="${method}">${method}</option>`;
         });
+
+        // NEW: Populate teacher filter initially with all teachers
+        filterTeacherSelect.innerHTML = '<option value="all">Tất cả</option>';
+        allTeachers.forEach(teacher => {
+            const option = document.createElement('option');
+            option.value = teacher.uid;
+            option.textContent = teacher.teacher_name;
+            filterTeacherSelect.appendChild(option);
+        });
     };
 
     const updateDependentFilters = () => {
