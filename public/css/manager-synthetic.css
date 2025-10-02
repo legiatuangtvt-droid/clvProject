@@ -515,13 +515,13 @@
 
 /* --- Cải tiến giao diện cho Modal Thống kê --- */
 .equipment-stats-modal .modal-content {
-    border-top: 5px solid #3498db; /* Màu xanh dương cho thống kê */
+    border-top: 5px solid var(--info-color); /* Sử dụng biến màu cho đồng bộ */
     animation: fadeIn 0.3s ease-out;
     max-width: 900px; /* Rộng hơn để chứa bảng */
 }
 
 .equipment-stats-modal-title {
-    color: var(--text-dark);
+    color: var(--info-hover); /* Đổi màu tiêu đề cho nổi bật */
     display: flex;
     align-items: center;
     gap: 12px;
@@ -542,7 +542,7 @@
     padding: 12px 15px;
     border-radius: 4px;
     font-size: 0.9rem;
-    line-height: 1.5;
+    line-height: 1.6; /* Tăng khoảng cách dòng cho dễ đọc */
     color: var(--info-hover);
     margin-bottom: 20px; /* Thêm khoảng cách dưới */
 }
@@ -556,49 +556,22 @@
     border: 1px solid var(--border-color-strong);
 }
 
+/* NEW: Tăng khoảng cách dòng cho bảng thống kê */
+.equipment-stats-container .weekly-plan-table td {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
 /* Thêm hiệu ứng hover cho các dòng trong bảng thống kê và bảng xem trước */
 .equipment-stats-container .weekly-plan-table tbody tr:hover,
 .preview-table tbody tr:hover {
     background-color: #f1f5f9; /* Màu nền xám nhạt khi hover */
 }
 
-/* --- NEW: School Year Selector Header (manager-setting.html) --- */
-.school-year-selector-header {
-    padding: 15px;
-    background-color: var(--surface-subtle-bg);
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 20px;
-    border-radius: 8px;
-}
-
-.selector-container {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    max-width: 500px; /* Giới hạn chiều rộng để trông gọn gàng hơn */
-}
-
-.selector-container #school-year-select {
-    flex-grow: 1; /* Cho phép select co giãn */
-    padding: 10px 15px;
-    font-size: 1rem;
-    border: 1px solid var(--border-color-strong);
-    border-radius: 6px;
-    background-color: var(--surface-bg);
-    font-weight: 500;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.selector-container #school-year-select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(26, 188, 156, 0.25);
-    outline: none;
-}
-
 /* Đơn giản hóa selector */
 .weekly-plan-table thead th {
-    background-color: var(--surface-hover-bg);
-    color: var(--text-light);
+    background-color: var(--surface-subtle-bg); /* Nền xám nhạt hơn, đồng bộ với các bảng khác */
+    color: var(--text-dark); /* Chữ đậm hơn, dễ đọc hơn */
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.8rem;
@@ -606,8 +579,9 @@
 }
 
 .equipment-stats-container .weekly-plan-table .total-row {
-    background-color: var(--border-color-strong);
+    background-color: var(--info-light); /* Dùng màu xanh nhạt cho dòng tổng */
     color: var(--text-dark);
+    border-top: 2px solid var(--info-color); /* Thêm đường kẻ đậm phân cách */
 }
 
 /* --- Session Toggle Buttons for Bulk Import --- */
