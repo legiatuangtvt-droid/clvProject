@@ -52,16 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const slotDetailModal = document.getElementById('slot-detail-modal');
 
-    const getSubjectsFromGroupName = (groupName) => {
-        if (!groupName) return [];
-        const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
-        // Tạm thời thay thế "Giáo dục thể chất - QP" để không bị split sai
-        const placeholder = 'TDQP_PLACEHOLDER';
-        return cleanedName.replace('Giáo dục thể chất - QP', placeholder)
-                          .split(/\s*-\s*/)
-                          .map(s => s.trim().replace(placeholder, 'Giáo dục thể chất - QP'));
-    };
-
     // --- INITIALIZATION ---
     const initializePage = async () => {
         try {
@@ -229,9 +219,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedGroup = allGroups.find(g => g.group_id === selectedGroupId);
             if (selectedGroup) {
                 // Lọc các môn học trong `allSubjects` dựa trên tên tổ
-                const subjectsInGroup = getSubjectsFromGroupName(selectedGroup.group_name);
-                allSubjects.forEach(sub => {
-                    if (subjectsInGroup.includes(sub)) availableSubjects.add(sub);
+                (selectedGroup.subjects || []).forEach(sub => {
+                    if (allSubjects.has(sub)) availableSubjects.add(sub);
                 });
             }
         }
@@ -1090,8 +1079,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const createRegistrationData = (teacher, className, period, lesson, equipmentStr, teachingMethodStr, week) => {
-        const subject = teacher.subject ? teacher.subject : (getSubjectsFromGroupName(groupMap.get(teacher.group_id)?.group_name || '')[0] || 'Chưa xác định');
-        
+        const subject = teacher.subject || (groupMap.get(teacher.group_id)?.subjects?.[0] || 'Chưa xác định');
         // Mở rộng logic PPDH để nhận cả tên đầy đủ và viết tắt
         const ppdhMapping = {
             'CNTT': 'Công nghệ thông tin',
@@ -1431,7 +1419,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Lấy các môn học từ tổ chuyên môn của giáo viên
         const group = groupMap.get(teacher.group_id);
         if (group) {
-            getSubjectsFromGroupName(group.group_name).forEach(sub => allowedSubjects.add(sub));
+            (group.subjects || []).forEach(sub => allowedSubjects.add(sub));
         }
     
         // 2. Lấy các môn học đặc biệt từ collection 'subjects'

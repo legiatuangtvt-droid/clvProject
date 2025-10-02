@@ -288,6 +288,12 @@
                 <label for="group-name-input">Tên tổ</label>
                 <input type="text" id="group-name-input" placeholder="Ví dụ: Tổ Toán - Tin">
             </div>
+            <!-- REFACTORED: Subject selection for the group using standard multi-select -->
+            <div class="form-group">
+                <label for="group-subjects-select">Các môn học thuộc tổ</label>
+                <select multiple id="group-subjects-select" class="form-control" style="height: 150px;"></select>
+                <p class="form-note">Giữ phím Ctrl (hoặc Cmd trên Mac) để chọn nhiều môn học.</p>
+            </div>
             <div class="modal-actions">
                 <div class="modal-actions-right">
                     <button id="cancel-group-modal" class="btn-cancel">Hủy</button>

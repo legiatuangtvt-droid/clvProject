@@ -41,15 +41,6 @@ const initializeTeacherRegisterPage = (user) => {
     let registrationRule = 'none'; // Quy tắc đăng ký, mặc định là không giới hạn
     let selectedWeekNumber = null;
 
-    const getSubjectsFromGroupName = (groupName) => {
-        const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
-        // Tạm thời thay thế "Giáo dục thể chất - QP" để không bị split sai
-        const placeholder = 'TDQP_PLACEHOLDER';
-        return cleanedName.replace('Giáo dục thể chất - QP', placeholder)
-                          .split(/\s*-\s*/)
-                          .map(s => s.trim().replace(placeholder, 'Giáo dục thể chất - QP'));
-    };
-
     const loadRegistrationRule = async () => {
         try {
             // Lấy quy tắc từ document của năm học hiện tại
@@ -227,9 +218,10 @@ const initializeTeacherRegisterPage = (user) => {
         });
 
         // 5. Nếu không có môn nào, vẫn hiển thị các môn trong tổ làm phương án dự phòng
-        if (currentUserInfo && currentUserInfo.group_name) {
-            getSubjectsFromGroupName(currentUserInfo.group_name).forEach(sub => {
-                if (!allowedSubjects.has(sub)) subjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+        if (currentUserInfo && currentUserInfo.group_id) {
+            const groupDoc = await getDoc(doc(firestore, 'groups', currentUserInfo.group_id));
+            (groupDoc.data()?.subjects || []).forEach(sub => {
+                 if (!allowedSubjects.has(sub)) subjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
             });
         }
 

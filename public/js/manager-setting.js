@@ -89,15 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${month}-${day}`;
     };
 
-    const getSubjectsFromGroupName = (groupName) => {
-        const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
-        // Tạm thời thay thế "Giáo dục thể chất - QP" để không bị split sai
-        const placeholder = 'TDQP_PLACEHOLDER';
-        return cleanedName.replace('Giáo dục thể chất - QP', placeholder)
-                          .split(/\s*-\s*/)
-                          .map(s => s.trim().replace(placeholder, 'Giáo dục thể chất - QP'));
-    };
-
     const syncSubjectsFromGroups = async () => {
         if (!currentSchoolYear) {
             showToast('Vui lòng chọn một năm học để đồng bộ.', 'error');
@@ -118,8 +109,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const groupsSnapshot = await getDocs(groupsQuery);
             const subjectsFromGroups = new Set();
             groupsSnapshot.forEach(doc => {
-                const groupName = doc.data().group_name;
-                getSubjectsFromGroupName(groupName).forEach(subject => subjectsFromGroups.add(subject));
+                // NEW LOGIC: Get subjects from the 'subjects' array in the group document
+                const groupSubjects = doc.data().subjects || [];
+                groupSubjects.forEach(subject => subjectsFromGroups.add(subject));
             });
 
             // 3. Tìm các môn học cần thêm mới
@@ -146,6 +138,53 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             setButtonLoading(syncBtn, false);
         }
+    };
+
+    /**
+     * Hàm chuyên dụng để tải danh sách môn học cho một năm học mà không thay đổi giao diện.
+     * @param {string} schoolYear - Năm học cần tải môn học.
+     * @returns {Promise<Array>} - Một promise giải quyết với một mảng các đối tượng môn học.
+     */
+    const fetchSubjectsForYear = async (schoolYear) => {
+        if (!schoolYear) return [];
+        try {
+            const subjectsQuery = query(collection(firestore, 'subjects'), where("schoolYear", "==", schoolYear), orderBy('name'));
+            const snapshot = await getDocs(subjectsQuery);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error("Lỗi khi tải danh sách môn học cho modal:", error);
+            showToast("Không thể tải danh sách môn học để lựa chọn.", "error");
+            return [];
+        }
+    };
+
+    // --- REFACTORED: Open Group Modal with Subject Selection ---
+    const openGroupModal = async (groupData = null) => {
+        currentEditingId = groupData ? groupData.id : null;
+        document.getElementById('group-modal-title').textContent = groupData ? 'Sửa Tổ chuyên môn' : 'Thêm Tổ chuyên môn';
+        document.getElementById('group-name-input').value = groupData ? groupData.group_name : '';
+
+        // --- REFACTORED: Logic for standard multi-select ---
+        const subjectsSelect = document.getElementById('group-subjects-select');
+        subjectsSelect.innerHTML = ''; // Xóa các lựa chọn cũ
+
+        // Tải tất cả các môn học có sẵn cho năm học hiện tại
+        const subjectsForSelection = await fetchSubjectsForYear(currentSchoolYear);
+        const assignedSubjects = groupData && Array.isArray(groupData.subjects) ? groupData.subjects : [];
+
+        // Điền các môn học vào thẻ <select>
+        subjectsForSelection.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.name;
+            option.textContent = subject.name;
+            // Nếu môn học này đã được gán cho tổ, đánh dấu là đã chọn
+            if (assignedSubjects.includes(subject.name)) {
+                option.selected = true;
+            }
+            subjectsSelect.appendChild(option);
+        });
+
+        openModal(groupModal);
     };
 
     // --- SUBJECT ASSIGNMENT FUNCTIONS ---
@@ -1327,7 +1366,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentEditingId = null;
         document.getElementById('group-modal-title').textContent = 'Thêm Tổ chuyên môn';
         document.getElementById('group-name-input').value = '';
-        openModal(groupModal);
+        openGroupModal(); // Use the new function
     });
 
     // Mở modal thêm Năm học
@@ -1384,17 +1423,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('save-group-btn').addEventListener('click', async () => {
         const saveBtn = document.getElementById('save-group-btn');
         const group_name = document.getElementById('group-name-input').value.trim();
+        // REFACTORED: Get selected subjects from the new <select> element
+        const subjectsSelect = document.getElementById('group-subjects-select');
+        const selectedSubjects = Array.from(subjectsSelect.selectedOptions).map(option => option.value);
+
         if (!group_name) {
             showToast('Vui lòng nhập tên tổ.', 'error');
             return;
         }
+        if (selectedSubjects.length === 0) {
+            showToast('Vui lòng chọn ít nhất một môn học cho tổ.', 'error');
+            return;
+        }
 
         setButtonLoading(saveBtn, true);
+        const dataToSave = { group_name, subjects: selectedSubjects };
 
         try {
             if (currentEditingId) { // Cập nhật
                 const groupRef = doc(firestore, 'groups', currentEditingId);
-                await updateDoc(groupRef, { group_name });
+                await updateDoc(groupRef, dataToSave);
             } else { // Thêm mới
                 // Tự động tạo group_id từ tên tổ
                 // Ví dụ: "Tổ Toán - Tin" -> "TO-TOAN-TIN"
@@ -1415,8 +1463,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const groupsInYearSnapshot = await getDocs(groupsInYearQuery);
                 const newOrder = groupsInYearSnapshot.size;
 
-                await addDoc(collection(firestore, 'groups'), { 
-                    group_name: group_name,
+                await addDoc(collection(firestore, 'groups'), {
+                    ...dataToSave,
                     group_id: groupId,
                     order: newOrder,
                     schoolYear: currentSchoolYear // Thêm chuỗi năm học
@@ -1717,18 +1765,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // Lấy group_id từ data attribute của group-card
             const groupDocRef = doc(firestore, 'groups', groupId);
             const groupDocSnap = await getDoc(groupDocRef);
+
             if (groupDocSnap.exists()) {
                 currentGroupId = groupDocSnap.data().group_id; // Lấy mã tổ (vd: 'TOAN')
 
                 // Populate subject dropdown in teacher modal
-                const groupName = groupDocSnap.data().group_name;
-                const subjects = getSubjectsFromGroupName(groupName);
+                const subjects = groupDocSnap.data().subjects || [];
                 const subjectSelect = document.getElementById('teacher-subject-input');
                 subjectSelect.innerHTML = '<option value="">-- Chọn môn chính --</option>';
                 subjects.forEach(sub => {
                     subjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
                 });
-
+                
                 // Hiển thị/ẩn ô chọn môn học
                 if (subjects.length > 1) {
                     teacherSubjectGroup.style.display = 'block';
@@ -1753,7 +1801,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentEditingId = groupId;
                     document.getElementById('group-modal-title').textContent = 'Sửa tên Tổ';
                     document.getElementById('group-name-input').value = groupSnap.data().group_name;
-                    openModal(groupModal);
+                    openGroupModal({ id: groupId, ...groupSnap.data() }); // Use new function
                 }
             } catch (error) {
                 showToast('Không thể lấy thông tin tổ. Vui lòng thử lại.', 'error');
@@ -1779,8 +1827,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Populate và set giá trị cho subject dropdown
                     const groupRef = doc(firestore, 'groups', groupId);
                     const groupSnap = await getDoc(groupRef);
-                    const groupName = groupSnap.exists() ? groupSnap.data().group_name : '';
-                    const subjects = getSubjectsFromGroupName(groupName);
+                    const subjects = groupSnap.exists() ? (groupSnap.data().subjects || []) : [];
                     const subjectSelect = document.getElementById('teacher-subject-input');
                     subjectSelect.innerHTML = '<option value="">-- Chọn môn chính --</option>';
                     subjects.forEach(sub => {

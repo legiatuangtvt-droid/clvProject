@@ -22,7 +22,7 @@ export function showToast(message, type = 'info', duration = 3000) {
         info: 'fas fa-info-circle',
         warning: 'fas fa-exclamation-triangle'
     };
-    icon.className = `toast-icon ${iconClasses[type] || 'fas fa-info-circle'}`;
+    icon.className = `toast-icon ${iconClasses[type] || iconClasses['info']}`;
 
     // Tạo phần tử chứa nội dung thông báo
     const messageSpan = document.createElement('span');
