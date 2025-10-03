@@ -158,32 +158,86 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- REFACTORED: Open Group Modal with Subject Selection ---
+    // --- NEW: Cải tiến Modal chọn môn học cho Tổ ---
     const openGroupModal = async (groupData = null) => {
         currentEditingId = groupData ? groupData.id : null;
         document.getElementById('group-modal-title').textContent = groupData ? 'Sửa Tổ chuyên môn' : 'Thêm Tổ chuyên môn';
         document.getElementById('group-name-input').value = groupData ? groupData.group_name : '';
-
-        // --- REFACTORED: Logic for standard multi-select ---
-        const subjectsSelect = document.getElementById('group-subjects-select');
-        subjectsSelect.innerHTML = ''; // Xóa các lựa chọn cũ
-
-        // Tải tất cả các môn học có sẵn cho năm học hiện tại
-        const subjectsForSelection = await fetchSubjectsForYear(currentSchoolYear);
-        const assignedSubjects = groupData && Array.isArray(groupData.subjects) ? groupData.subjects : [];
-
-        // Điền các môn học vào thẻ <select>
-        subjectsForSelection.forEach(subject => {
-            const option = document.createElement('option');
-            option.value = subject.name;
-            option.textContent = subject.name;
-            // Nếu môn học này đã được gán cho tổ, đánh dấu là đã chọn
-            if (assignedSubjects.includes(subject.name)) {
-                option.selected = true;
+    
+        const wrapper = document.getElementById('group-subjects-select-wrapper');
+        const container = document.getElementById('group-subjects-container');
+        const searchInput = document.getElementById('group-subject-search-input');
+        const dropdown = document.getElementById('group-subject-dropdown');
+    
+        // Lấy danh sách môn học đã được gán và tất cả môn học có thể chọn
+        let assignedSubjects = groupData && Array.isArray(groupData.subjects) ? [...groupData.subjects] : [];
+        const allAvailableSubjects = await fetchSubjectsForYear(currentSchoolYear);
+    
+        // Hàm để render các thẻ môn học đã chọn
+        const renderTags = () => {
+            container.querySelectorAll('.subject-tag').forEach(tag => tag.remove());
+            assignedSubjects.forEach(subjectName => {
+                const tag = document.createElement('div');
+                tag.className = 'subject-tag';
+                tag.textContent = subjectName;
+                tag.dataset.value = subjectName;
+    
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'subject-tag-remove-btn';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.title = `Xóa môn ${subjectName}`;
+                removeBtn.onclick = () => {
+                    assignedSubjects = assignedSubjects.filter(s => s !== subjectName);
+                    renderTags();
+                    renderDropdown();
+                };
+    
+                tag.appendChild(removeBtn);
+                container.insertBefore(tag, searchInput);
+            });
+        };
+    
+        // Hàm để render danh sách thả xuống
+        const renderDropdown = () => {
+            const filterText = searchInput.value.toLowerCase();
+            dropdown.innerHTML = '';
+            const subjectsToShow = allAvailableSubjects
+                .filter(sub => sub.name.toLowerCase().includes(filterText));
+    
+            if (subjectsToShow.length === 0) {
+                dropdown.style.display = 'none';
+                return;
             }
-            subjectsSelect.appendChild(option);
-        });
-
+    
+            subjectsToShow.forEach(sub => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.textContent = sub.name;
+    
+                if (assignedSubjects.includes(sub.name)) {
+                    item.classList.add('disabled');
+                } else {
+                    item.onclick = () => {
+                        assignedSubjects.push(sub.name);
+                        searchInput.value = '';
+                        renderTags();
+                        renderDropdown();
+                        searchInput.focus();
+                    };
+                }
+                dropdown.appendChild(item);
+            });
+    
+            dropdown.style.display = 'block';
+        };
+    
+        searchInput.onfocus = renderDropdown;
+        searchInput.oninput = renderDropdown;
+        container.onclick = (e) => { if (e.target === container) searchInput.focus(); };
+        document.addEventListener('click', (e) => { if (!wrapper.contains(e.target)) dropdown.style.display = 'none'; }, { once: true });
+    
+        renderTags(); // Render các thẻ ban đầu
         openModal(groupModal);
     };
 
@@ -1423,9 +1477,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('save-group-btn').addEventListener('click', async () => {
         const saveBtn = document.getElementById('save-group-btn');
         const group_name = document.getElementById('group-name-input').value.trim();
-        // REFACTORED: Get selected subjects from the new <select> element
-        const subjectsSelect = document.getElementById('group-subjects-select');
-        const selectedSubjects = Array.from(subjectsSelect.selectedOptions).map(option => option.value);
+        // NEW: Lấy các môn học đã chọn từ giao diện thẻ
+        const selectedSubjects = Array.from(document.querySelectorAll('#group-subjects-container .subject-tag')).map(tag => tag.dataset.value);
 
         if (!group_name) {
             showToast('Vui lòng nhập tên tổ.', 'error');
@@ -1762,33 +1815,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Mở modal thêm Giáo viên
         if (target.closest('.add-teacher-btn')) {
-            // Lấy group_id từ data attribute của group-card
+            // Lấy thông tin tổ từ Firestore
             const groupDocRef = doc(firestore, 'groups', groupId);
             const groupDocSnap = await getDoc(groupDocRef);
-
+        
             if (groupDocSnap.exists()) {
-                currentGroupId = groupDocSnap.data().group_id; // Lấy mã tổ (vd: 'TOAN')
-
-                // Populate subject dropdown in teacher modal
-                const subjects = groupDocSnap.data().subjects || [];
+                const groupData = groupDocSnap.data();
+                currentGroupId = groupData.group_id; // Lưu lại mã tổ để dùng khi lưu GV
+        
+                // Lấy danh sách môn học của tổ và điền vào dropdown
+                const subjects = groupData.subjects || [];
                 const subjectSelect = document.getElementById('teacher-subject-input');
-                subjectSelect.innerHTML = '<option value="">-- Chọn môn chính --</option>';
+                subjectSelect.innerHTML = ''; // Xóa các lựa chọn cũ
+        
                 subjects.forEach(sub => {
-                    subjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+                    const option = document.createElement('option');
+                    option.value = sub;
+                    option.textContent = sub;
+                    subjectSelect.appendChild(option);
                 });
-                
-                // Hiển thị/ẩn ô chọn môn học
+        
+                // Tự động xử lý việc hiển thị và chọn môn học
                 if (subjects.length > 1) {
                     teacherSubjectGroup.style.display = 'block';
+                    subjectSelect.selectedIndex = 0; // Tự động chọn môn đầu tiên
                 } else {
                     teacherSubjectGroup.style.display = 'none';
-                    subjectSelect.value = subjects[0] || ''; // Tự chọn nếu chỉ có 1 môn
                 }
             }
-
+        
             currentEditingId = null; // Đảm bảo đây là chế độ thêm mới
             document.getElementById('teacher-modal-title').textContent = 'Thêm Giáo viên';
-            document.getElementById('teacher-form').reset(); // Xóa sạch các trường input
+            document.getElementById('teacher-names-input').value = ''; // Chỉ reset ô tên
             openModal(teacherModal);
         }
 
@@ -1800,17 +1858,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (groupSnap.exists()) {
                     currentEditingId = groupId;
                     document.getElementById('group-modal-title').textContent = 'Sửa tên Tổ';
-                    document.getElementById('group-name-input').value = groupSnap.data().group_name;
                     openGroupModal({ id: groupId, ...groupSnap.data() }); // Use new function
                 }
             } catch (error) {
                 showToast('Không thể lấy thông tin tổ. Vui lòng thử lại.', 'error');
             }
         }
-
+        
         // Mở modal sửa Giáo viên
         if (target.closest('.edit-teacher-btn')) {
             const teacherItem = target.closest('.teacher-item');
+            // Sửa lỗi: Đảm bảo teacherItem tồn tại trước khi truy cập dataset
+            if (!teacherItem) return;
+
             const teacherId = teacherItem.dataset.teacherId;
             currentEditingId = teacherId;
 
@@ -1822,7 +1882,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const teacherData = teacherSnap.data();
                     document.getElementById('teacher-modal-title').textContent = 'Sửa thông tin Giáo viên';
                     document.getElementById('teacher-names-input').value = teacherData.teacher_name || '';
-                    document.getElementById('teacher-names-input').rows = 1; // Chỉ sửa 1 tên
+                    document.getElementById('teacher-names-input').rows = 1; // Chỉ cho phép sửa 1 tên
 
                     // Populate và set giá trị cho subject dropdown
                     const groupRef = doc(firestore, 'groups', groupId);

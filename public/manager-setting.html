@@ -288,11 +288,16 @@
                 <label for="group-name-input">Tên tổ</label>
                 <input type="text" id="group-name-input" placeholder="Ví dụ: Tổ Toán - Tin">
             </div>
-            <!-- REFACTORED: Subject selection for the group using standard multi-select -->
+            <!-- NEW: Cải tiến giao diện chọn môn học bằng thẻ (tags) -->
             <div class="form-group">
                 <label for="group-subjects-select">Các môn học thuộc tổ</label>
-                <select multiple id="group-subjects-select" class="form-control" style="height: 150px;"></select>
-                <p class="form-note">Giữ phím Ctrl (hoặc Cmd trên Mac) để chọn nhiều môn học.</p>
+                <div id="group-subjects-select-wrapper" class="custom-select-wrapper">
+                    <div id="group-subjects-container" class="custom-select-container">
+                        <!-- Các thẻ môn học đã chọn sẽ được chèn vào đây -->
+                        <input type="text" id="group-subject-search-input" placeholder="Tìm và chọn môn học...">
+                    </div>
+                    <div id="group-subject-dropdown" class="subject-dropdown-list" style="display: none;"></div>
+                </div>
             </div>
             <div class="modal-actions">
                 <div class="modal-actions-right">

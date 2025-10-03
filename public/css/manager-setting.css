@@ -1201,3 +1201,64 @@
     margin-bottom: 0; /* Bỏ margin-bottom mặc định */
     min-width: 120px; /* Đặt độ rộng tối thiểu cho label để thẳng hàng */
 }
+
+/* --- NEW: Custom Tag-based Multi-select for Group Modal --- */
+.custom-select-wrapper {
+    position: relative;
+}
+
+.custom-select-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    cursor: text;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.custom-select-container:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
+}
+
+.subject-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.subject-tag-remove-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6c757d;
+    font-size: 1rem;
+    padding: 0;
+    line-height: 1;
+}
+.subject-tag-remove-btn:hover {
+    color: #212529;
+}
+
+#group-subject-search-input {
+    flex-grow: 1;
+    border: none;
+    outline: none;
+    padding: 5px;
+    background-color: transparent;
+    min-width: 150px; /* Đảm bảo input có độ rộng tối thiểu */
+}
+
+.subject-dropdown-list .dropdown-item.disabled {
+    background-color: #f8f9fa;
+    color: #adb5bd;
+    cursor: not-allowed;
+}
