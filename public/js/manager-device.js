@@ -19,24 +19,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- DOM ELEMENTS ---
-    const treeContainer = document.getElementById('device-tree-container');
     const listContainer = document.getElementById('device-list-container');
-    const currentFolderTitle = document.getElementById('current-folder-title');
+    const breadcrumbContainer = document.getElementById('breadcrumb-container');
     const addSubjectBtn = document.getElementById('add-subject-btn');
     const addCategoryBtn = document.getElementById('add-category-btn');
     const addDeviceBtn = document.getElementById('add-device-btn');
     const bulkImportBtn = document.getElementById('bulk-import-btn');
 
-    const itemModal = document.getElementById('item-modal');
-    if (!itemModal) {
-        console.error("Lỗi nghiêm trọng: Không tìm thấy modal #item-modal. Các chức năng thêm/sửa sẽ không hoạt động.");
-        // Không return ở đây để các phần khác có thể vẫn chạy, nhưng cảnh báo là cần thiết
-    }
-    const itemModalTitle = document.getElementById('item-modal-title');
-    const itemForm = document.getElementById('item-form');
-    const deviceOnlyFields = itemModal.querySelector('.device-only-fields');
-    const saveItemBtn = document.getElementById('save-item-btn');
-    const cancelItemBtn = document.getElementById('cancel-item-modal');
+    // Category Modal Elements
+    const categoryModal = document.getElementById('category-modal');
+    const categoryModalTitle = document.getElementById('category-modal-title');
+    const categoryForm = document.getElementById('category-form');
+    const saveCategoryBtn = document.getElementById('save-category-btn');
+    const cancelCategoryBtn = document.getElementById('cancel-category-modal');
+
+    // Device Modal Elements
+    const deviceModal = document.getElementById('device-modal');
+    const deviceModalTitle = document.getElementById('device-modal-title');
+    const deviceForm = document.getElementById('device-form');
+    const saveDeviceBtn = document.getElementById('save-device-btn');
+    const cancelDeviceBtn = document.getElementById('cancel-device-modal');
 
     const confirmDeleteModal = document.getElementById('confirm-delete-modal');
     const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
@@ -70,116 +72,61 @@ document.addEventListener('DOMContentLoaded', () => {
             setupEventListeners();
         } catch (error) {
             console.error("Lỗi khởi tạo trang:", error);
-            treeContainer.innerHTML = '<p class="error-message">Lỗi tải dữ liệu.</p>';
+            listContainer.innerHTML = '<p class="error-message">Lỗi tải dữ liệu.</p>';
         }
     };
 
     // --- DATA LOADING ---
     const loadAllItems = async () => {
-        treeContainer.innerHTML = '<p>Đang tải cây danh mục...</p>';
-        listContainer.innerHTML = '<p>Chọn một mục từ cây danh mục để xem chi tiết.</p>';
+        listContainer.innerHTML = '<p>Đang tải danh sách thiết bị...</p>';
         try {
             const q = query(collection(firestore, 'devices'), orderBy('order'));
             const snapshot = await getDocs(q);
             allItemsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-            renderTree();
-            initTreeSortable(); // Kích hoạt kéo-thả sau khi cây được render
             renderList(null); // Hiển thị nội dung gốc ban đầu
         } catch (error) {
             console.error("Lỗi khi tải dữ liệu:", error);
-            treeContainer.innerHTML = '<p class="error-message">Không thể tải dữ liệu.</p>';
+            listContainer.innerHTML = '<p class="error-message">Không thể tải dữ liệu từ cơ sở dữ liệu.</p>';
         }
     };
 
     // --- UI RENDERING ---
-    const renderTree = () => {
-        const buildTreeHtml = (parentId = null) => {
-            const children = allItemsCache
-                .filter(item => item.parentId === parentId && item.type !== 'device') // Chỉ lấy thư mục/môn học
-                .sort((a, b) => (a.order || 0) - (b.order || 0));
+    const renderBreadcrumbs = (parentId) => {
+        const path = [];
+        let currentId = parentId;
+        while (currentId) {
+            const item = allItemsCache.find(i => i.id === currentId);
+            if (item) {
+                path.unshift({ id: item.id, name: item.name });
+                currentId = item.parentId;
+            } else {
+                break;
+            }
+        }
 
-            if (children.length === 0) return '';
-
-            let html = '<div class="tree-children">';
-            children.forEach(child => {
-                const hasChildren = allItemsCache.some(item => item.parentId === child.id && item.type !== 'device');
-                const toggleIconClass = hasChildren ? 'fas fa-chevron-down toggle' : 'fas fa-minus';
-                const folderIcon = child.type === 'subject' ? 'fas fa-book' : 'fas fa-folder';
-
-                html += `
-                    <div class="tree-node" data-id="${child.id}">
-                        <i class="fas fa-grip-vertical tree-drag-handle" title="Kéo để sắp xếp"></i>
-                        <i class="tree-node-icon ${toggleIconClass}"></i>
-                        <i class="tree-node-icon ${folderIcon}" title="${child.type}"></i>
-                        <span class="tree-node-name" title="${child.name}">${child.name}</span>
-                    </div>
-                    ${buildTreeHtml(child.id)}
-                `;
-            });
-            html += '</div>';
-            return html;
-        };
-        treeContainer.innerHTML = buildTreeHtml(null);
-    };
-
-    /**
-     * Khởi tạo chức năng kéo-thả cho cây thư mục.
-     */
-    const initTreeSortable = () => {
-        const treeContainers = document.querySelectorAll('#device-tree-container .tree-children');
-        treeContainers.forEach(container => {
-            new Sortable(container, {
-                group: 'nested-tree', // Đặt tên group để chỉ cho phép kéo-thả trong cùng cấp
-                animation: 150,
-                handle: '.tree-drag-handle', // Chỉ định phần tử để kéo
-                ghostClass: 'sortable-ghost', // Class cho "bóng ma" khi kéo
-                chosenClass: 'sortable-chosen', // Class cho mục đang được chọn
-                dragClass: 'sortable-drag', // Class cho mục đang được kéo
-                onEnd: async (evt) => {
-                    const items = evt.to.children;
-                    const batch = writeBatch(firestore);
-
-                    // Lặp qua các mục trong container đã được sắp xếp lại
-                    Array.from(items).forEach((itemNode, index) => {
-                        const itemId = itemNode.dataset.id;
-                        if (itemId) {
-                            const itemRef = doc(firestore, 'devices', itemId);
-                            // Cập nhật lại trường 'order' theo vị trí mới
-                            batch.update(itemRef, { order: index });
-                        }
-                    });
-
-                    try {
-                        await batch.commit();
-                        showToast('Đã cập nhật thứ tự danh mục.', 'success');
-                        await loadAllItems(); // Tải lại toàn bộ dữ liệu để đảm bảo cache và UI đồng bộ
-                    } catch (error) {
-                        console.error("Lỗi khi cập nhật thứ tự:", error);
-                        showToast('Không thể cập nhật thứ tự.', 'error');
-                    }
-                }
-            });
+        let html = '<a href="#" class="breadcrumb-item" data-id="null"><i class="fas fa-home"></i>Trang chủ</a>';
+        path.forEach(item => {
+            html += ` / <a href="#" class="breadcrumb-item" data-id="${item.id}">${item.name}</a>`;
         });
+
+        breadcrumbContainer.innerHTML = html;
     };
 
     const renderList = (parentId) => {
         selectedNodeId = parentId;
         const parentItem = parentId ? allItemsCache.find(item => item.id === parentId) : null;
-        currentFolderTitle.textContent = parentItem ? parentItem.name : 'Tất cả danh mục';
+        renderBreadcrumbs(parentId);
 
-        // Kích hoạt/Vô hiệu hóa các nút thêm mới trong phần nội dung bên phải
-        // - Nút "Thêm Môn học" (gốc) không bị ảnh hưởng bởi lựa chọn này và luôn hoạt động.
-        // - Có thể thêm "Danh mục con" nếu một môn học hoặc danh mục khác được chọn.
-        addCategoryBtn.disabled = !parentItem;
-        // - Có thể thêm "Thiết bị" nếu một danh mục (không phải môn học) được chọn.
-        addDeviceBtn.disabled = !parentItem || parentItem.type === 'subject';
-        // - Nút "Nhập hàng loạt" cũng yêu cầu chọn một danh mục cha.
+        // Nút "Thêm danh mục" luôn hoạt động.
+        addCategoryBtn.disabled = false;
+        // Chỉ cho phép thêm thiết bị hoặc nhập hàng loạt khi đang ở trong một danh mục (không phải ở gốc).
+        addDeviceBtn.disabled = !parentItem;
         bulkImportBtn.disabled = !parentItem;
 
         const children = allItemsCache
             .filter(item => item.parentId === parentId)
-            .sort((a, b) => (a.order || 0) - (b.order || 0));
+            .sort((a, b) => String(a.order || '').localeCompare(String(b.order || ''), undefined, { numeric: true, sensitivity: 'base' }));
 
         const tableHTML = `
             <table class="device-table">
@@ -237,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </tr>
                             `;
                         }).join('') :
-                        `<tr><td colspan="12" class="empty-list-message">Thư mục này trống.</td>
+                        `<tr><td colspan="12" class="empty-list-message">Danh mục này trống.</td>
                          </tr>`
                     }
                 </tbody>
@@ -305,17 +252,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MODAL HANDLING ---
     const buildCategoryTreeForSelect = (selectElement, currentParentId) => {
-        selectElement.innerHTML = ''; // Xóa các option cũ
+        selectElement.innerHTML = '<option value="">-- Chọn danh mục gốc --</option>'; // Thêm option gốc
         const buildOptions = (parentId = null, prefix = '') => {
             const children = allItemsCache
                 .filter(item => item.parentId === parentId && item.type !== 'device')
-                .sort((a, b) => (a.order || 0) - (b.order || 0));
+                .sort((a, b) => String(a.order || '').localeCompare(String(b.order || ''), undefined, { numeric: true, sensitivity: 'base' }));
 
             children.forEach(child => {
                 const option = document.createElement('option');
                 option.value = child.id;
                 option.textContent = `${prefix}${child.name}`;
-                option.selected = child.id === currentParentId;
+                // Không tự động chọn nữa, để người dùng tự chọn
                 selectElement.appendChild(option);
                 buildOptions(child.id, prefix + '— ');
             });
@@ -323,118 +270,169 @@ document.addEventListener('DOMContentLoaded', () => {
         buildOptions(null, '');
     };
     const openItemModal = (type, isEditing = false, data = {}) => {
-        if (!itemModal) {
-            console.error('Lỗi: Không tìm thấy modal với ID "item-modal". Vui lòng kiểm tra HTML.');
-            return;
-        }
-        currentModalType = type;
-        currentEditingId = isEditing ? data.id : null;
-        itemForm.reset();
-
-        // Xóa các class type cũ và thêm class mới để CSS có thể định dạng icon
-        itemModal.classList.remove('modal-type-subject', 'modal-type-category', 'modal-type-device');
-        itemModal.classList.add(`modal-type-${type}`);
-
-        const titles = {
-            subject: isEditing ? 'Sửa Môn học' : 'Thêm Môn học mới',
-            category: isEditing ? 'Sửa Danh mục' : 'Thêm Danh mục mới',
-            device: isEditing ? 'Sửa Thiết bị' : 'Thêm Thiết bị mới',
-        };
-        itemModalTitle.textContent = titles[type];
-        
-        // Sử dụng class 'hidden' thay vì thay đổi style 'display' trực tiếp
-        // để không phá vỡ layout 'display: contents' của grid.
         if (type === 'device') {
-            deviceOnlyFields.classList.remove('hidden');
+            openDeviceModal(isEditing, data);
+        } else if (type === 'category') {
+            openCategoryModal(isEditing, data);
+        }
+    };
+
+    const openCategoryModal = (isEditing = false, data = {}) => {
+        currentEditingId = isEditing ? data.id : null;
+        categoryForm.reset();
+        categoryModalTitle.textContent = isEditing ? 'Sửa Danh mục' : 'Thêm Danh mục';
+
+        const parentSelectGroup = document.getElementById('category-parent-select-group');
+        const parentSelect = document.getElementById('category-parent-select');
+
+        if (isEditing) {
+            document.getElementById('category-name').value = data.name || '';
+            document.getElementById('category-order').value = data.order !== undefined ? data.order : '';
+            buildCategoryTreeForSelect(parentSelect, data.parentId);
+            parentSelect.value = data.parentId || '';
+            parentSelectGroup.style.display = 'block';
         } else {
-            deviceOnlyFields.classList.add('hidden');
+            // Khi thêm mới, vị trí là danh mục hiện tại, nên không cần hiển thị selector
+            parentSelectGroup.style.display = 'none';
         }
 
-        if (isEditing && data) {
-            document.getElementById('item-name').value = data.name || '';
-            document.getElementById('item-order').value = data.order || '';
-            if (type === 'device') {
-                buildCategoryTreeForSelect(document.getElementById('item-parent-select'), data.parentId);
-                document.getElementById('item-topic').value = data.topic || '';
-                document.getElementById('item-purpose').value = data.purpose || '';
-                document.getElementById('item-description').value = data.description || '';
-                document.getElementById('item-usage-gv').checked = data.usageObject?.includes('GV') || false;
-                document.getElementById('item-usage-hs').checked = data.usageObject?.includes('HS') || false;
-                document.getElementById('item-unit').value = data.unit || '';
-                document.getElementById('item-quota').value = data.quota || '';
-                document.getElementById('item-quantity').value = data.quantity || 0;
-                document.getElementById('item-broken').value = data.broken || 0;
-            }
-        } else if (type === 'device') {
-            // Khi thêm mới thiết bị, tự động chọn danh mục cha hiện tại
-            buildCategoryTreeForSelect(document.getElementById('item-parent-select'), selectedNodeId);
+        categoryModal.style.display = 'flex';
+        document.getElementById('category-name').focus();
+    };
+
+    const openDeviceModal = (isEditing = false, data = {}) => {
+        currentEditingId = isEditing ? data.id : null;
+        deviceForm.reset();
+        deviceModalTitle.textContent = isEditing ? 'Sửa Thiết bị' : 'Thêm Thiết bị';
+
+        const parentSelect = document.getElementById('device-parent-select');
+
+        if (isEditing) {
+            document.getElementById('device-name').value = data.name || '';
+            document.getElementById('device-order').value = data.order !== undefined ? data.order : '';
+            buildCategoryTreeForSelect(parentSelect, data.parentId);
+            parentSelect.value = data.parentId || '';
+            document.getElementById('device-topic').value = data.topic || '';
+            document.getElementById('device-purpose').value = data.purpose || '';
+            document.getElementById('device-description').value = data.description || '';
+            document.getElementById('device-usage-gv').checked = data.usageObject?.includes('GV') || false;
+            document.getElementById('device-usage-hs').checked = data.usageObject?.includes('HS') || false;
+            document.getElementById('device-unit').value = data.unit || '';
+            document.getElementById('device-quota').value = data.quota || '';
+            document.getElementById('device-quantity').value = data.quantity || 0;
+            document.getElementById('device-broken').value = data.broken || 0;
+        } else {
+            // Khi thêm mới, tự động chọn danh mục cha là danh mục đang xem
+            buildCategoryTreeForSelect(parentSelect, selectedNodeId);
+            parentSelect.value = selectedNodeId || '';
         }
 
-        itemModal.style.display = 'flex';
-        document.getElementById('item-name').focus();
+        deviceModal.style.display = 'flex';
+        document.getElementById('device-name').focus();
     };
 
     // --- DATA OPERATIONS (CRUD) ---
-    const saveItem = async () => {
-        setButtonLoading(saveItemBtn, true);
-        const name = document.getElementById('item-name').value.trim();
+    const saveCategory = async () => {
+        setButtonLoading(saveCategoryBtn, true);
+        const name = document.getElementById('category-name').value.trim();
         if (!name) {
-            showToast('Vui lòng nhập tên.', 'error');
+            showToast('Vui lòng nhập tên danh mục.', 'error', 3000);
+            setButtonLoading(saveCategoryBtn, false);
             return;
         }
 
-        const orderInput = document.getElementById('item-order').value;
+        let parentId;
+        if (currentEditingId) { // Nếu đang sửa
+            parentId = document.getElementById('category-parent-select').value || null;
+        } else { // Nếu thêm mới
+            parentId = selectedNodeId; // parentId là mục đang xem
+        }
+
         const data = {
             name: name,
-            order: orderInput ? parseInt(orderInput) : 0,
-            type: currentModalType
+            order: document.getElementById('category-order').value.trim(),
+            type: 'category',
+            parentId: parentId
         };
-
-        if (currentModalType === 'device') {
-            const usageObject = [];
-            if (document.getElementById('item-usage-gv').checked) usageObject.push('GV');
-            if (document.getElementById('item-usage-hs').checked) usageObject.push('HS');
-
-            data.parentId = document.getElementById('item-parent-select').value;
-            data.topic = document.getElementById('item-topic').value.trim();
-            data.purpose = document.getElementById('item-purpose').value.trim();
-            data.description = document.getElementById('item-description').value.trim();
-            data.usageObject = usageObject;
-            data.unit = document.getElementById('item-unit').value.trim();
-            data.quota = document.getElementById('item-quota').value.trim();
-            data.quantity = parseInt(document.getElementById('item-quantity').value) || 0;
-            data.broken = parseInt(document.getElementById('item-broken').value) || 0;
-        } else {
-            data.parentId = currentModalType === 'subject' ? null : selectedNodeId;
-        }
 
         try {
             if (currentEditingId) {
                 const itemRef = doc(firestore, 'devices', currentEditingId);
                 await updateDoc(itemRef, data);
-                showToast('Cập nhật thành công!', 'success');
+                showToast('Cập nhật danh mục thành công!', 'success', 3000);
             } else {
                 await addDoc(collection(firestore, 'devices'), data);
-                showToast('Thêm mới thành công!', 'success');
+                showToast('Thêm danh mục mới thành công!', 'success', 3000);
             }
-            itemModal.style.display = 'none';
+            categoryModal.style.display = 'none';
             await loadAllItems();
-            // Cập nhật lại view sau khi tải lại dữ liệu
-            renderList(selectedNodeId);
-            document.querySelector(`.tree-node[data-id="${selectedNodeId}"]`)?.classList.add('active');
-
+            renderList(selectedNodeId); // Luôn render lại danh mục đang xem
         } catch (error) {
-            console.error("Lỗi khi lưu:", error);
-            showToast('Đã có lỗi xảy ra khi lưu.', 'error');
+            console.error("Lỗi khi lưu danh mục:", error);
+            showToast('Đã có lỗi xảy ra khi lưu danh mục.', 'error');
         } finally {
-            setButtonLoading(saveItemBtn, false);
+            setButtonLoading(saveCategoryBtn, false);
         }
+    };
+
+    const saveDevice = async () => {
+        setButtonLoading(saveDeviceBtn, true);
+        const name = document.getElementById('device-name').value.trim();
+        if (!name) {
+            showToast('Vui lòng nhập tên thiết bị.', 'error', 3000);
+            setButtonLoading(saveDeviceBtn, false);
+            return;
+        }
+
+        const usageObject = [];
+        if (document.getElementById('device-usage-gv').checked) usageObject.push('GV');
+        if (document.getElementById('device-usage-hs').checked) usageObject.push('HS');
+
+        const data = {
+            name: name,
+            order: document.getElementById('device-order').value.trim(),
+            type: 'device',
+            parentId: currentEditingId ? document.getElementById('device-parent-select').value : selectedNodeId,
+            topic: document.getElementById('device-topic').value.trim(),
+            purpose: document.getElementById('device-purpose').value.trim(),
+            description: document.getElementById('device-description').value.trim(),
+            usageObject: usageObject,
+            unit: document.getElementById('device-unit').value.trim(),
+            quota: document.getElementById('device-quota').value.trim(),
+            quantity: parseInt(document.getElementById('device-quantity').value) || 0,
+            broken: parseInt(document.getElementById('device-broken').value) || 0,
+        };
+
+        try {
+            if (currentEditingId) {
+                const itemRef = doc(firestore, 'devices', currentEditingId);
+                await updateDoc(itemRef, data);
+                showToast('Cập nhật thiết bị thành công!', 'success', 3000);
+            } else {
+                await addDoc(collection(firestore, 'devices'), data);
+                showToast('Thêm thiết bị mới thành công!', 'success', 3000);
+            }
+            deviceModal.style.display = 'none';
+            await loadAllItems();
+            renderList(selectedNodeId); // Luôn render lại danh mục đang xem
+        } catch (error) {
+            console.error("Lỗi khi lưu thiết bị:", error);
+            showToast('Đã có lỗi xảy ra khi lưu thiết bị.', 'error');
+        } finally {
+            setButtonLoading(saveDeviceBtn, false);
+        }
+    };
+
+    const saveItem = async () => {
+        // This function is now deprecated and replaced by saveCategory/saveDevice
+        // It's kept here to avoid breaking old references if any, but should be removed in the future.
+        console.warn('saveItem is deprecated. Use saveCategory or saveDevice instead.');
     };
 
     const saveInlineDevice = async (row) => {
         const name = row.querySelector('input[name="name"]').value.trim();
         if (!name) {
-            showToast('Vui lòng nhập tên thiết bị.', 'error');
+            showToast('Vui lòng nhập tên thiết bị.', 'error', 3000);
             row.querySelector('input[name="name"]').focus();
             return;
         }
@@ -445,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const data = {
             name: name,
-            order: parseFloat(row.querySelector('input[name="order"]').value.replace(/,/, '.')) || 0,
+            order: row.querySelector('input[name="order"]').value.trim(), // Store order as string
             topic: row.querySelector('input[name="topic"]').value.trim(),
             purpose: row.querySelector('input[name="purpose"]').value.trim(),
             description: row.querySelector('textarea[name="description"]').value.trim(),
@@ -460,11 +458,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             await addDoc(collection(firestore, 'devices'), data);
-            showToast('Thêm thiết bị thành công!', 'success');
+            showToast('Thêm thiết bị thành công!', 'success', 3000);
             // Tải lại toàn bộ dữ liệu và render lại
             await loadAllItems();
             renderList(selectedNodeId);
-            document.querySelector(`.tree-node[data-id="${selectedNodeId}"]`)?.classList.add('active');
         } catch (error) {
             console.error("Lỗi khi lưu thiết bị inline:", error);
             showToast('Đã có lỗi xảy ra khi lưu.', 'error');
@@ -474,12 +471,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const validateAndPreviewBulkImport = async () => {
         if (!selectedNodeId) {
             showToast('Vui lòng chọn một danh mục để nhập thiết bị vào.', 'error');
-            return; // Dừng hàm
+            return;
         }
 
         const text = bulkImportInput.value.trim();
         if (!text) {
-            showToast('Vui lòng dán dữ liệu vào ô nhập.', 'error');
+            showToast('Vui lòng dán dữ liệu vào ô nhập.', 'error', 3000);
             return;
         }
 
@@ -487,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rawLines.length === 0) {
             showToast('Không có dữ liệu hợp lệ để nhập.', 'info');
             return;
-        }
+        } // Log the actual error
 
         const saveBtn = document.getElementById('confirm-bulk-import-btn');
         setButtonLoading(saveBtn, true);
@@ -508,21 +505,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const columns = line.split('\t');
                 if (columns.length < 9) {
-                    errors.push(`Dòng ${i + 1}: Không đủ 9 cột, sẽ bị bỏ qua.`);
+                    errors.push(`Dòng ${i + 1}: Không đủ 9 cột, sẽ bị bỏ qua.`); // Error message for insufficient columns
                     currentRecord = null;
                     continue;
                 }
                 const [orderStr, topic, name, purpose, description, unit, quota, quantityStr, brokenStr] = columns.map(c => c.trim());
                 if (!name) {
-                    errors.push(`Dòng ${i + 1}: Tên thiết bị không được để trống, sẽ bị bỏ qua.`);
+                    errors.push(`Dòng ${i + 1}: Tên thiết bị không được để trống, sẽ bị bỏ qua.`); // Error message for empty device name
                     currentRecord = null;
                     continue;
                 }
                 currentRecord = {
                     parentId: selectedNodeId, type: 'device',
-                    order: parseFloat(orderStr.replace(/,/, '.')) || 0,
+                    order: orderStr, // Store order as a string
                     topic: topic, name: name, purpose: purpose, description: description,
-                    unit: unit, quantity: parseInt(quantityStr) || 0, broken: parseInt(brokenStr) || 0,
+                    unit: unit, quantity: parseInt(quantityStr) || 0, broken: parseInt(brokenStr) || 0, // Quantity and broken remain numbers
                     quota: quota, };
             } else if (currentRecord) {
                 currentRecord.description += '\n' + line;
@@ -536,7 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Hiển thị modal xem trước
         renderPreviewModal(previewRecords, errors);
-    };
+    }; // Log the actual error
 
     const renderPreviewModal = (records, errors) => {
         // Hiển thị lỗi nếu có
@@ -550,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hiển thị bảng xem trước
         if (validRecordsToImport.length > 0) {
             const tableHTML = `
-                <table class="device-table preview"><thead><tr><th>STT</th><th>Tên thiết bị</th><th>Đơn vị</th><th>Định mức</th><th>Tổng số</th><th>Hỏng</th><th>Chủ đề</th></tr></thead>
+                <table class="device-table preview"><thead><tr><th>STT</th><th>Tên thiết bị</th><th>Đơn vị</th><th>Định mức</th><th>Tổng số</th><th>Hỏng</th><th>Chủ đề</th></tr></thead> // Table headers for preview
                     <tbody>
                         ${validRecordsToImport.map(r => `
                             <tr>
@@ -578,7 +575,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const commitBulkImport = async () => {
         if (validRecordsToImport.length === 0) {
-            showToast('Không có dữ liệu hợp lệ để nhập.', 'info');
+            showToast('Không có dữ liệu hợp lệ để nhập.', 'info', 3000);
             return;
         }
 
@@ -591,7 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 batch.set(newDeviceRef, record);
             });
             await batch.commit();
-            showToast(`Nhập thành công ${validRecordsToImport.length} thiết bị!`, 'success');
+            showToast(`Nhập thành công ${validRecordsToImport.length} thiết bị!`, 'success', 3000);
             bulkImportPreviewModal.style.display = 'none';
             await loadAllItems();
             renderList(selectedNodeId);
@@ -622,7 +619,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 await batch.commit();
 
-                showToast('Đã xóa thành công!', 'success');
+                showToast('Đã xóa thành công!', 'success', 3000);
                 await loadAllItems();
                 renderList(selectedNodeId); // Cập nhật lại list sau khi xóa
             } catch (error) {
@@ -646,21 +643,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- EVENT LISTENERS ---
     const setupEventListeners = () => {
         // Mở modal
-        addSubjectBtn.addEventListener('click', () => openItemModal('subject'));
-        addCategoryBtn.addEventListener('click', () => openItemModal('category'));
+        addCategoryBtn.addEventListener('click', () => openCategoryModal(false));
         addDeviceBtn.addEventListener('click', addInlineDeviceRow); // <-- THAY ĐỔI Ở ĐÂY
-        bulkImportBtn.addEventListener('click', () => {
-            if (!selectedNodeId || allItemsCache.find(item => item.id === selectedNodeId)?.type === 'subject') {
-                showToast('Vui lòng chọn một danh mục (không phải môn học) để nhập thiết bị.', 'error');
+        bulkImportBtn.addEventListener('click', () => { // Event listener for bulk import button
+            if (!selectedNodeId) {
+                showToast('Vui lòng chọn một danh mục để nhập thiết bị.', 'error');
                 return;
             }
             bulkImportInput.value = ''; // Xóa dữ liệu cũ
             bulkImportModal.style.display = 'flex';
         });
 
-        // Đóng/Lưu modal
-        cancelItemBtn.addEventListener('click', () => itemModal.style.display = 'none');
-        saveItemBtn.addEventListener('click', saveItem);
+        // Đóng/Lưu modal Danh mục
+        cancelCategoryBtn.addEventListener('click', () => categoryModal.style.display = 'none');
+        saveCategoryBtn.addEventListener('click', saveCategory);
+
+        // Đóng/Lưu modal Thiết bị
+        cancelDeviceBtn.addEventListener('click', () => deviceModal.style.display = 'none');
+        saveDeviceBtn.addEventListener('click', saveDevice);
 
         // Modal xác nhận xóa
         cancelDeleteBtn.addEventListener('click', () => confirmDeleteModal.style.display = 'none');
@@ -697,58 +697,44 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Event delegation cho cây thư mục bên trái
-        treeContainer.addEventListener('click', (e) => {
+        // Event delegation cho breadcrumbs
+        breadcrumbContainer.addEventListener('click', (e) => {
             const target = e.target;
-            const node = target.closest('.tree-node');
-            if (!node) return;
-
-            const nodeId = node.dataset.id;
-
-            // Xử lý thu/mở
-            if (target.classList.contains('toggle')) {
-                node.classList.toggle('collapsed');
-                const childrenContainer = node.nextElementSibling;
-                if (childrenContainer && childrenContainer.classList.contains('tree-children')) {
-                    childrenContainer.classList.toggle('hidden');
-                }
-                return; // Không chọn node khi chỉ thu/mở
-            }
-
-            // Xử lý chọn node
-            document.querySelectorAll('.tree-node.active').forEach(n => n.classList.remove('active'));
-            node.classList.add('active');
+            const breadcrumbItem = target.closest('.breadcrumb-item');
+            if (!breadcrumbItem) return;
+            const nodeId = breadcrumbItem.dataset.id === 'null' ? null : breadcrumbItem.dataset.id;
             renderList(nodeId);
         });
 
         // Event delegation cho bảng bên phải
-        listContainer.addEventListener('click', (e) => {
-            const row = e.target.closest('tr');
-            if (!row) return;
+        listContainer.addEventListener('click', (e) => { // Gộp 2 event listener thành 1
+            const target = e.target;
+            const row = target.closest('tr');
+            if (!row) return; // Click không nằm trong hàng nào, bỏ qua
 
+            // --- Xử lý cho dòng thêm mới inline ---
+            if (row.classList.contains('inline-add-row')) {
+                if (target.closest('.save-inline-btn')) {
+                    saveInlineDevice(row);
+                } else if (target.closest('.cancel-inline-btn')) {
+                    row.remove();
+                }
+                return; // Dừng lại để không xử lý tiếp
+            }
+
+            // --- Xử lý cho các hàng dữ liệu thông thường ---
             const id = row.dataset.id;
             const type = row.dataset.type;
             const itemData = allItemsCache.find(item => item.id === id);
 
-            if (e.target.closest('.edit-item-btn')) {
+            // Ưu tiên xử lý các nút hành động trước
+            if (target.closest('.edit-item-btn')) {
                 openItemModal(type, true, itemData);
-            }
-
-            if (e.target.closest('.delete-item-btn')) {
+            } else if (target.closest('.delete-item-btn')) {
                 handleDelete(id, type);
-            }
-        });
-
-        // Event delegation cho các nút trên dòng inline
-        listContainer.addEventListener('click', (e) => {
-            const addRow = e.target.closest('.inline-add-row');
-            if (addRow) {
-                if (e.target.closest('.save-inline-btn')) {
-                    saveInlineDevice(addRow);
-                } else if (e.target.closest('.cancel-inline-btn')) {
-                    addRow.remove();
-                }
-                return; // Dừng lại để không xử lý tiếp
+            } else if (type === 'category' && target.closest('.col-name')) {
+                // Nếu click vào ô tên của một danh mục (và không phải các nút trên), đi vào trong
+                renderList(id);
             }
         });
     };

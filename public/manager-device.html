@@ -41,24 +41,15 @@
             <main id="main-content" class="main-content">
                 <!-- Nội dung chính của trang device -->
                 <div class="content-card">
-                    <div id="device-explorer-layout" class="device-explorer-layout">
-                        <!-- Cột trái: Cây thư mục -->
-                        <aside id="device-tree-sidebar" class="device-tree-sidebar">
-                            <div class="sidebar-header">
-                                <h4><i class="fas fa-sitemap"></i> Cây danh mục</h4>
-                                <button id="add-subject-btn" class="icon-button" title="Thêm môn học mới"><i class="fas fa-plus"></i></button>
-                            </div>
-                            <div id="device-tree-container" class="tree-container">
-                                <!-- Cây thư mục sẽ được JS render vào đây -->
-                            </div>
-                        </aside>
-
-                        <!-- Cột phải: Nội dung thư mục -->
-                        <div id="device-content-main" class="device-content-main">
+                    <div id="device-explorer-layout" class="device-explorer-layout-flat">
+                        <!-- Nội dung chính: Bảng danh mục -->
+                        <div id="device-content-main" class="device-content-main-full">
                             <div class="page-header">
-                                <h3 id="current-folder-title">Tất cả danh mục</h3>
+                                <div id="breadcrumb-container">
+                                    <!-- Breadcrumbs sẽ được JS render vào đây -->
+                                </div>
                                 <div class="page-actions">
-                                    <button id="add-category-btn" class="btn-secondary"><i class="fas fa-folder-plus"></i> Thêm danh mục</button>
+                                    <button id="add-category-btn" class="btn-secondary"><i class="fas fa-folder-plus"></i> Thêm Danh mục</button>
                                     <button id="add-device-btn" class="btn-secondary"><i class="fas fa-plus-circle"></i> Thêm thiết bị</button>
                                     <button id="bulk-import-btn" class="btn-secondary"><i class="fas fa-file-import"></i> Nhập hàng loạt</button>
                                 </div>
@@ -73,74 +64,75 @@
         </div>
     </div>
 
-    <!-- Modal cho Thêm/Sửa Danh mục & Thiết bị -->
-    <div id="item-modal" class="modal-overlay" style="display: none;">
+    <!-- Modal cho Thêm/Sửa DANH MỤC -->
+    <div id="category-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
-            <h2 id="item-modal-title">Thêm mục mới</h2>
-            <form id="item-form" class="form-grid">
-                <!-- Các trường chung -->
+            <h2 id="category-modal-title">Thêm Danh mục</h2>
+            <form id="category-form" class="form-grid">
                 <div class="form-group form-group-span-2">
-                    <label for="item-name">Tên <span class="required-star">*</span></label>
-                    <input type="text" id="item-name" required>
+                    <label for="category-name">Tên Danh mục <span class="required-star">*</span></label>
+                    <input type="text" id="category-name" required>
                 </div>
-
-                <!-- Các trường chỉ dành cho thiết bị -->
-                <div class="device-only-fields" style="display: contents;">
-                    <div class="form-group">
-                        <label for="item-parent-select">Vị trí (Danh mục cha)</label>
-                        <select id="item-parent-select"></select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="item-order">Thứ tự</label>
-                        <input type="number" id="item-order" placeholder="Để trống để tự động sắp xếp">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="item-topic">Chủ đề dạy học</label>
-                        <input type="text" id="item-topic">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="item-purpose">Mục đích sử dụng</label>
-                        <input type="text" id="item-purpose">
-                    </div>
-
-                    <div class="form-group form-group-span-2">
-                        <label for="item-description">Mô tả chi tiết</label>
-                        <textarea id="item-description" rows="2"></textarea>
-                    </div>
-
-                    <div class="form-group checkbox-group-container">
-                        <label>Đối tượng sử dụng</label>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" id="item-usage-gv"> Giáo viên</label>
-                            <label><input type="checkbox" id="item-usage-hs"> Học sinh</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="item-unit">Đơn vị tính</label>
-                        <input type="text" id="item-unit">
-                    </div>
-                    <div class="form-group">
-                        <label for="item-quota">Định mức</label>
-                        <input type="text" id="item-quota">
-                    </div>
-                    <div class="form-group">
-                        <label for="item-quantity">Tổng số</label>
-                        <input type="number" id="item-quantity" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="item-broken">Hỏng</label>
-                        <input type="number" id="item-broken" value="0">
-                    </div>
+                <div class="form-group">
+                    <label for="category-order">Thứ tự</label>
+                    <input type="text" id="category-order" placeholder="A, B, I, II, 1, 2...">
                 </div>
-
+                <div class="form-group" id="category-parent-select-group">
+                    <label for="category-parent-select">Vị trí (Danh mục cha)</label>
+                    <select id="category-parent-select"></select>
+                </div>
             </form>
             <div class="modal-actions">
-                <button id="cancel-item-modal" class="btn-cancel">Hủy</button>
-                <button id="save-item-btn" class="btn-save">Lưu</button>
+                <button id="cancel-category-modal" class="btn-cancel">Hủy</button>
+                <button id="save-category-btn" class="btn-save">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal cho Thêm/Sửa THIẾT BỊ -->
+    <div id="device-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="device-modal-title">Thêm Thiết bị</h2>
+            <form id="device-form" class="form-grid">
+                <div class="form-group form-group-span-2">
+                    <label for="device-name">Tên Thiết bị <span class="required-star">*</span></label>
+                    <input type="text" id="device-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="device-order">Thứ tự</label>
+                    <input type="text" id="device-order" placeholder="A, B, I, II, 1, 2...">
+                </div>
+                <div class="form-group">
+                    <label for="device-parent-select">Vị trí (Danh mục cha)</label>
+                    <select id="device-parent-select"></select>
+                </div>
+                <div class="form-group">
+                    <label for="device-topic">Chủ đề dạy học</label>
+                    <input type="text" id="device-topic">
+                </div>
+                <div class="form-group">
+                    <label for="device-purpose">Mục đích sử dụng</label>
+                    <input type="text" id="device-purpose">
+                </div>
+                <div class="form-group form-group-span-2">
+                    <label for="device-description">Mô tả chi tiết</label>
+                    <textarea id="device-description" rows="2"></textarea>
+                </div>
+                <div class="form-group checkbox-group-container">
+                    <label>Đối tượng sử dụng</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="device-usage-gv"> Giáo viên</label>
+                        <label><input type="checkbox" id="device-usage-hs"> Học sinh</label>
+                    </div>
+                </div>
+                <div class="form-group"><label for="device-unit">Đơn vị tính</label><input type="text" id="device-unit"></div>
+                <div class="form-group"><label for="device-quota">Định mức</label><input type="text" id="device-quota"></div>
+                <div class="form-group"><label for="device-quantity">Tổng số</label><input type="number" id="device-quantity" value="0"></div>
+                <div class="form-group"><label for="device-broken">Hỏng</label><input type="number" id="device-broken" value="0"></div>
+            </form>
+            <div class="modal-actions">
+                <button id="cancel-device-modal" class="btn-cancel">Hủy</button>
+                <button id="save-device-btn" class="btn-save">Lưu</button>
             </div>
         </div>
     </div>
