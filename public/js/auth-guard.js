@@ -335,15 +335,20 @@ function setupMenuToggle() {
         overlay.addEventListener('click', toggleMenu);
     }
     else {
-        // --- TRƯỜNG HỢP 1: DESKTOP ---        
+        // --- TRƯỜNG HỢP 1: DESKTOP & TABLET (Màn hình rộng) ---
+        // Mở rộng sidebar khi di chuột vào
         sidebar.addEventListener('mouseenter', () => {
             sidebar.classList.add('expanded');
             localStorage.setItem('sidebarExpandedState', 'true'); // Lưu trạng thái
         });
-
-        sidebar.addEventListener('mouseleave', () => {
-            sidebar.classList.remove('expanded');
-            localStorage.setItem('sidebarExpandedState', 'false'); // Lưu trạng thái
+        
+        // NEW: Thu gọn sidebar khi click/touch ra ngoài
+        // Logic này hoạt động tốt cho cả chuột và cảm ứng.
+        document.querySelector('.content-wrapper').addEventListener('click', () => {
+            if (sidebar.classList.contains('expanded')) {
+                sidebar.classList.remove('expanded');
+                localStorage.setItem('sidebarExpandedState', 'false'); // Lưu trạng thái
+            }
         });
     }
 }
