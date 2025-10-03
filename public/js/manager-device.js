@@ -98,16 +98,19 @@ document.addEventListener('DOMContentLoaded', () => {
         while (currentId) {
             const item = allItemsCache.find(i => i.id === currentId);
             if (item) {
-                path.unshift({ id: item.id, name: item.name });
+                // Lấy thêm cả 'order' để hiển thị
+                path.unshift({ id: item.id, name: item.name, order: item.order });
                 currentId = item.parentId;
             } else {
                 break;
             }
         }
 
-        let html = '<a href="#" class="breadcrumb-item" data-id="null"><i class="fas fa-home"></i>Trang chủ</a>';
+        let html = '<a href="#" class="breadcrumb-item" data-id="null"><i class="fas fa-home"></i> Trang chủ</a>';
         path.forEach(item => {
-            html += ` / <a href="#" class="breadcrumb-item" data-id="${item.id}">${item.name}</a>`;
+            // Nếu có STT, hiển thị dạng "STT. Tên". Nếu không, chỉ hiển thị tên.
+            const displayName = (item.order) ? `${item.order}. ${item.name}` : item.name;
+            html += ` / <a href="#" class="breadcrumb-item" data-id="${item.id}">${displayName}</a>`;
         });
 
         breadcrumbContainer.innerHTML = html;
@@ -184,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </tr>
                             `;
                         }).join('') :
-                        `<tr><td colspan="12" class="empty-list-message">Danh mục này trống.</td>
+                        `<tr><td colspan="12" class="empty-list-message">Thư mục này trống.</td>
                          </tr>`
                     }
                 </tbody>
@@ -392,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
             name: name,
             order: document.getElementById('device-order').value.trim(),
             type: 'device',
-            parentId: currentEditingId ? document.getElementById('device-parent-select').value : selectedNodeId,
+            parentId: document.getElementById('device-parent-select').value || selectedNodeId,
             topic: document.getElementById('device-topic').value.trim(),
             purpose: document.getElementById('device-purpose').value.trim(),
             description: document.getElementById('device-description').value.trim(),
