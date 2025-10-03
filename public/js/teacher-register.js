@@ -197,16 +197,18 @@ const initializeTeacherRegisterPage = (user) => {
             allowedSubjects.add(currentUserInfo.subject);
         }
 
-        // 2. Lấy các môn học phụ được phân công cho môn chính
-        if (currentUserInfo?.subject) {
-            const q = query(collection(firestore, 'subjectAssignments'), where('schoolYear', '==', currentSchoolYear), where('primarySubject', '==', currentUserInfo.subject), limit(1));
-            const snapshot = await getDocs(q);
-            if (!snapshot.empty) {
-                snapshot.docs[0].data().secondarySubjects.forEach(sub => allowedSubjects.add(sub));
+        // 2. Lấy tất cả các môn học khác trong cùng tổ chuyên môn
+        if (currentUserInfo?.group_id) {
+            const groupQuery = query(collection(firestore, 'groups'), where('group_id', '==', currentUserInfo.group_id), where('schoolYear', '==', currentSchoolYear), limit(1));
+            const groupSnapshot = await getDocs(groupQuery);
+            if (!groupSnapshot.empty) {
+                const groupData = groupSnapshot.docs[0].data();
+                (groupData.subjects || []).forEach(sub => allowedSubjects.add(sub));
             }
         }
 
-        // 3. Lấy các môn học đặc biệt (dành cho tất cả mọi người)
+        // 3. Lấy các môn học phụ được phân công (nếu có) và các môn đặc biệt
+        // Lấy các môn học phụ được phân công cho môn chính
         const specialSubjectsQuery = query(collection(firestore, 'subjects'), where('schoolYear', '==', currentSchoolYear), where('type', '==', 'special'));
         const specialSubjectsSnapshot = await getDocs(specialSubjectsQuery);
         specialSubjectsSnapshot.forEach(doc => allowedSubjects.add(doc.data().name));
@@ -216,14 +218,6 @@ const initializeTeacherRegisterPage = (user) => {
             const isPrimary = subject === currentUserInfo?.subject;
             subjectSelect.innerHTML += `<option value="${subject}" ${isPrimary ? 'selected' : ''}>${subject}</option>`;
         });
-
-        // 5. Nếu không có môn nào, vẫn hiển thị các môn trong tổ làm phương án dự phòng
-        if (currentUserInfo && currentUserInfo.group_id) {
-            const groupDoc = await getDoc(doc(firestore, 'groups', currentUserInfo.group_id));
-            (groupDoc.data()?.subjects || []).forEach(sub => {
-                 if (!allowedSubjects.has(sub)) subjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
-            });
-        }
 
         // 6. Tải PPDH (logic này không đổi)
         const methodsQuery = query(collection(firestore, 'teachingMethods'), where('schoolYear', '==', currentSchoolYear), orderBy('method'));
