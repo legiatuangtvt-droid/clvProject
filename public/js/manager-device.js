@@ -395,7 +395,9 @@ document.addEventListener('DOMContentLoaded', () => {
             name: name,
             order: document.getElementById('device-order').value.trim(),
             type: 'device',
-            parentId: document.getElementById('device-parent-select').value || selectedNodeId,
+            // Khi sửa, lấy từ select. Khi thêm mới, luôn lấy từ danh mục đang xem.
+            // `|| null` để đảm bảo giá trị là null thay vì chuỗi rỗng "" khi ở thư mục gốc.
+            parentId: currentEditingId ? (document.getElementById('device-parent-select').value || null) : selectedNodeId,
             topic: document.getElementById('device-topic').value.trim(),
             purpose: document.getElementById('device-purpose').value.trim(),
             description: document.getElementById('device-description').value.trim(),
