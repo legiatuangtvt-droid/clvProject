@@ -107,6 +107,29 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSubjectFilter(subjectSelect);
     };
  
+    const updateTypeFilter = () => {
+        const selectedSubjectName = subjectSelect.value;
+        typeSelect.innerHTML = ''; // Xóa các option cũ
+        typeSelect.disabled = true; // Vô hiệu hóa mặc định
+
+        if (!selectedSubjectName) {
+            typeSelect.innerHTML = '<option value="">-- Chọn môn học trước --</option>';
+            return;
+        }
+
+        const selectedSubject = allSubjects.find(s => s.name === selectedSubjectName);
+        const subTypes = selectedSubject?.subTypes;
+
+        if (subTypes && subTypes.length > 0) {
+            typeSelect.disabled = false;
+            typeSelect.innerHTML = '<option value="">Tất cả</option>';
+            subTypes.forEach(type => {
+                typeSelect.innerHTML += `<option value="${type}">${type}</option>`;
+            });
+        } else {
+            typeSelect.innerHTML = '<option value="">Không có</option>';
+        }
+    };
     // --- BULK IMPORT LOGIC ---
     const openBulkImportModal = () => {
         // Kiểm tra xem tất cả các bộ lọc cần thiết đã được chọn chưa
@@ -114,8 +137,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedGrade = gradeSelect.value;
         const selectedType = typeSelect.value;
 
-        if (!selectedSubject || !selectedGrade || !selectedType) {
-            showToast('Vui lòng chọn đầy đủ các bộ lọc: Môn, Khối và Phân môn trước khi nhập hàng loạt.', 'error', 5000);
+        const subjectHasSubTypes = allSubjects.find(s => s.name === selectedSubject)?.subTypes?.length > 0;
+
+        // Nếu môn học có phân môn, thì phân môn phải được chọn. Nếu không có, thì không cần.
+        const isTypeRequiredAndMissing = subjectHasSubTypes && !selectedType;
+
+        if (!selectedSubject || !selectedGrade || isTypeRequiredAndMissing) {
+            const missingField = !selectedSubject ? 'Môn học' : !selectedGrade ? 'Khối' : 'Phân môn';
+            showToast(`Vui lòng chọn ${missingField} trước khi nhập hàng loạt.`, 'error', 5000);
             return;
         }
 
@@ -134,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Lấy thông tin từ các bộ lọc
         const subject = subjectSelect.value;
         const grade = parseInt(gradeSelect.value);
-        const type = typeSelect.value;
+        const type = typeSelect.value || null; // Lưu null nếu không có phân môn
 
         const lessons = [];
 
@@ -167,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
             schoolYear: currentSchoolYear,
             subject,
             grade,
-            type,
+            type: type, // Có thể là null
             lessons
         };
 
@@ -176,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
             where('schoolYear', '==', currentSchoolYear),
             where('subject', '==', subject),
             where('grade', '==', grade),
-            where('type', '==', type),
+            where('type', '==', type), // Vẫn hoạt động đúng với type là null
             limit(1)
         );
 
@@ -233,11 +262,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadSyllabusData = async () => {
         const selectedSubject = subjectSelect.value;
         const selectedGrade = gradeSelect.value;
-        const selectedType = typeSelect.value;
+        const selectedType = typeSelect.disabled ? null : typeSelect.value; // Lấy giá trị hoặc null nếu bị vô hiệu hóa
 
-        // Chỉ tải dữ liệu khi tất cả các bộ lọc đã được chọn
-        if (!selectedSubject || !selectedGrade || !selectedType) {
-            // Nếu có bất kỳ bộ lọc nào chưa được chọn, hiển thị thông báo hướng dẫn
+        const subjectHasSubTypes = allSubjects.find(s => s.name === selectedSubject)?.subTypes?.length > 0;
+        const isTypeRequired = subjectHasSubTypes;
+
+        // Chỉ tải khi Môn và Khối đã được chọn.
+        // Nếu Môn học yêu cầu Phân môn, thì Phân môn cũng phải được chọn (không phải rỗng).
+        if (!selectedSubject || !selectedGrade) {
             syllabusContainer.innerHTML = '<p>Hãy chọn Năm học/Tổ chuyên môn/Môn học/Khối/Phân môn để xem Phân phối chương trình tương ứng.</p>';
             return; // Dừng hàm tại đây
         }
@@ -249,7 +281,12 @@ document.addEventListener('DOMContentLoaded', () => {
             let q = query(collection(firestore, 'syllabuses'), where('schoolYear', '==', currentSchoolYear));
             if (selectedSubject) q = query(q, where('subject', '==', selectedSubject));
             if (selectedGrade) q = query(q, where('grade', '==', parseInt(selectedGrade)));
-            if (selectedType) q = query(q, where('type', '==', selectedType));
+            
+            // Chỉ lọc theo 'type' nếu nó không phải là 'Tất cả' (giá trị rỗng)
+            // và bộ lọc không bị vô hiệu hóa
+            if (selectedType) {
+                q = query(q, where('type', '==', selectedType));
+            }
  
             const snapshot = await getDocs(q);
  
@@ -286,8 +323,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const syllabuses = groupedBySubject[key];
             const firstSyllabus = syllabuses[0];
  
-            const typeText = firstSyllabus.type === 'main' ? 'chính' : 'chuyên đề';
-            const newTitle = `Bảng Phân phối chương trình, Môn ${firstSyllabus.subject}, Phân môn ${typeText}, Khối ${firstSyllabus.grade}, Năm học ${currentSchoolYear}`;
+            // Hiển thị tên phân môn hoặc không hiển thị nếu không có
+            const typeText = firstSyllabus.type ? `, Phân môn ${firstSyllabus.type}` : '';
+
+            const newTitle = `Bảng Phân phối chương trình, Môn ${firstSyllabus.subject}${typeText}, Khối ${firstSyllabus.grade}, Năm học ${currentSchoolYear}`;
 
             html += `<h3 class="syllabus-table-title">${newTitle}</h3>`;
             html += `<table class="syllabus-table">
@@ -304,11 +343,11 @@ document.addEventListener('DOMContentLoaded', () => {
             ).sort((a, b) => a.period - b.period);
  
             allLessons.forEach(lesson => {
-                const typeText = lesson.type === 'specialized' ? ' (Chuyên đề)' : '';
+                const typeText = lesson.type ? ` (${lesson.type})` : '';
                 html += `
                     <tr data-syllabus-id="${lesson.syllabusId}">
                         <td class="col-period">${lesson.period}</td>
-                        <td>${lesson.lessonName}${typeText}</td>
+                        <td>${lesson.lessonName}</td>
                     </tr>
                 `;
             });
@@ -323,6 +362,12 @@ document.addEventListener('DOMContentLoaded', () => {
         schoolYearSelect.addEventListener('change', async (e) => {
             currentSchoolYear = e.target.value;
             await loadFiltersForYear(currentSchoolYear);
+            updateTypeFilter(); // Cập nhật bộ lọc phân môn
+            loadSyllabusData(); // Tải lại dữ liệu
+        });
+
+        subjectSelect.addEventListener('change', () => {
+            updateTypeFilter();
         });
  
         [subjectSelect, gradeSelect, typeSelect].forEach(el => {

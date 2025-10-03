@@ -1443,6 +1443,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('subject-modal-title').textContent = 'Thêm Môn học';
         document.getElementById('subject-name-input').value = '';
         document.getElementById('subject-type-select').value = 'regular';
+        document.getElementById('subject-subtypes-input').value = ''; // Reset trường mới
         openModal(subjectModal);
     });
 
@@ -1575,6 +1576,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const saveBtn = document.getElementById('save-subject-btn');
         const subjectName = document.getElementById('subject-name-input').value.trim();
         const subjectType = document.getElementById('subject-type-select').value;
+        const subTypesString = document.getElementById('subject-subtypes-input').value.trim();
+        // Chuyển chuỗi thành mảng, loại bỏ các phần tử rỗng
+        const subTypes = subTypesString ? subTypesString.split(',').map(s => s.trim()).filter(Boolean) : [];
 
         if (!subjectName) {
             showToast('Vui lòng nhập tên môn học.', 'error');
@@ -1591,7 +1595,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = {
                 name: subjectName,
                 type: subjectType,
-                schoolYear: currentSchoolYear
+                schoolYear: currentSchoolYear,
+                subTypes: subTypes // Lưu mảng các phân môn
             };
 
             if (currentEditingId) { // Cập nhật
@@ -2021,6 +2026,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('subject-modal-title').textContent = 'Sửa Môn học';
                     document.getElementById('subject-name-input').value = data.name;
                     document.getElementById('subject-type-select').value = data.type;
+                    document.getElementById('subject-subtypes-input').value = data.subTypes ? data.subTypes.join(', ') : '';
                     openModal(subjectModal);
                 }
             } catch (error) {
