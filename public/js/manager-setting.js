@@ -1900,7 +1900,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     subjectSelect.value = teacherData.subject || '';
 
-                    if (subjects.length > 1) {
+                    // LUÔN hiển thị bộ chọn môn học khi sửa, để đảm bảo có thể gán môn chính cho GV
+                    if (subjects.length > 0) {
                         teacherSubjectGroup.style.display = 'block';
                     } else {
                         teacherSubjectGroup.style.display = 'none';
