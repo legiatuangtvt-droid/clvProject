@@ -101,6 +101,70 @@ document.addEventListener('DOMContentLoaded', () => {
         breadcrumbContainer.innerHTML = html;
     };
 
+    // --- NEW: Recursive function to render the entire tree ---
+    const renderTreeRows = (parentId, depth) => {
+        const children = allItemsCache
+            .filter(item => item.parentId === parentId)
+            .sort((a, b) => String(a.order || '').localeCompare(String(b.order || ''), undefined, { numeric: true, sensitivity: 'base' }));
+
+        let html = '';
+        const indent = depth * 25; // 25px per level
+
+        children.forEach(item => {
+            if (item.type === 'device') {
+                const usageObject = item.usageObject || [];
+                const usageGV = usageObject.includes('GV');
+                const usageHS = usageObject.includes('HS');
+                html += `
+                    <tr data-id="${item.id}" data-type="device">
+                        <td class="col-stt">${item.order || ''}</td>
+                        <td class="col-topic">${item.topic || ''}</td>
+                        <td class="col-name">
+                            <div class="item-name-cell" style="padding-left: ${indent}px;">
+                                <i class="fas fa-desktop"></i><span>${item.name}</span>
+                            </div>
+                        </td>
+                        <td class="col-purpose">${item.purpose || ''}</td>
+                        <td class="col-description">${item.description || ''}</td>
+                        <td class="col-usage-gv"><input type="checkbox" ${usageGV ? 'checked' : ''} disabled></td>
+                        <td class="col-usage-hs"><input type="checkbox" ${usageHS ? 'checked' : ''} disabled></td>
+                        <td class="col-unit">${item.unit || ''}</td>
+                        <td class="col-quota">${item.quota || ''}</td>
+                        <td class="col-quantity">${item.quantity || 0}</td>
+                        <td class="col-broken">${item.broken || 0}</td>
+                        <td class="col-actions">
+                            <div class="item-actions">
+                                <button class="icon-button edit-item-btn" title="Sửa"><i class="fas fa-pencil-alt"></i></button>
+                                <button class="icon-button delete-item-btn" title="Xóa"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } else { // Category
+                html += `
+                    <tr data-id="${item.id}" data-type="category" class="category-row">
+                        <td class="col-stt">${item.order || ''}</td>
+                        <td colspan="10" class="col-name">
+                            <div class="item-name-cell" style="padding-left: ${indent}px;">
+                                <i class="fas fa-folder"></i>
+                                <span class="item-link" data-id="${item.id}" data-type="category">${item.name}</span>
+                            </div>
+                        </td>
+                        <td class="col-actions">
+                            <div class="item-actions">
+                                <button class="icon-button edit-item-btn" title="Sửa"><i class="fas fa-pencil-alt"></i></button>
+                                <button class="icon-button delete-item-btn" title="Xóa"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                // Recursively render children
+                html += renderTreeRows(item.id, depth + 1);
+            }
+        });
+        return html;
+    };
+
     const renderList = (parentId) => {
         selectedNodeId = parentId;
         const parentItem = parentId ? allItemsCache.find(item => item.id === parentId) : null;
@@ -110,44 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
         addCategoryBtn.disabled = false;
         // Chỉ cho phép thêm thiết bị hoặc nhập hàng loạt khi đang ở trong một danh mục (không phải ở gốc).
         addDeviceBtn.disabled = !parentItem;
-
-        const children = allItemsCache
-            .filter(item => item.parentId === parentId)
-            .sort((a, b) => String(a.order || '').localeCompare(String(b.order || ''), undefined, { numeric: true, sensitivity: 'base' }));
-
-        // --- NEW: Lấy toàn bộ cây thư mục cha và tạo HTML ---
-        const parentHierarchyRows = [];
-        let currentParentId = parentId;
-        let hierarchyDepth = 0;
-        const tempHierarchy = [];
-
-        // 1. Xây dựng cây thư mục ngược từ dưới lên
-        while (currentParentId) {
-            const currentParentItem = allItemsCache.find(item => item.id === currentParentId);
-            if (currentParentItem) {
-                tempHierarchy.unshift(currentParentItem);
-                currentParentId = currentParentItem.parentId;
-            } else { break; }
-        }
-
-        // 2. Tạo HTML với độ thụt lề chính xác
-        tempHierarchy.forEach((item, index) => {
-            const isCurrentLevel = item.id === parentId;
-            const icon = isCurrentLevel ? 'fa-folder-open' : 'fa-folder';
-            const rowClass = isCurrentLevel ? 'parent-category-row' : 'ancestor-category-row';
-            parentHierarchyRows.push(`
-                    <tr data-id="${item.id}" data-type="category" class="category-row ${rowClass}">
-                        <td class="col-stt">${item.order || ''}</td>
-                        <td colspan="10" class="col-name">
-                            <div class="item-name-cell" style="padding-left: ${index * 25}px;">
-                                <i class="fas ${icon}"></i>
-                                <span class="item-link" data-id="${item.id}" data-type="category">${item.name}</span>
-                            </div>
-                        </td>
-                        <td class="col-actions"></td>
-                    </tr>
-                `);
-        });
 
         const tableHTML = `
             <table class="device-table">
@@ -171,61 +197,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tr>
                 </thead>
                 <tbody>
-                    ${parentHierarchyRows.join('')}
-                    ${children.length > 0 ?
-                        children.map(item => {
-                            const isDevice = item.type === 'device';
-                            if (isDevice) {
-                                const usageObject = item.usageObject || [];
-                                const usageGV = usageObject.includes('GV');
-                                const usageHS = usageObject.includes('HS');
-                                return `
-                                    <tr data-id="${item.id}" data-type="device">
-                                        <td class="col-stt">${item.order || ''}</td>
-                                        <td class="col-topic">${item.topic || ''}</td>
-                                        <td class="col-name"><div class="item-name-cell"><i class="fas fa-desktop"></i><span>${item.name}</span></div></td>
-                                        <td class="col-purpose">${item.purpose || ''}</td>
-                                        <td class="col-description">${item.description || ''}</td>
-                                        <td class="col-usage-gv"><input type="checkbox" ${usageGV ? 'checked' : ''} disabled></td>
-                                        <td class="col-usage-hs"><input type="checkbox" ${usageHS ? 'checked' : ''} disabled></td>
-                                        <td class="col-unit">${item.unit || ''}</td>
-                                        <td class="col-quota">${item.quota || ''}</td>
-                                        <td class="col-quantity">${item.quantity || 0}</td>
-                                        <td class="col-broken">${item.broken || 0}</td>
-                                        <td class="col-actions">
-                                            <div class="item-actions">
-                                                <button class="icon-button edit-item-btn" title="Sửa"><i class="fas fa-pencil-alt"></i></button>
-                                                <button class="icon-button delete-item-btn" title="Xóa"><i class="fas fa-trash-alt"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                `;
-                            } else { // Đây là một danh mục (category)
-                                return `
-                                    <tr data-id="${item.id}" data-type="category" class="category-row">
-                                        <td class="col-stt">${item.order || ''}</td>
-                                        <td colspan="10" class="col-name">
-                                            <div class="item-name-cell" style="padding-left: ${tempHierarchy.length * 25}px;">
-                                                <i class="fas fa-folder"></i>
-                                                <span class="item-link" data-id="${item.id}" data-type="category">${item.name}</span>
-                                            </div>
-                                        </td>
-                                    <td class="col-actions">
-                                        <div class="item-actions">
-                                            <button class="icon-button edit-item-btn" title="Sửa"><i class="fas fa-pencil-alt"></i></button>
-                                            <button class="icon-button delete-item-btn" title="Xóa"><i class="fas fa-trash-alt"></i></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `;
-                            }}).join('') :
-                        `<tr><td colspan="12" class="empty-list-message">Thư mục này trống.</td>
-                         </tr>` // Nếu không có parent và cũng không có children, thông báo này sẽ hiển thị
-                    }
+                    ${renderTreeRows(null, 0)}
                 </tbody>
             </table>
         `;
         listContainer.innerHTML = tableHTML;
+        // Đánh dấu hàng đang được chọn (nếu có)
+        if (parentId) {
+            const activeRow = listContainer.querySelector(`tr[data-id="${parentId}"]`);
+            if (activeRow) activeRow.classList.add('parent-category-row');
+        }
     };
 
     const addInlineDeviceRow = () => {
@@ -377,6 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let parentId;
+        let shouldUpdateSelectedNode = false;
         if (currentEditingId) { // Nếu đang sửa
             parentId = document.getElementById('category-parent-select').value || null;
         } else { // Nếu thêm mới
@@ -399,9 +381,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 await addDoc(collection(firestore, 'devices'), data);
                 showToast('Thêm danh mục mới thành công!', 'success', 3000);
             }
+            // Cập nhật lại selectedNodeId để giữ nguyên vị trí sau khi lưu
+            selectedNodeId = parentId;
             categoryModal.style.display = 'none';
             await loadAllItems();
-            renderList(selectedNodeId); // Luôn render lại danh mục đang xem
+            renderList(parentId); // Render lại đúng danh mục cha
         } catch (error) {
             console.error("Lỗi khi lưu danh mục:", error);
             showToast('Đã có lỗi xảy ra khi lưu danh mục.', 'error');
@@ -427,9 +411,9 @@ document.addEventListener('DOMContentLoaded', () => {
             name: name,
             order: document.getElementById('device-order').value.trim(),
             type: 'device',
-            // Khi sửa, lấy từ select. Khi thêm mới, luôn lấy từ danh mục đang xem.
-            // `|| null` để đảm bảo giá trị là null thay vì chuỗi rỗng "" khi ở thư mục gốc.
-            parentId: currentEditingId ? (document.getElementById('device-parent-select').value || null) : selectedNodeId,
+            // Khi sửa, lấy từ select. Khi thêm mới, lấy từ select (vì có thể người dùng đổi danh mục cha).
+            // `|| null` để đảm bảo giá trị là null thay vì chuỗi rỗng "" khi ở thư mục gốc
+            parentId: document.getElementById('device-parent-select').value || null,
             topic: document.getElementById('device-topic').value.trim(),
             purpose: document.getElementById('device-purpose').value.trim(),
             description: document.getElementById('device-description').value.trim(),
@@ -449,9 +433,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 await addDoc(collection(firestore, 'devices'), data);
                 showToast('Thêm thiết bị mới thành công!', 'success', 3000);
             }
+            // Cập nhật lại selectedNodeId để giữ nguyên vị trí sau khi lưu
+            selectedNodeId = data.parentId;
             deviceModal.style.display = 'none';
             await loadAllItems();
-            renderList(selectedNodeId); // Luôn render lại danh mục đang xem
+            renderList(data.parentId); // Render lại đúng danh mục cha
         } catch (error) {
             console.error("Lỗi khi lưu thiết bị:", error);
             showToast('Đã có lỗi xảy ra khi lưu thiết bị.', 'error');
