@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentEditingId = null;
     let currentModalType = 'category'; // 'subject', 'category', 'device'
     let deleteFunction = null;
+    let expandedCategories = new Set(); // Theo dõi các danh mục đang mở
 
     // --- INITIALIZATION ---
     const initializePage = async () => {
@@ -110,13 +111,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = '';
         const indent = depth * 25; // 25px per level
 
+        const isParentExpanded = parentId === null || expandedCategories.has(parentId);
+
         children.forEach(item => {
             if (item.type === 'device') {
                 const usageObject = item.usageObject || [];
                 const usageGV = usageObject.includes('GV');
                 const usageHS = usageObject.includes('HS');
                 html += `
-                    <tr data-id="${item.id}" data-type="device">
+                    <tr data-id="${item.id}" data-type="device" data-parent-id="${parentId || 'root'}" class="${isParentExpanded ? '' : 'hidden'}">
                         <td class="col-stt">${item.order || ''}</td>
                         <td class="col-topic">${item.topic || ''}</td>
                         <td class="col-name">
@@ -141,12 +144,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tr>
                 `;
             } else { // Category
+                const isExpanded = expandedCategories.has(item.id);
+                const iconClass = isExpanded ? 'fa-folder-open' : 'fa-folder';
                 html += `
-                    <tr data-id="${item.id}" data-type="category" class="category-row">
+                    <tr data-id="${item.id}" data-type="category" data-parent-id="${parentId || 'root'}" class="category-row ${isParentExpanded ? '' : 'hidden'}">
                         <td class="col-stt">${item.order || ''}</td>
                         <td colspan="10" class="col-name">
                             <div class="item-name-cell" style="padding-left: ${indent}px;">
-                                <i class="fas fa-folder"></i>
+                                <i class="fas ${iconClass}"></i>
                                 <span class="item-link" data-id="${item.id}" data-type="category">${item.name}</span>
                             </div>
                         </td>
@@ -588,7 +593,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 handleDelete(id, type);
             } else if (type === 'category' && target.closest('.col-name')) {
                 // Nếu click vào ô tên của một danh mục (và không phải các nút trên), đi vào trong
-                renderList(id);
+                // THAY ĐỔI: Thay vì render lại toàn bộ, chỉ thu/phóng
+                const icon = row.querySelector('.col-name .fas');
+                if (expandedCategories.has(id)) {
+                    expandedCategories.delete(id);
+                    if (icon) icon.className = 'fas fa-folder';
+                } else {
+                    expandedCategories.add(id);
+                    if (icon) icon.className = 'fas fa-folder-open';
+                }
+                // Ẩn/hiện tất cả các mục con
+                document.querySelectorAll(`tr[data-parent-id="${id}"]`).forEach(childRow => childRow.classList.toggle('hidden'));
             }
         });
     };

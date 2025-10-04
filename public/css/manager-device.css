@@ -230,6 +230,11 @@
     overflow: hidden; /* Ẩn phần bị tràn */
     text-overflow: ellipsis; /* Hiển thị dấu "..." */
 }
+.device-table tr.hidden {
+    display: none;
+}
+
+
 .device-table .col-usage-gv,
 .device-table .col-usage-hs {
     width: 5%;
@@ -248,11 +253,6 @@
     gap: 8px;
 }
 
-/* Thêm con trỏ hình bàn tay khi di chuột qua tên danh mục */
-.device-table tr[data-type="category"] .item-name-cell {
-    cursor: pointer;
-    color: var(--primary-color); /* Làm nổi bật tên danh mục */
-}
 /* --- NEW: Category Row Specific Styles --- */
 .device-table .category-row {
     background-color: #f8f9fa; /* Màu nền giống header để nổi bật */
@@ -264,7 +264,7 @@
 }
 
 .device-table .category-row .item-name-cell .item-link {
-    cursor: pointer;
+    cursor: pointer; /* Thêm con trỏ để báo hiệu có thể click */
     color: var(--primary-color);
     text-decoration: none;
     transition: text-decoration 0.2s;
