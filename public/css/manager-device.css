@@ -194,10 +194,7 @@
     font-size: 0.8rem; /* Giảm kích thước chữ tiêu đề */
     letter-spacing: 0.5px; /* Tăng khoảng cách giữa các chữ */
     vertical-align: middle; /* Căn giữa theo chiều dọc */
-}
-
-.device-table thead .col-usage-object {
-    text-align: center;
+    text-align: center; /* Căn giữa nội dung tiêu đề cột */
 }
 
 /* Bo tròn góc cho ô đầu và cuối của header */
