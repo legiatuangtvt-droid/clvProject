@@ -495,23 +495,3 @@
 .inline-edit-row textarea {
     background-color: #fff; /* Đảm bảo nền trắng để dễ đọc */
 }
-
-/* --- NEW: Bulk Import Modal Textarea --- */
-.bulk-import-input {
-    width: 100%;
-    padding: 10px 15px;
-    font-size: 0.9rem;
-    border: 1px solid var(--border-color-strong);
-    border-radius: 8px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    color: var(--text-dark);
-    box-sizing: border-box; /* Đảm bảo padding không làm ảnh hưởng đến width */
-    resize: vertical; /* Cho phép người dùng thay đổi chiều cao */
-    font-family: 'Courier New', Courier, monospace; /* Font chữ đơn cách để dễ nhìn các cột tab */
-}
-
-.bulk-import-input:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
-    outline: none;
-}

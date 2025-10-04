@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const addSubjectBtn = document.getElementById('add-subject-btn');
     const addCategoryBtn = document.getElementById('add-category-btn');
     const addDeviceBtn = document.getElementById('add-device-btn');
-    const bulkImportBtn = document.getElementById('bulk-import-btn');
 
     // Category Modal Elements
     const categoryModal = document.getElementById('category-modal');
@@ -44,26 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
 
-    // Bulk Import Modal Elements
-    const bulkImportModal = document.getElementById('bulk-import-modal');
-    const bulkImportInput = document.getElementById('bulk-import-input');
-    const saveBulkImportBtn = document.getElementById('save-bulk-import-btn');
-    const cancelBulkImportBtn = document.getElementById('cancel-bulk-import-modal');
-
-    // Bulk Import Preview Modal Elements
-    const bulkImportPreviewModal = document.getElementById('bulk-import-preview-modal');
-    const backToBulkInputBtn = document.getElementById('back-to-bulk-input-btn');
-    const confirmBulkImportBtn = document.getElementById('confirm-bulk-import-btn');
-    const errorSection = document.getElementById('bulk-import-error-section');
-    const previewContainer = document.getElementById('bulk-import-preview-container');
-
     // --- STATE ---
     let allItemsCache = [];
     let selectedNodeId = null;
     let currentEditingId = null;
     let currentModalType = 'category'; // 'subject', 'category', 'device'
     let deleteFunction = null;
-    let validRecordsToImport = []; // Lưu các bản ghi hợp lệ để chờ xác nhận
 
     // --- INITIALIZATION ---
     const initializePage = async () => {
@@ -125,7 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
         addCategoryBtn.disabled = false;
         // Chỉ cho phép thêm thiết bị hoặc nhập hàng loạt khi đang ở trong một danh mục (không phải ở gốc).
         addDeviceBtn.disabled = !parentItem;
-        bulkImportBtn.disabled = !parentItem;
 
         const children = allItemsCache
             .filter(item => item.parentId === parentId)
@@ -134,30 +118,36 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- NEW: Lấy toàn bộ cây thư mục cha và tạo HTML ---
         const parentHierarchyRows = [];
         let currentParentId = parentId;
+        let hierarchyDepth = 0;
+        const tempHierarchy = [];
+
+        // 1. Xây dựng cây thư mục ngược từ dưới lên
         while (currentParentId) {
             const currentParentItem = allItemsCache.find(item => item.id === currentParentId);
             if (currentParentItem) {
-                const isCurrentLevel = currentParentItem.id === parentId;
-                const icon = isCurrentLevel ? 'fa-folder-open' : 'fa-folder';
-                const rowClass = isCurrentLevel ? 'parent-category-row' : 'ancestor-category-row';
+                tempHierarchy.unshift(currentParentItem);
+                currentParentId = currentParentItem.parentId;
+            } else { break; }
+        }
 
-                // Tính toán độ sâu thụt lề. parentHierarchyRows.length là số cấp cha đã được xử lý.
-                const indentLevel = parentHierarchyRows.length;
-                parentHierarchyRows.unshift(`
-                    <tr data-id="${currentParentItem.id}" data-type="category" class="category-row ${rowClass}">
-                        <td class="col-stt">${currentParentItem.order || ''}</td>
+        // 2. Tạo HTML với độ thụt lề chính xác
+        tempHierarchy.forEach((item, index) => {
+            const isCurrentLevel = item.id === parentId;
+            const icon = isCurrentLevel ? 'fa-folder-open' : 'fa-folder';
+            const rowClass = isCurrentLevel ? 'parent-category-row' : 'ancestor-category-row';
+            parentHierarchyRows.push(`
+                    <tr data-id="${item.id}" data-type="category" class="category-row ${rowClass}">
+                        <td class="col-stt">${item.order || ''}</td>
                         <td colspan="10" class="col-name">
-                            <div class="item-name-cell" style="padding-left: ${indentLevel * 25}px;">
+                            <div class="item-name-cell" style="padding-left: ${index * 25}px;">
                                 <i class="fas ${icon}"></i>
-                                <span class="item-link">${currentParentItem.name}</span>
+                                <span class="item-link" data-id="${item.id}" data-type="category">${item.name}</span>
                             </div>
                         </td>
                         <td class="col-actions"></td>
                     </tr>
                 `);
-                currentParentId = currentParentItem.parentId;
-            } else { break; }
-        }
+        });
 
         const tableHTML = `
             <table class="device-table">
@@ -212,13 +202,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 `;
                             } else { // Đây là một danh mục (category)
                                 return `
-                                    <tr data-id="${item.id}" data-type="category" class="category-row child-category-row">
+                                    <tr data-id="${item.id}" data-type="category" class="category-row">
                                         <td class="col-stt">${item.order || ''}</td>
                                         <td colspan="10" class="col-name">
-                                            <div class="item-name-cell" style="padding-left: ${parentHierarchyRows.length * 25}px;">
-                                            <div class="item-name-cell">
+                                            <div class="item-name-cell" style="padding-left: ${tempHierarchy.length * 25}px;">
                                                 <i class="fas fa-folder"></i>
-                                                <span class="item-link">${item.name}</span>
+                                                <span class="item-link" data-id="${item.id}" data-type="category">${item.name}</span>
                                             </div>
                                         </td>
                                     <td class="col-actions">
@@ -279,8 +268,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </td>
         `;
 
-        // Chèn vào đầu bảng
-        table.prepend(newRow);
+        // Chèn vào cuối bảng
+        table.appendChild(newRow);
 
         // Focus vào ô nhập tên
         newRow.querySelector('input[name="name"]').focus();
@@ -516,142 +505,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const validateAndPreviewBulkImport = async () => {
-        if (!selectedNodeId) {
-            showToast('Vui lòng chọn một danh mục để nhập thiết bị vào.', 'error');
-            return;
-        }
-
-        const text = bulkImportInput.value.trim();
-        if (!text) {
-            showToast('Vui lòng dán dữ liệu vào ô nhập.', 'error', 3000);
-            return;
-        }
-
-        const rawLines = text.split('\n');
-        if (rawLines.length === 0) {
-            showToast('Không có dữ liệu hợp lệ để nhập.', 'info');
-            return;
-        } // Log the actual error
-
-        const saveBtn = document.getElementById('confirm-bulk-import-btn');
-        setButtonLoading(saveBtn, true);
-        validRecordsToImport = []; // Reset mảng
-        const previewRecords = [];
-        const errors = [];
-        let currentRecord = null;
-
-        // Hàm để đẩy record hiện tại vào danh sách kết quả
-        const pushCurrentRecord = () => {
-            if (currentRecord) validRecordsToImport.push(currentRecord);
-        };
-        for (let i = 0; i < rawLines.length; i++) {
-            const line = rawLines[i];
-            const isNewRecord = /^\d+(\.\d+)?[\.\)]?\s*\t/.test(line);
-
-            if (isNewRecord) {
-                if (currentRecord) {
-                    previewRecords.push({ ...currentRecord, isValid: true });
-                }
-
-                const columns = line.split('\t');
-                if (columns.length < 9) {
-                    errors.push(`Dòng ${i + 1}: Không đủ 9 cột, sẽ bị bỏ qua.`); // Error message for insufficient columns
-                    currentRecord = null;
-                    continue;
-                }
-                const [orderStr, topic, name, purpose, description, unit, quota, quantityStr, brokenStr] = columns.map(c => c.trim());
-                if (!name) {
-                    errors.push(`Dòng ${i + 1}: Tên thiết bị không được để trống, sẽ bị bỏ qua.`); // Error message for empty device name
-                    currentRecord = null;
-                    continue;
-                }
-                currentRecord = {
-                    parentId: selectedNodeId, type: 'device',
-                    order: orderStr, // Store order as a string
-                    topic: topic, name: name, purpose: purpose, description: description,
-                    unit: unit, quantity: parseInt(quantityStr) || 0, broken: parseInt(brokenStr) || 0, // Quantity and broken remain numbers
-                    quota: quota, };
-            } else if (currentRecord) {
-                currentRecord.description += '\n' + line;
-            } else if (line.trim() !== '') {
-                // Ghi nhận lỗi nếu có dòng văn bản không thuộc record nào (ví dụ: dòng trống ở đầu file)
-                errors.push(`Dòng ${i + 1}: Dữ liệu không hợp lệ hoặc không thuộc thiết bị nào, sẽ bị bỏ qua.`);
-            }
-        }
-
-        if (currentRecord) previewRecords.push({ ...currentRecord, isValid: true });
-
-        // Hiển thị modal xem trước
-        renderPreviewModal(previewRecords, errors);
-    }; // Log the actual error
-
-    const renderPreviewModal = (records, errors) => {
-        // Hiển thị lỗi nếu có
-        if (errors.length > 0) {
-            errorSection.innerHTML = `<h4><i class="fas fa-exclamation-triangle"></i> Cảnh báo:</h4><ul>${errors.map(e => `<li>${e}</li>`).join('')}</ul>`;
-            errorSection.style.display = 'block';
-        } else {
-            errorSection.style.display = 'none';
-        }
-
-        // Hiển thị bảng xem trước
-        if (validRecordsToImport.length > 0) {
-            const tableHTML = `
-                <table class="device-table preview"><thead><tr><th>STT</th><th>Tên thiết bị</th><th>Đơn vị</th><th>Định mức</th><th>Tổng số</th><th>Hỏng</th><th>Chủ đề</th></tr></thead> // Table headers for preview
-                    <tbody>
-                        ${validRecordsToImport.map(r => `
-                            <tr>
-                                <td>${r.order}</td>
-                                <td>${r.name}</td>
-                                <td>${r.unit}</td>
-                                <td>${r.quantity}</td>
-                                <td>${r.quota}</td>
-                                <td>${r.broken}</td>
-                                <td>${r.topic}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>`;
-            previewContainer.innerHTML = tableHTML;
-            confirmBulkImportBtn.style.display = 'inline-block';
-        } else {
-            previewContainer.innerHTML = '<p>Không có dữ liệu hợp lệ nào để nhập.</p>';
-            confirmBulkImportBtn.style.display = 'none';
-        }
-
-        bulkImportModal.style.display = 'none';
-        bulkImportPreviewModal.style.display = 'flex';
-    };
-
-    const commitBulkImport = async () => {
-        if (validRecordsToImport.length === 0) {
-            showToast('Không có dữ liệu hợp lệ để nhập.', 'info', 3000);
-            return;
-        }
-
-        setButtonLoading(confirmBulkImportBtn, true);
-
-        try {
-            const batch = writeBatch(firestore);
-            validRecordsToImport.forEach(record => {
-                const newDeviceRef = doc(collection(firestore, 'devices'));
-                batch.set(newDeviceRef, record);
-            });
-            await batch.commit();
-            showToast(`Nhập thành công ${validRecordsToImport.length} thiết bị!`, 'success', 3000);
-            bulkImportPreviewModal.style.display = 'none';
-            await loadAllItems();
-            renderList(selectedNodeId);
-        } catch (error) {
-            console.error("Lỗi khi xác nhận nhập hàng loạt:", error);
-            showToast('Đã có lỗi xảy ra khi lưu dữ liệu.', 'error');
-        } finally {
-            setButtonLoading(confirmBulkImportBtn, false);
-        }
-    };
-
-
     const handleDelete = (id, type) => {
         // Hàm này chỉ chuẩn bị cho việc xóa, việc xóa thực sự nằm trong `deleteFunction`
         document.getElementById('confirm-delete-message').textContent = "Bạn có chắc chắn muốn xóa mục này? Nếu đây là danh mục cha, tất cả các mục con cũng sẽ bị xóa.";
@@ -696,14 +549,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Mở modal
         addCategoryBtn.addEventListener('click', () => openCategoryModal(false));
         addDeviceBtn.addEventListener('click', addInlineDeviceRow); // <-- THAY ĐỔI Ở ĐÂY
-        bulkImportBtn.addEventListener('click', () => { // Event listener for bulk import button
-            if (!selectedNodeId) {
-                showToast('Vui lòng chọn một danh mục để nhập thiết bị.', 'error');
-                return;
-            }
-            bulkImportInput.value = ''; // Xóa dữ liệu cũ
-            bulkImportModal.style.display = 'flex';
-        });
 
         // Đóng/Lưu modal Danh mục
         cancelCategoryBtn.addEventListener('click', () => categoryModal.style.display = 'none');
@@ -718,34 +563,6 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmDeleteBtn.addEventListener('click', () => {
             if (typeof deleteFunction === 'function') deleteFunction();
             confirmDeleteModal.style.display = 'none';
-        });
-
-        // Modal nhập hàng loạt
-        cancelBulkImportBtn.addEventListener('click', () => bulkImportModal.style.display = 'none');
-        saveBulkImportBtn.addEventListener('click', validateAndPreviewBulkImport);
-
-        // Modal xem trước nhập hàng loạt
-        backToBulkInputBtn.addEventListener('click', () => {
-            bulkImportPreviewModal.style.display = 'none';
-            bulkImportModal.style.display = 'flex';
-        });
-        confirmBulkImportBtn.addEventListener('click', commitBulkImport);
-
-        // Cho phép nhấn phím Tab trong textarea nhập hàng loạt
-        bulkImportInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Tab') {
-                e.preventDefault(); // Ngăn không cho chuyển focus
-
-                // Lấy vị trí con trỏ
-                const start = e.target.selectionStart;
-                const end = e.target.selectionEnd;
-
-                // Chèn ký tự Tab vào vị trí con trỏ
-                e.target.value = e.target.value.substring(0, start) + '\t' + e.target.value.substring(end);
-
-                // Di chuyển con trỏ đến sau ký tự Tab vừa chèn
-                e.target.selectionStart = e.target.selectionEnd = start + 1;
-            }
         });
 
         // Event delegation cho breadcrumbs
