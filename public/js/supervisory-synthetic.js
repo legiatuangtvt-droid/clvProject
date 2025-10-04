@@ -40,16 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let allRegistrations = [];
     let selectedWeekNumber = null;
 
-    const getSubjectsFromGroupName = (groupName) => {
-        if (!groupName) return [];
-        const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
-        // Tạm thời thay thế "Giáo dục thể chất - QP" để không bị split sai
-        const placeholder = 'TDQP_PLACEHOLDER';
-        return cleanedName.replace('Giáo dục thể chất - QP', placeholder)
-                          .split(/\s*-\s*/)
-                          .map(s => s.trim().replace(placeholder, 'Giáo dục thể chất - QP'));
-    };
-
     // --- INITIALIZATION ---
     const initializePage = async () => {
         try {
@@ -139,8 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const groupsSnapshot = await getDocs(groupsQuery);
         allSubjects.clear();
         groupsSnapshot.forEach(doc => {
-            const groupName = doc.data().group_name;
-            getSubjectsFromGroupName(groupName).forEach(sub => allSubjects.add(sub.trim()));
+            (doc.data().subjects || []).forEach(sub => allSubjects.add(sub.trim()));
         });
 
         allGroups.forEach(group => {
@@ -170,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             const selectedGroup = allGroups.find(g => g.group_id === selectedGroupId);
             if (selectedGroup) {
-                getSubjectsFromGroupName(selectedGroup.group_name).forEach(sub => availableSubjects.add(sub.trim()));
+                (selectedGroup.subjects || []).forEach(sub => availableSubjects.add(sub.trim()));
             }
         }
         [...availableSubjects].sort().forEach(subject => {

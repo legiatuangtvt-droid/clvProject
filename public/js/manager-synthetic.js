@@ -1444,13 +1444,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const handlePracticeCheckboxChange = async (isChecked) => {
         const equipmentInput = document.getElementById('reg-equipment-input');
+        const subject = document.getElementById('reg-subject').value;
         let equipmentList = equipmentInput.value.trim() ? equipmentInput.value.split(',').map(item => item.trim()) : [];
     
         // Luôn xóa các mục liên quan đến thực hành cũ trước khi thêm mới
         equipmentList = equipmentList.filter(item => !item.startsWith('Thực hành tại') && item !== 'Thực hành trên lớp');
     
         if (isChecked) {
-            const subject = document.getElementById('reg-subject').value;
+            // Bỏ qua việc thêm "Thực hành..." cho môn GDTC vì đây là môn đặc thù
+            if (subject === 'Giáo dục thể chất') {
+                equipmentInput.value = equipmentList.join(', ');
+                return;
+            }
+
             const date = document.getElementById('reg-day').value;
             const period = parseInt(document.getElementById('reg-period').value);
     

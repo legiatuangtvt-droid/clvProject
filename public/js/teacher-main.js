@@ -35,15 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentRegistrations = []; // Lưu các đăng ký của tuần hiện tại
     let classTimings = null; // State để lưu thời gian tiết học
 
-    const getSubjectsFromGroupName = (groupName) => {
-        const cleanedName = groupName.replace(/^Tổ\s*/, '').trim();
-        // Tạm thời thay thế "Giáo dục thể chất - QP" để không bị split sai
-        const placeholder = 'TDQP_PLACEHOLDER';
-        return cleanedName.replace('Giáo dục thể chất - QP', placeholder)
-                          .split(/\s*-\s*/)
-                          .map(s => s.trim().replace(placeholder, 'Giáo dục thể chất - QP'));
-    };
-
     const loadDashboardData = async () => {
         try {
             // 1. Lấy năm học mới nhất
@@ -112,11 +103,11 @@ document.addEventListener('DOMContentLoaded', () => {
             where('schoolYear', '==', currentSchoolYear),
             where('type', '==', 'regular') // Chỉ lấy các môn thông thường
         );
-        const subjectsSnapshot = await getDocs(subjectsQuery);
-        const subjectsFromGroupName = getSubjectsFromGroupName(groupSnapshot.docs[0].data().group_name);
+        const subjectsSnapshot = await getDocs(subjectsQuery);        
+        const subjectsInGroup = groupSnapshot.docs[0].data().subjects || [];
         subjectsSnapshot.forEach(doc => {
             const subject = doc.data();
-            if (subjectsFromGroupName.includes(subject.name)) {
+            if (subjectsInGroup.includes(subject.name)) {
                 allSubjectsInGroup.add(subject.name);
             }
         });

@@ -257,12 +257,12 @@ document.addEventListener('DOMContentLoaded', () => {
             where('schoolYear', '==', currentSchoolYear)
         );
         const subjectsSnapshot = await getDocs(subjectsQuery);
-        const group = groupMap.get(currentTeacherInfo.group_id);
-        const subjectsFromGroupName = group ? getSubjectsFromGroupName(group.group_name) : [];
+        const group = groupMap.get(currentTeacherInfo.group_id); // Lấy thông tin tổ từ map đã tải
+        const subjectsInGroup = group ? (group.subjects || []) : []; // Lấy danh sách môn học của tổ
 
         subjectsSnapshot.forEach(doc => {
             const subject = doc.data();
-            if (subject.type === 'special' || subjectsFromGroupName.includes(subject.name)) {
+            if (subject.type === 'special' || subjectsInGroup.includes(subject.name)) {
                 subjectFilter.innerHTML += `<option value="${subject.name}">${subject.name}</option>`;
             }
         });
