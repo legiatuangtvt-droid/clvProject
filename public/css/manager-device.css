@@ -253,6 +253,50 @@
     cursor: pointer;
     color: var(--primary-color); /* Làm nổi bật tên danh mục */
 }
+/* --- NEW: Category Row Specific Styles --- */
+.device-table .category-row {
+    background-color: #f8f9fa; /* Màu nền giống header để nổi bật */
+    font-weight: 600; /* Chữ đậm */
+}
+
+.device-table .category-row:hover {
+    background-color: #e9ecef; /* Màu nền đậm hơn khi hover */
+}
+
+.device-table .category-row .item-name-cell .item-link {
+    cursor: pointer;
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: text-decoration 0.2s;
+}
+
+.device-table .category-row:hover .item-name-cell .item-link {
+    text-decoration: underline;
+}
+
+.device-table .category-row .item-name-cell {
+    font-size: 1rem; /* Tăng kích thước chữ một chút */
+}
+
+/* --- NEW: Parent Category Row Style --- */
+.device-table .parent-category-row {
+    background-color: #e9ecef; /* Màu nền đậm hơn một chút so với các danh mục con */
+    border-bottom: 2px solid var(--primary-color-light); /* Đường viền dưới để tách biệt với danh sách con */
+}
+.device-table .parent-category-row .item-name-cell {
+    color: var(--primary-color-dark); /* Màu chữ đậm hơn */
+}
+
+/* --- NEW: Ancestor Category Row Style --- */
+.device-table .ancestor-category-row {
+    background-color: #fdfdfe; /* Màu nền sáng hơn cả category-row */
+    opacity: 0.8; /* Làm mờ đi một chút */
+}
+
+.device-table .ancestor-category-row:hover {
+    opacity: 1;
+    background-color: #f1f5f9;
+}
 
 /* --- Nút hành động trong bảng --- */
 .item-actions {
@@ -450,4 +494,24 @@
 .inline-edit-row input[type="number"],
 .inline-edit-row textarea {
     background-color: #fff; /* Đảm bảo nền trắng để dễ đọc */
+}
+
+/* --- NEW: Bulk Import Modal Textarea --- */
+.bulk-import-input {
+    width: 100%;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color-strong);
+    border-radius: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    color: var(--text-dark);
+    box-sizing: border-box; /* Đảm bảo padding không làm ảnh hưởng đến width */
+    resize: vertical; /* Cho phép người dùng thay đổi chiều cao */
+    font-family: 'Courier New', Courier, monospace; /* Font chữ đơn cách để dễ nhìn các cột tab */
+}
+
+.bulk-import-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
+    outline: none;
 }
