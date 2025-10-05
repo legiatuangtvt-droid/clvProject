@@ -928,9 +928,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 4. Logic thu/phóng cây thư mục (giữ nguyên)
                 const icon = row.querySelector('.col-name .fas');
                 if (expandedCategories.has(id)) {
-                    // Nếu đang mở, chỉ cần đóng nó lại
+                    // Nếu đang mở, đóng nó lại
                     expandedCategories.delete(id);
                     if (icon) icon.className = 'fas fa-folder';
+                    // Yêu cầu mới: gán danh mục cha là danh mục hiện tại
+                    const parentIdToRender = itemData.parentId || null; // Nếu không có parentId, quay về gốc (null)
+                    renderList(parentIdToRender);
+                    return; // Dừng hàm ở đây để không chạy renderList(id) ở cuối
                 } else { // Mở rộng
                     // Logic mới: Đóng tất cả các danh mục đồng cấp trước khi mở danh mục hiện tại.
                     const itemToExpand = allItemsCache.find(item => item.id === id);
