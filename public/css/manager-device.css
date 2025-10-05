@@ -502,3 +502,31 @@
 .inline-edit-row textarea {
     background-color: #fff; /* Đảm bảo nền trắng để dễ đọc */
 }
+
+/* --- NEW: Add Item Row Styles --- */
+.add-item-row td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.btn-add-in-list {
+    width: 100%;
+    padding: 8px 15px;
+    font-weight: 600;
+    color: var(--primary-color);
+    background-color: var(--primary-light);
+    border: 1px dashed var(--primary-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-add-in-list:hover {
+    background-color: var(--primary-color);
+    color: var(--text-on-primary);
+}

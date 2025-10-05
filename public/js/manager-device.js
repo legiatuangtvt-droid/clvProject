@@ -181,6 +181,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+
+        // --- NEW: Thêm nút "Thêm thiết bị" vào cuối danh sách con của danh mục đang được chọn ---
+        // Chỉ hiển thị nút này khi đang xem một danh mục cụ thể (selectedNodeId không phải là null)
+        // và parentId của lần render đệ quy này khớp với danh mục đang được chọn.
+        if (parentId === selectedNodeId && parentId !== null) {
+            // Kiểm tra xem có dòng inline nào đang hoạt động không. Nếu có, không hiển thị nút.
+            const isAddingInline = document.querySelector('.inline-add-row');
+            if (!isAddingInline) {
+                html += `
+                    <tr class="add-item-row" data-parent-id="${parentId}">
+                        <td colspan="12"><button class="btn-add-in-list"><i class="fas fa-plus"></i> Thêm thiết bị mới</button></td>
+                    </tr>`;
+            }
+        }
         return html;
     };
 
@@ -647,6 +661,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     row.remove();
                 }
                 return; // Dừng lại để không xử lý tiếp
+            }
+            // --- Xử lý cho nút "Thêm thiết bị mới" trong danh sách ---
+            if (target.closest('.btn-add-in-list')) {
+                addInlineDeviceRow();
+                target.closest('.add-item-row').remove(); // Ẩn nút sau khi click
+                return;
             }
 
             // --- Xử lý cho các hàng dữ liệu thông thường ---
