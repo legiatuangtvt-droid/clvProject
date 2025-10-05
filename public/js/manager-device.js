@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentEditingId = null;
     let currentModalType = 'category'; // 'subject', 'category', 'device'
     let deleteFunction = null;
+    let activeTopLevelCategoryId = null; // NEW: Track the top-level category being viewed
     let expandedCategories = new Set(); // Theo dõi các danh mục đang mở
 
     // --- INITIALIZATION ---
@@ -104,14 +105,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- NEW: Recursive function to render the entire tree ---
     const renderTreeRows = (parentId, depth) => {
-        const children = allItemsCache
+        let children = allItemsCache
             .filter(item => item.parentId === parentId)
             .sort((a, b) => String(a.order || '').localeCompare(String(b.order || ''), undefined, { numeric: true, sensitivity: 'base' }));
 
+        // Tách danh mục đang được chọn (selectedNodeId) ra và đẩy xuống cuối
+        // SỬA LỖI: Sử dụng activeTopLevelCategoryId thay vì selectedNodeId
+        if (activeTopLevelCategoryId && depth === 0) {
+            const selectedItemInfo = allItemsCache.find(item => item.id === activeTopLevelCategoryId);
+            if (selectedItemInfo && selectedItemInfo.parentId === null) { // Double-check it's a top-level item
+                const selectedItemIndex = children.findIndex(item => item.id === activeTopLevelCategoryId);
+                if (selectedItemIndex > -1) {
+                    const [selectedItem] = children.splice(selectedItemIndex, 1);
+                    children.push(selectedItem);
+                }
+            }
+        }
+
         let html = '';
         const indent = depth * 25; // 25px per level
-
-        const isParentExpanded = parentId === null || expandedCategories.has(parentId);
 
         children.forEach(item => {
             if (item.type === 'device') {
@@ -119,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const usageGV = usageObject.includes('GV');
                 const usageHS = usageObject.includes('HS');
                 html += `
-                    <tr data-id="${item.id}" data-type="device" data-parent-id="${parentId || 'root'}" class="${isParentExpanded ? '' : 'hidden'}">
+                    <tr data-id="${item.id}" data-type="device" data-parent-id="${parentId || 'root'}" style="padding-left: ${indent}px;">
                         <td class="col-stt">${item.order || ''}</td>
                         <td class="col-topic">${item.topic || ''}</td>
                         <td class="col-name">
@@ -147,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isExpanded = expandedCategories.has(item.id);
                 const iconClass = isExpanded ? 'fa-folder-open' : 'fa-folder';
                 html += `
-                    <tr data-id="${item.id}" data-type="category" data-parent-id="${parentId || 'root'}" class="category-row ${isParentExpanded ? '' : 'hidden'}">
+                    <tr data-id="${item.id}" data-type="category" data-parent-id="${parentId || 'root'}" class="category-row">
                         <td class="col-stt">${item.order || ''}</td>
                         <td colspan="10" class="col-name">
                             <div class="item-name-cell" style="padding-left: ${indent}px;">
@@ -163,8 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         </td>
                     </tr>
                 `;
-                // Recursively render children
-                html += renderTreeRows(item.id, depth + 1);
+                // Đệ quy để render các mục con nếu danh mục này đang được mở rộng
+                if (isExpanded) {
+                    html += renderTreeRows(item.id, depth + 1);
+                }
             }
         });
         return html;
@@ -173,6 +187,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderList = (parentId) => {
         selectedNodeId = parentId;
         const parentItem = parentId ? allItemsCache.find(item => item.id === parentId) : null;
+
+        // --- NEW: Logic to determine and set the active top-level category ---
+        if (parentId === null) {
+            activeTopLevelCategoryId = null;
+        } else {
+            let current = parentItem;
+            let topLevelParent = current;
+            // Traverse up the tree until we find the root parent
+            while (current && current.parentId !== null) {
+                const parent = allItemsCache.find(item => item.id === current.parentId);
+                if (parent) topLevelParent = parent;
+                current = parent;
+            }
+            activeTopLevelCategoryId = topLevelParent ? topLevelParent.id : null;
+        }
+
         renderBreadcrumbs(parentId);
 
         // Nút "Thêm danh mục" luôn hoạt động.
@@ -621,25 +651,30 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (type === 'category' && target.closest('.col-name')) {
                 // --- SỬA LỖI: Cập nhật lại trạng thái khi chọn một danh mục ---
                 // 1. Cập nhật ID của danh mục đang được chọn
-                selectedNodeId = id;
-
-                // 2. Kích hoạt nút "Thêm thiết bị" vì chúng ta đang ở trong một danh mục
-                addDeviceBtn.disabled = false;
-
-                // 3. Cập nhật breadcrumbs để phản ánh đúng vị trí hiện tại
-                renderBreadcrumbs(id);
+                // selectedNodeId = id; // Đã được gán ở đầu hàm renderList
 
                 // 4. Logic thu/phóng cây thư mục (giữ nguyên)
                 const icon = row.querySelector('.col-name .fas');
                 if (expandedCategories.has(id)) {
+                    // Nếu đang mở, chỉ cần đóng nó lại
                     expandedCategories.delete(id);
-                    toggleSubtreeVisibility(id, true); // Ẩn toàn bộ cây con
                     if (icon) icon.className = 'fas fa-folder';
                 } else { // Mở rộng
+                    // Nếu là danh mục cấp gốc (không có parentId), đóng tất cả các mục khác trước khi mở mục này
+                    const itemToExpand = allItemsCache.find(item => item.id === id);
+                    if (itemToExpand && itemToExpand.parentId === null) {
+                        // Lấy danh sách tất cả các mục cấp gốc
+                        const topLevelCategoryIds = allItemsCache
+                            .filter(item => item.parentId === null && item.type === 'category')
+                            .map(item => item.id);
+                        // Xóa tất cả các mục cấp gốc khỏi danh sách đang mở rộng
+                        topLevelCategoryIds.forEach(catId => expandedCategories.delete(catId));
+                    }
+                    // Thêm mục hiện tại vào danh sách mở rộng
                     expandedCategories.add(id);
-                    toggleSubtreeVisibility(id, false); // Hiện các con trực tiếp
                     if (icon) icon.className = 'fas fa-folder-open';
                 }
+                renderList(id); // Vẽ lại toàn bộ cây với trạng thái mới
             }
         });
     };
