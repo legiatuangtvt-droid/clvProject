@@ -329,8 +329,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cancelAllInlineActions = () => {
         document.querySelector('.inline-add-row')?.remove();
-        // Sau khi hủy, render lại list để nút "Thêm thiết bị mới" có thể hiện lại nếu cần
-        // Điều này chỉ cần thiết khi hủy từ một hành động khác (ví dụ: click vào danh mục khác)
+        // Sau khi hủy, render lại list để hàng chứa nút "Thêm thiết bị mới" và "Nhập hàng loạt" có thể hiện lại.
+        // Điều này đảm bảo giao diện nhất quán sau khi hủy bỏ hành động.
         renderList(selectedNodeId);
         const editingRow = document.querySelector('.inline-edit-row');
         if (editingRow && editingRow.dataset.originalHtml) {
@@ -698,49 +698,57 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Tách các dòng dựa trên ký tự xuống dòng. Cách này an toàn hơn regex
-        // vì nó không bị ảnh hưởng bởi nội dung có ký tự xuống dòng bên trong một ô.
-        const lines = input.split(/\r\n|\r|\n/);
+        // Tách toàn bộ văn bản thành các bản ghi dựa trên dấu hiệu bắt đầu là một số (Số TT)
+        // Ví dụ: "1. ", "1.1 ", "1\t". Regex này đảm bảo các dòng xuống dòng trong cột Mô tả không bị tách.
+        const recordsRaw = input.split(/(?:\r\n|\r|\n)(?=\d+(\.\d+)?[\s\t])/);
 
         validRegistrationsToCreate = []; // Reset
         const previewData = [];
         const errors = [];
 
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
+        for (let i = 0; i < recordsRaw.length; i++) {
+            const recordText = recordsRaw[i].trim();
+            if (!recordText) continue;
 
-            // Tách các cột trong một dòng bằng ký tự Tab
-            const parts = line.split('\t').map(p => p.trim());
+            // Tách chuỗi thành 2 phần dựa trên cột 'x' (Dùng cho GV) làm điểm neo.
+            // Regex: tìm 'x' được bao quanh bởi các khoảng trắng (tab, enter, space)
+            const separatorRegex = /\s+x\s+/i;
+            const separatorIndex = recordText.search(separatorRegex);
 
-            // Cần ít nhất 3 cột: STT, Chủ đề, Tên thiết bị
-            if (parts.length < 3) {
-                errors.push(`Dòng ${i + 1}: Không đủ thông tin. Cần ít nhất 3 cột đầu tiên (Số TT, Chủ đề, Tên thiết bị).`);
-                previewData.push({ data: parts, status: 'has-error', originalText: line });
+            if (separatorIndex === -1) {
+                errors.push(`Dòng ${i + 1}: Định dạng không hợp lệ. Không tìm thấy cột "Dùng cho GV" (có giá trị 'x').`);
+                previewData.push({ data: [recordText], status: 'has-error', originalText: recordText });
                 continue;
             }
 
-            // Gán giá trị từ các cột đã tách bằng phương pháp Destructuring Assignment
-            const [
-                stt = '',
-                topic = '',
-                name = '',
-                purpose = '',
-                description = '',
-                usageGV = '',
-                usageHS = '',
-                unit = '',
-                quota = '',
-                quantityStr = '0',
-                brokenStr = '0'
-            ] = parts;
+            // Phần 1: Từ đầu đến trước cột 'x'
+            const beforeX = recordText.substring(0, separatorIndex);
+            // Phần 2: Từ sau cột 'x' đến hết
+            const afterX = recordText.substring(separatorIndex + separatorRegex.exec(recordText)[0].length);
 
-            // Tên thiết bị là trường bắt buộc
+            // Tách các cột ở phần 1 (trước 'x')
+            const beforeParts = beforeX.split('\t');
+            const stt = beforeParts[0]?.trim() || '';
+            const topic = beforeParts[1]?.trim() || '';
+            const name = beforeParts[2]?.trim() || '';
+            const purpose = beforeParts[3]?.trim() || '';
+            // Cột mô tả là phần còn lại của beforeParts, nối lại bằng ký tự xuống dòng
+            const description = beforeParts.slice(4).join('\n').trim();
+
             if (!name) {
                 errors.push(`Dòng ${i + 1}: Tên thiết bị không được để trống.`);
-                previewData.push({ data: parts, status: 'has-error', originalText: line });
+                previewData.push({ data: [recordText], status: 'has-error', originalText: recordText });
                 continue;
             }
+
+            // Tách các cột ở phần 2 (sau 'x')
+            const afterParts = afterX.split('\t').map(p => p.trim());
+            const usageGV = 'x'; // Cột GV là điểm neo
+            const usageHS = afterParts[0] || '';
+            const unit = afterParts[1] || '';
+            const quota = afterParts[2] || '';
+            const quantityStr = afterParts[3] || '0';
+            const brokenStr = afterParts[4] || '0';
 
             const usageObject = [];
             if (usageGV.toLowerCase() === 'x') usageObject.push('GV');
@@ -749,13 +757,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const quantity = parseInt(quantityStr) || 0;
             const broken = parseInt(brokenStr) || 0;
 
+            // Tạo đối tượng dữ liệu để lưu
             const newDeviceData = {
                 order: stt,
                 topic: topic,
                 name: name,
                 purpose: purpose,
                 description: description,
-                usageObject: usageObject,
+                usageObject: usageObject, // Lưu dạng mảng ['GV', 'HS']
                 unit: unit,
                 quota: quota,
                 quantity: quantity,
@@ -766,7 +775,9 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             validRegistrationsToCreate.push(newDeviceData);
-            previewData.push({ data: parts, status: 'is-valid', originalText: line });
+            // Dữ liệu để hiển thị trong bảng xem trước
+            const previewRow = [stt, topic, name, purpose, description, usageGV, usageHS, unit, quota, quantityStr, brokenStr];
+            previewData.push({ data: previewRow, status: 'is-valid', originalText: recordText });
         }
 
         // Render preview
@@ -843,6 +854,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bulk import modals
         cancelBulkImportBtn?.addEventListener('click', () => {
             document.getElementById('bulk-data-input').removeEventListener('keydown', handleTextareaTab); // Gỡ sự kiện
+            // Render lại danh sách để hiển thị lại các nút hành động
+            renderList(selectedNodeId);
             bulkImportModal.style.display = 'none';
         });
         processBulkImportBtn?.addEventListener('click', () => {
@@ -852,7 +865,8 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelBulkImportPreviewBtn?.addEventListener('click', () => {
             bulkImportPreviewModal.style.display = 'none';
             // Mở lại modal nhập liệu để người dùng có thể sửa
-            bulkImportModal.style.display = 'flex';
+            // Thay vì mở lại modal, ta render lại list để người dùng có thể chọn lại hành động
+            renderList(selectedNodeId);
         });
         confirmBulkImportBtn?.addEventListener('click', commitBulkImport);
 
