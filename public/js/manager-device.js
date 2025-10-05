@@ -321,6 +321,12 @@ document.addEventListener('DOMContentLoaded', () => {
         newRow.querySelector('input[name="name"]').focus();
     };
 
+    // Hàm ẩn hàng chứa các nút hành động (Thêm mới, Nhập hàng loạt)
+    const hideActionButtonsRow = () => {
+        const actionRow = document.querySelector('.add-item-row');
+        if (actionRow) actionRow.remove();
+    };
+
     const cancelAllInlineActions = () => {
         document.querySelector('.inline-add-row')?.remove();
         // Sau khi hủy, render lại list để nút "Thêm thiết bị mới" có thể hiện lại nếu cần
@@ -894,13 +900,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- Xử lý cho nút "Thêm thiết bị mới" trong danh sách ---
             if (target.closest('.add-single-device-btn')) {
                 addInlineDeviceRow();
-                target.closest('.add-item-row').remove(); // Ẩn nút sau khi click
+                hideActionButtonsRow(); // Ẩn hàng chứa nút sau khi click
                 return;
             }
             // --- Xử lý cho nút "Nhập hàng loạt" trong danh sách ---
             if (target.closest('.bulk-import-in-list-btn')) {
                 openBulkImportModal();
-                target.closest('.add-item-row')?.remove(); // Ẩn nút sau khi click
+                hideActionButtonsRow(); // Ẩn hàng chứa nút sau khi click
                 return;
             }
 
