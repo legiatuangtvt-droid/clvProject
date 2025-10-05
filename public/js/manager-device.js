@@ -846,6 +846,28 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelCategoryBtn?.addEventListener('click', () => categoryModal.style.display = 'none');
         saveCategoryBtn?.addEventListener('click', saveCategory);
 
+        // Thêm sự kiện Enter để lưu cho modal Danh mục
+        categoryForm?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Ngăn hành vi mặc định của form
+                saveCategoryBtn.click();
+            }
+        });
+
+        // Thêm sự kiện Enter để lưu cho modal Thiết bị
+        deviceForm?.addEventListener('keydown', (e) => {
+            // Chỉ thực hiện khi phím Enter được nhấn và không phải trong textarea
+            if (e.key === 'Enter' && e.target.tagName.toLowerCase() !== 'textarea') {
+                e.preventDefault();
+                saveDeviceBtn.click();
+            }
+        });
+
+        // Thêm sự kiện Enter để xác nhận xóa
+        confirmDeleteModal?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') confirmDeleteBtn.click();
+        });
+
         // Đóng/Lưu modal Thiết bị
         cancelDeviceBtn?.addEventListener('click', () => deviceModal.style.display = 'none');
         saveDeviceBtn?.addEventListener('click', saveDevice);
@@ -864,6 +886,13 @@ document.addEventListener('DOMContentLoaded', () => {
             renderList(selectedNodeId);
             bulkImportModal.style.display = 'none';
         });
+        // Thêm sự kiện Enter để xử lý cho modal Nhập hàng loạt
+        bulkImportModal?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.tagName.toLowerCase() !== 'textarea') {
+                e.preventDefault();
+                processBulkImportBtn.click();
+            }
+        });
         processBulkImportBtn?.addEventListener('click', () => {
             document.getElementById('bulk-data-input').removeEventListener('keydown', handleTextareaTab); // Gỡ sự kiện
             processAndPreviewBulkData();
@@ -874,6 +903,11 @@ document.addEventListener('DOMContentLoaded', () => {
             bulkImportModal.style.display = 'flex';
             document.getElementById('bulk-data-input').addEventListener('keydown', handleTextareaTab); // Gắn lại sự kiện cho textarea
         });
+        // Thêm sự kiện Enter để xác nhận nhập
+        bulkImportPreviewModal?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') confirmBulkImportBtn.click();
+        });
+
         confirmBulkImportBtn?.addEventListener('click', commitBulkImport);
 
         // Event delegation cho breadcrumbs
