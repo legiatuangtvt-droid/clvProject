@@ -692,30 +692,43 @@ document.addEventListener('DOMContentLoaded', () => {
             const separatorRegex = /\s+x\s+/i;
             const separatorIndex = recordText.search(separatorRegex);
 
-            if (separatorIndex === -1) {
-                errors.push(`Dòng ${i + 1}: Định dạng không hợp lệ. Không tìm thấy cột "Dùng cho GV" (có giá trị 'x').`);
+            if (separatorIndex === -1) { // SỬA LỖI: Dùng continue để bỏ qua dòng lỗi và xử lý dòng tiếp theo, thay vì return để thoát hàm.
+                errors.push(`Dòng ${i + 1}: Định dạng không hợp lệ. Không tìm thấy cột "Dùng cho GV" (có giá trị 'x').`); 
                 previewData.push({ data: [recordText], status: 'has-error', originalText: recordText });
-                continue; // SỬA LỖI: Dùng continue để bỏ qua dòng lỗi và xử lý dòng tiếp theo, thay vì return để thoát hàm.
+                continue;
             }
 
             // Phần 1: Từ đầu đến trước cột 'x'
             const beforeX = recordText.substring(0, separatorIndex);
             // Phần 2: Từ sau cột 'x' đến hết
             const afterX = recordText.substring(separatorIndex + separatorRegex.exec(recordText)[0].length);
+            
+            // Logic mới (V6): Tách riêng 4 cột đầu và phần mô tả để xử lý chính xác hơn
+            const beforePartsRaw = beforeX.split(/[\t\r\n]+/);
+            const firstFourParts = beforePartsRaw.slice(0, 4).filter(p => p.trim() !== '');
+            const descriptionPart = beforePartsRaw.slice(4).join(' ').trim();
 
-            // Tách các cột ở phần 1 (Số TT, Chủ đề, Tên, Mục đích, Mô tả)
-            const beforeParts = beforeX.split(/[\t\r\n]+/);
-            if (beforeParts.length < 3) { // Cần ít nhất Số TT, Chủ đề, Tên
-                errors.push(`Dòng ${i + 1}: Thiếu thông tin trước cột "Tên thiết bị".`);
+            if (firstFourParts.length < 2) { // Cần ít nhất Số TT và Tên thiết bị
+                errors.push(`Dòng ${i + 1}: Thiếu thông tin tối thiểu (cần có Số TT và Tên thiết bị).`);
                 previewData.push({ data: [recordText], status: 'has-error', originalText: recordText });
                 continue;
             }
-            const stt = beforeParts[0] || '';
-            const topic = beforeParts[1] || '';
-            const name = beforeParts[2] || '';
-            const purpose = beforeParts[3] || '';
-            // Mọi thứ còn lại trong phần 1 là Mô tả
-            const description = beforeParts.slice(4).join(' ').trim();
+
+            const stt = firstFourParts[0] || '';
+            let topic = '', name = '', purpose = '';
+            const description = descriptionPart; // Gán mô tả đã được tách riêng
+
+            // Xử lý linh hoạt 3 cột: Chủ đề, Tên, Mục đích
+            const mainInfoParts = firstFourParts.slice(1); // Bỏ qua cột STT
+            if (mainInfoParts.length === 1) {
+                // Nếu chỉ có 1 giá trị, ưu tiên gán cho Tên thiết bị
+                name = mainInfoParts[0];
+            } else {
+                // Nếu có nhiều hơn 1 giá trị, gán theo thứ tự thông thường
+                topic = mainInfoParts[0] || '';
+                name = mainInfoParts[1] || '';
+                purpose = mainInfoParts[2] || ''; // Cột thứ 4 (index 3) sẽ là mục đích
+            }
 
             // Tách các cột ở phần 2 (HS, ĐVT, ĐM, Tổng, Hỏng)
             // SỬA LỖI: Lọc bỏ các phần tử rỗng do các tab thừa tạo ra
