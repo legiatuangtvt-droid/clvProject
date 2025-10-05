@@ -144,24 +144,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 const usageHS = usageObject.includes('HS');
                 html += `
                     <tr data-id="${item.id}" data-type="device" data-parent-id="${parentId || 'root'}" style="padding-left: ${indent}px;">
-                        <td class="col-stt">${item.order || ''}</td>
-                        <td class="col-topic">${item.topic || ''}</td>
-                        <td class="col-name">
+                        <td class="col-stt" data-field="device-order">${item.order || ''}</td>
+                        <td class="col-topic" data-field="device-topic">${item.topic || ''}</td>
+                        <td class="col-name" data-field="device-name">
                             <div class="item-name-cell">
                                 <i class="fas fa-desktop"></i><span>${item.name}</span>
                             </div>
                         </td>
-                        <td class="col-purpose">${item.purpose || ''}</td>
-                        <td class="col-description">${item.description || ''}</td>
-                        <td class="col-usage-gv"><input type="checkbox" ${usageGV ? 'checked' : ''} disabled></td>
-                        <td class="col-usage-hs"><input type="checkbox" ${usageHS ? 'checked' : ''} disabled></td>
-                        <td class="col-unit">${item.unit || ''}</td>
-                        <td class="col-quota">${item.quota || ''}</td>
-                        <td class="col-quantity">${item.quantity || 0}</td>
-                        <td class="col-broken">${item.broken || 0}</td>
+                        <td class="col-purpose" data-field="device-purpose">${item.purpose || ''}</td>
+                        <td class="col-description" data-field="device-description">${item.description || ''}</td>
+                        <td class="col-usage-gv" data-field="device-usage-gv"><input type="checkbox" ${usageGV ? 'checked' : ''} disabled></td>
+                        <td class="col-usage-hs" data-field="device-usage-hs"><input type="checkbox" ${usageHS ? 'checked' : ''} disabled></td>
+                        <td class="col-unit" data-field="device-unit">${item.unit || ''}</td>
+                        <td class="col-quota" data-field="device-quota">${item.quota || ''}</td>
+                        <td class="col-quantity" data-field="device-quantity">${item.quantity || 0}</td>
+                        <td class="col-broken" data-field="device-broken">${item.broken || 0}</td>
                         <td class="col-actions">
                             <div class="item-actions">
-                                <button class="icon-button edit-item-btn" title="Sửa"><i class="fas fa-pencil-alt"></i></button>
+                                <!-- Nút sửa đã được thay bằng sự kiện click trực tiếp vào ô -->
                                 <button class="icon-button delete-item-btn" title="Xóa"><i class="fas fa-trash-alt"></i></button>
                             </div>
                         </td>
@@ -172,11 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const iconClass = isExpanded ? 'fa-folder-open' : 'fa-folder';
                 html += `
                     <tr data-id="${item.id}" data-type="category" data-parent-id="${parentId || 'root'}" class="category-row">
-                        <td class="col-stt">${item.order || ''}</td>
+                        <td class="col-stt" data-field="category-order">${item.order || ''}</td>
                         <td colspan="10" class="col-name">
                             <div class="item-name-cell" style="padding-left: ${indent}px;">
-                                <i class="fas ${iconClass}"></i>
-                                <span class="item-link" data-id="${item.id}" data-type="category">${item.name}</span>
+                                <i class="fas ${iconClass} category-toggle-icon"></i>
+                                <span class="item-link" data-field="category-name">${item.name}</span>
                             </div>
                         </td>
                         <td class="col-actions">
@@ -360,15 +360,15 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         buildOptions(null, '');
     };
-    const openItemModal = (type, isEditing = false, data = {}) => {
+    const openItemModal = (type, isEditing = false, data = {}, focusFieldId = null) => {
         if (type === 'device') {
-            openDeviceModal(isEditing, data);
+            openDeviceModal(isEditing, data, focusFieldId);
         } else if (type === 'category') {
-            openCategoryModal(isEditing, data);
+            openCategoryModal(isEditing, data, focusFieldId);
         }
     };
 
-    const openCategoryModal = (isEditing = false, data = {}) => {
+    const openCategoryModal = (isEditing = false, data = {}, focusFieldId = null) => {
         currentEditingId = isEditing ? data.id : null;
         categoryForm.reset();
         categoryModalTitle.textContent = isEditing ? 'Sửa Danh mục' : 'Thêm Danh mục';
@@ -388,10 +388,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         categoryModal.style.display = 'flex';
-        document.getElementById('category-name').focus();
+        // Focus vào trường được chỉ định hoặc trường tên mặc định
+        const fieldToFocus = focusFieldId ? document.getElementById(focusFieldId) : document.getElementById('category-name');
+        if (fieldToFocus) {
+            setTimeout(() => fieldToFocus.focus(), 100); // Delay nhỏ để đảm bảo modal hiển thị
+        }
     };
 
-    const openDeviceModal = (isEditing = false, data = {}) => {
+    const openDeviceModal = (isEditing = false, data = {}, focusFieldId = null) => {
         currentEditingId = isEditing ? data.id : null;
         deviceForm.reset();
         deviceModalTitle.textContent = isEditing ? 'Sửa Thiết bị' : 'Thêm Thiết bị';
@@ -419,7 +423,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         deviceModal.style.display = 'flex';
-        document.getElementById('device-name').focus();
+        // Focus vào trường được chỉ định hoặc trường tên mặc định
+        const fieldToFocus = focusFieldId ? document.getElementById(focusFieldId) : document.getElementById('device-name');
+        if (fieldToFocus) {
+            setTimeout(() => fieldToFocus.focus(), 100); // Delay nhỏ để đảm bảo modal hiển thị
+        }
     };
 
     // --- DATA OPERATIONS (CRUD) ---
@@ -919,11 +927,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const itemData = allItemsCache.find(item => item.id === id);
 
             // Ưu tiên xử lý các nút hành động trước
-            if (target.closest('.edit-item-btn')) {
-                openItemModal(type, true, itemData);
-            } else if (target.closest('.delete-item-btn')) {
+            if (target.closest('.delete-item-btn')) {
                 handleDelete(id, type);
-            } else if (type === 'category' && target.closest('.col-name')) {
+            } 
+            // Xử lý click vào ô có thể sửa
+            else if (target.closest('td[data-field]')) {
+                const clickedCell = target.closest('td[data-field]');
+                const focusFieldId = clickedCell.dataset.field;
+                openItemModal(type, true, itemData, focusFieldId);
+            }
+            // Xử lý click vào tên danh mục để mở rộng/thu gọn
+            else if (type === 'category' && target.closest('.col-name')) {
                 // --- SỬA LỖI: Cập nhật lại trạng thái khi chọn một danh mục ---
                 // 1. Cập nhật ID của danh mục đang được chọn
                 // selectedNodeId = id; // Đã được gán ở đầu hàm renderList
