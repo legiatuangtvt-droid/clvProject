@@ -687,6 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         document.getElementById('bulk-import-parent-name').textContent = getCategoryPathString(selectedNodeId);
         document.getElementById('bulk-data-input').value = '';
+        document.getElementById('bulk-data-input').addEventListener('keydown', handleTextareaTab); // Gắn sự kiện
         bulkImportModal.style.display = 'flex';
     };
 
@@ -840,8 +841,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Bulk import modals
-        cancelBulkImportBtn?.addEventListener('click', () => bulkImportModal.style.display = 'none');
-        processBulkImportBtn?.addEventListener('click', processAndPreviewBulkData);
+        cancelBulkImportBtn?.addEventListener('click', () => {
+            document.getElementById('bulk-data-input').removeEventListener('keydown', handleTextareaTab); // Gỡ sự kiện
+            bulkImportModal.style.display = 'none';
+        });
+        processBulkImportBtn?.addEventListener('click', () => {
+            document.getElementById('bulk-data-input').removeEventListener('keydown', handleTextareaTab); // Gỡ sự kiện
+            processAndPreviewBulkData();
+        });
         cancelBulkImportPreviewBtn?.addEventListener('click', () => {
             bulkImportPreviewModal.style.display = 'none';
             // Mở lại modal nhập liệu để người dùng có thể sửa
