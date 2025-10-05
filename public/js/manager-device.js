@@ -619,14 +619,23 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (target.closest('.delete-item-btn')) {
                 handleDelete(id, type);
             } else if (type === 'category' && target.closest('.col-name')) {
-                // Nếu click vào ô tên của một danh mục (và không phải các nút trên), đi vào trong
-                // THAY ĐỔI: Thay vì render lại toàn bộ, chỉ thu/phóng
+                // --- SỬA LỖI: Cập nhật lại trạng thái khi chọn một danh mục ---
+                // 1. Cập nhật ID của danh mục đang được chọn
+                selectedNodeId = id;
+
+                // 2. Kích hoạt nút "Thêm thiết bị" vì chúng ta đang ở trong một danh mục
+                addDeviceBtn.disabled = false;
+
+                // 3. Cập nhật breadcrumbs để phản ánh đúng vị trí hiện tại
+                renderBreadcrumbs(id);
+
+                // 4. Logic thu/phóng cây thư mục (giữ nguyên)
                 const icon = row.querySelector('.col-name .fas');
                 if (expandedCategories.has(id)) {
                     expandedCategories.delete(id);
                     toggleSubtreeVisibility(id, true); // Ẩn toàn bộ cây con
                     if (icon) icon.className = 'fas fa-folder';
-                } else {
+                } else { // Mở rộng
                     expandedCategories.add(id);
                     toggleSubtreeVisibility(id, false); // Hiện các con trực tiếp
                     if (icon) icon.className = 'fas fa-folder-open';
