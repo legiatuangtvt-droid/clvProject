@@ -701,10 +701,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Tách toàn bộ văn bản thành các bản ghi dựa trên dấu hiệu bắt đầu là một số (Số TT)
-        // Ví dụ: "1. ", "1.1 ", "1\t". Regex này đảm bảo các dòng xuống dòng trong cột Mô tả không bị tách.
-        const recordsRaw = input.split(/(?:\r\n|\r|\n)(?=\d+(\.\d+)?[\s\t])/);
-
+        // SỬA LỖI: Thay vì split, dùng match để tìm tất cả các bản ghi.
+        // Một bản ghi bắt đầu bằng một số (Số TT) và kéo dài cho đến khi gặp số TT tiếp theo hoặc kết thúc chuỗi.
+        // Regex: `\d+(\.\d+)?[\s\t][\s\S]*?(?=\r?\n\d+(\.\d+)?[\s\t]|$)`
+        // - `\d+(\.\d+)?[\s\t]`: Bắt đầu bằng số thứ tự (vd: 1, 1.1) theo sau là khoảng trắng/tab.
+        // - `[\s\S]*?`: Khớp với bất kỳ ký tự nào (bao gồm cả xuống dòng) một cách không tham lam.
+        // - `(?=\r?\n\d+(\.\d+)?[\s\t]|$)`: Dừng lại khi gặp dòng tiếp theo bắt đầu bằng số thứ tự, hoặc khi kết thúc chuỗi.
+        const recordRegex = /\d+(\.\d+)?[\s\t][\s\S]*?(?=\r?\n\d+(\.\d+)?[\s\t]|$)/g;
+        const recordsRaw = input.match(recordRegex) || [];
         validRegistrationsToCreate = []; // Reset
         const previewData = [];
         const errors = [];
