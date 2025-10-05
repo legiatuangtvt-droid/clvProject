@@ -307,6 +307,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cancelAllInlineActions = () => {
         document.querySelector('.inline-add-row')?.remove();
+        // Sau khi hủy, render lại list để nút "Thêm thiết bị mới" có thể hiện lại nếu cần
+        // Điều này chỉ cần thiết khi hủy từ một hành động khác (ví dụ: click vào danh mục khác)
+        renderList(selectedNodeId);
         const editingRow = document.querySelector('.inline-edit-row');
         if (editingRow && editingRow.dataset.originalHtml) {
             editingRow.innerHTML = editingRow.dataset.originalHtml;
@@ -542,8 +545,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const docRef = await addDoc(collection(firestore, 'devices'), data);
             // Thêm vào cache phía client
             allItemsCache.push({ id: docRef.id, ...data });
-            showToast('Thêm thiết bị thành công!', 'success', 3000);
+            // Xóa dòng inline add TRƯỚC KHI render lại
+            row.remove();
             // Render lại với trạng thái hiện tại
+            showToast('Thêm thiết bị thành công!', 'success', 3000);
             renderList(selectedNodeId);
         } catch (error) {
             console.error("Lỗi khi lưu thiết bị inline:", error);
@@ -659,6 +664,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     saveInlineDevice(row);
                 } else if (target.closest('.cancel-inline-btn')) {
                     row.remove();
+                    // Render lại list để nút "Thêm thiết bị mới" hiện lại
+                    renderList(selectedNodeId);
                 }
                 return; // Dừng lại để không xử lý tiếp
             }
