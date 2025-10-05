@@ -409,17 +409,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (currentEditingId) {
-                const itemRef = doc(firestore, 'devices', currentEditingId);
-                await updateDoc(itemRef, data);
+                const docRef = doc(firestore, 'devices', currentEditingId);
+                await updateDoc(docRef, data);
+                // Cập nhật cache phía client
+                const index = allItemsCache.findIndex(item => item.id === currentEditingId);
+                if (index > -1) {
+                    allItemsCache[index] = { ...allItemsCache[index], ...data };
+                }
                 showToast('Cập nhật danh mục thành công!', 'success', 3000);
             } else {
-                await addDoc(collection(firestore, 'devices'), data);
+                const docRef = await addDoc(collection(firestore, 'devices'), data);
+                // Thêm vào cache phía client
+                allItemsCache.push({ id: docRef.id, ...data });
                 showToast('Thêm danh mục mới thành công!', 'success', 3000);
             }
-            // Cập nhật lại selectedNodeId để giữ nguyên vị trí sau khi lưu
             selectedNodeId = parentId;
             categoryModal.style.display = 'none';
-            await loadAllItems();
             renderList(parentId); // Render lại đúng danh mục cha
         } catch (error) {
             console.error("Lỗi khi lưu danh mục:", error);
@@ -461,17 +466,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (currentEditingId) {
-                const itemRef = doc(firestore, 'devices', currentEditingId);
-                await updateDoc(itemRef, data);
+                const docRef = doc(firestore, 'devices', currentEditingId);
+                await updateDoc(docRef, data);
+                // Cập nhật cache
+                const index = allItemsCache.findIndex(item => item.id === currentEditingId);
+                if (index > -1) {
+                    allItemsCache[index] = { ...allItemsCache[index], ...data };
+                }
                 showToast('Cập nhật thiết bị thành công!', 'success', 3000);
             } else {
-                await addDoc(collection(firestore, 'devices'), data);
+                const docRef = await addDoc(collection(firestore, 'devices'), data);
+                // Thêm vào cache
+                allItemsCache.push({ id: docRef.id, ...data });
                 showToast('Thêm thiết bị mới thành công!', 'success', 3000);
             }
-            // Cập nhật lại selectedNodeId để giữ nguyên vị trí sau khi lưu
             selectedNodeId = data.parentId;
             deviceModal.style.display = 'none';
-            await loadAllItems();
             renderList(data.parentId); // Render lại đúng danh mục cha
         } catch (error) {
             console.error("Lỗi khi lưu thiết bị:", error);
@@ -515,10 +525,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            await addDoc(collection(firestore, 'devices'), data);
+            const docRef = await addDoc(collection(firestore, 'devices'), data);
+            // Thêm vào cache phía client
+            allItemsCache.push({ id: docRef.id, ...data });
             showToast('Thêm thiết bị thành công!', 'success', 3000);
-            // Tải lại toàn bộ dữ liệu và render lại
-            await loadAllItems();
+            // Render lại với trạng thái hiện tại
             renderList(selectedNodeId);
         } catch (error) {
             console.error("Lỗi khi lưu thiết bị inline:", error);
