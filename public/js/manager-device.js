@@ -873,9 +873,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         cancelBulkImportPreviewBtn?.addEventListener('click', () => {
             bulkImportPreviewModal.style.display = 'none';
-            // Mở lại modal nhập liệu để người dùng có thể sửa
-            // Thay vì mở lại modal, ta render lại list để người dùng có thể chọn lại hành động
-            renderList(selectedNodeId);
+            // Mở lại modal nhập liệu để người dùng có thể sửa lỗi.
+            bulkImportModal.style.display = 'flex';
+            document.getElementById('bulk-data-input').addEventListener('keydown', handleTextareaTab); // Gắn lại sự kiện cho textarea
         });
         confirmBulkImportBtn?.addEventListener('click', commitBulkImport);
 
