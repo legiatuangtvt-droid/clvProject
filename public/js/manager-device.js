@@ -204,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 html += `
                     <tr class="add-item-row" data-parent-id="${parentId}">
                         <td colspan="12">
+                            <button class="btn-add-in-list add-single-category-btn"><i class="fas fa-folder-plus"></i> Thêm danh mục mới</button>
                             <button class="btn-add-in-list add-single-device-btn"><i class="fas fa-plus"></i> Thêm thiết bị mới</button>
                             <button class="btn-add-in-list bulk-import-in-list-btn"><i class="fas fa-file-import"></i> Nhập hàng loạt</button>
                         </td>
@@ -914,6 +915,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- Xử lý cho nút "Nhập hàng loạt" trong danh sách ---
             if (target.closest('.bulk-import-in-list-btn')) {
                 openBulkImportModal();
+                hideActionButtonsRow(); // Ẩn hàng chứa nút sau khi click
+                return;
+            }
+            // --- Xử lý cho nút "Thêm danh mục mới" trong danh sách ---
+            if (target.closest('.add-single-category-btn')) {
+                openCategoryModal(false); // Mở modal thêm danh mục
                 hideActionButtonsRow(); // Ẩn hàng chứa nút sau khi click
                 return;
             }
