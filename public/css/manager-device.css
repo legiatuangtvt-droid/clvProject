@@ -215,17 +215,21 @@
     background-color: #f1f5f9; /* Đổi màu nền khi hover */
 }
 
-.device-table .col-stt { width: 5%; text-align: center; }
-.device-table .col-topic { width: 15%; }
-.device-table .col-name { width: 20%; font-weight: 500; }
-.device-table .col-purpose { width: 15%; }
-.device-table .col-description {
-    width: 25%;
+.device-table .col-stt { width: 3%; text-align: center; }
+.device-table .col-topic { width: 10%; }
+.device-table .col-name { width: 10%; font-weight: 500; }
+.device-table .col-purpose { width: 15%; text-align: justify; }
+.device-table th.col-description {
+    width: 39%;
+}
+.device-table td.col-description {
+    width: 39%;
     white-space: pre-wrap; /* Cho phép xuống dòng trong ô mô tả */
     word-break: break-word; /* Tự động ngắt từ nếu quá dài */
     max-width: 300px; /* Giới hạn chiều rộng tối đa */
     overflow: hidden; /* Ẩn phần bị tràn */
     text-overflow: ellipsis; /* Hiển thị dấu "..." */
+    text-align: justify; /* Chỉ căn đều cho nội dung, không phải tiêu đề */
 }
 .device-table tr.hidden {
     display: none;
@@ -234,14 +238,14 @@
 
 .device-table .col-usage-gv,
 .device-table .col-usage-hs {
-    width: 5%;
+    width: 3%;
     text-align: center;
 }
-.device-table .col-unit { width: 7%; text-align: center; }
-.device-table .col-quota { width: 8%; text-align: center; }
-.device-table .col-quantity { width: 7%; text-align: center; }
-.device-table .col-broken { width: 7%; text-align: center; }
-.device-table .col-actions { width: 8%; text-align: center; }
+.device-table .col-unit { width: 3%; text-align: center; }
+.device-table .col-quota { width: 3%; text-align: center; }
+.device-table .col-quantity { width: 3%; text-align: center; }
+.device-table .col-broken { width: 3%; text-align: center; }
+.device-table .col-actions { width: 5%; text-align: center; }
 
 
 .device-table .item-name-cell {

@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td class="col-stt">${item.order || ''}</td>
                         <td class="col-topic">${item.topic || ''}</td>
                         <td class="col-name">
-                            <div class="item-name-cell" style="padding-left: ${indent}px;">
+                            <div class="item-name-cell">
                                 <i class="fas fa-desktop"></i><span>${item.name}</span>
                             </div>
                         </td>
