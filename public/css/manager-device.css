@@ -590,3 +590,56 @@
     box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
     outline: none;
 }
+
+/* --- Cải tiến giao diện Modal Thiết bị --- */
+
+/* Ghi đè grid layout cho form thiết bị để tối ưu không gian */
+.device-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 20px;
+}
+
+/* Ghi đè cho các input/select/textarea để chúng chiếm toàn bộ chiều rộng của container */
+.device-form-grid .form-control,
+.device-form-grid .filter-select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Style cho textarea bên trong filter-group */
+.filter-group.textarea-group {
+    align-items: stretch; /* Cho phép label và textarea co giãn theo chiều dọc */
+}
+
+.filter-group.textarea-group textarea {
+    resize: vertical; /* Chỉ cho phép thay đổi chiều cao */
+    min-height: 60px;
+}
+
+/* Cải tiến checkbox group */
+.checkbox-group-container {
+    grid-column: span 2; /* Chiếm 2 cột */
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.checkbox-group-container > label {
+    margin-bottom: 5px; /* Giảm khoảng cách dưới của label chính */
+}
+
+.checkbox-group {
+    display: flex;
+    gap: 25px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}

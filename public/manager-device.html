@@ -93,42 +93,54 @@
     <div id="device-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <h2 id="device-modal-title">Thêm Thiết bị</h2>
-            <form id="device-form" class="form-grid">
+            <form id="device-form" class="form-grid device-form-grid">
                 <div class="form-group form-group-span-2">
-                    <label for="device-name">Tên Thiết bị <span class="required-star">*</span></label>
-                    <input type="text" id="device-name" required>
+                    <div class="filter-group">
+                        <label for="device-name">Tên Thiết bị <span class="required-star">*</span></label>
+                        <input type="text" id="device-name" class="form-control" required>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="device-order">Thứ tự</label>
-                    <input type="text" id="device-order" placeholder="A, B, I, II, 1, 2...">
+                    <div class="filter-group">
+                        <label for="device-order">Thứ tự</label>
+                        <input type="text" id="device-order" class="form-control" placeholder="A, B, I, II, 1, 2...">
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="device-parent-select">Vị trí (Danh mục cha)</label>
-                    <select id="device-parent-select"></select>
+                    <div class="filter-group">
+                        <label for="device-parent-select">Vị trí</label>
+                        <select id="device-parent-select" class="filter-select"></select>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="device-topic">Chủ đề dạy học</label>
-                    <input type="text" id="device-topic">
+                    <div class="filter-group">
+                        <label for="device-topic">Chủ đề</label>
+                        <input type="text" id="device-topic" class="form-control">
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="device-purpose">Mục đích sử dụng</label>
-                    <input type="text" id="device-purpose">
+                    <div class="filter-group">
+                        <label for="device-purpose">Mục đích</label>
+                        <input type="text" id="device-purpose" class="form-control">
+                    </div>
                 </div>
                 <div class="form-group form-group-span-2">
-                    <label for="device-description">Mô tả chi tiết</label>
-                    <textarea id="device-description" rows="2"></textarea>
+                    <div class="filter-group textarea-group">
+                        <label for="device-description">Mô tả</label>
+                        <textarea id="device-description" class="form-control" rows="2"></textarea>
+                    </div>
                 </div>
                 <div class="form-group checkbox-group-container">
                     <label>Đối tượng sử dụng</label>
                     <div class="checkbox-group">
-                        <label><input type="checkbox" id="device-usage-gv"> Giáo viên</label>
-                        <label><input type="checkbox" id="device-usage-hs"> Học sinh</label>
+                        <label class="checkbox-item"><input type="checkbox" id="device-usage-gv"> Giáo viên</label>
+                        <label class="checkbox-item"><input type="checkbox" id="device-usage-hs"> Học sinh</label>
                     </div>
                 </div>
-                <div class="form-group"><label for="device-unit">Đơn vị tính</label><input type="text" id="device-unit"></div>
-                <div class="form-group"><label for="device-quota">Định mức</label><input type="text" id="device-quota"></div>
-                <div class="form-group"><label for="device-quantity">Tổng số</label><input type="number" id="device-quantity" value="0"></div>
-                <div class="form-group"><label for="device-broken">Hỏng</label><input type="number" id="device-broken" value="0"></div>
+                <div class="form-group"><div class="filter-group"><label for="device-unit">ĐVT</label><input type="text" id="device-unit" class="form-control"></div></div>
+                <div class="form-group"><div class="filter-group"><label for="device-quota">Định mức</label><input type="text" id="device-quota" class="form-control"></div></div>
+                <div class="form-group"><div class="filter-group"><label for="device-quantity">Tổng số</label><input type="number" id="device-quantity" class="form-control" value="0"></div></div>
+                <div class="form-group"><div class="filter-group"><label for="device-broken">Hỏng</label><input type="number" id="device-broken" class="form-control" value="0"></div></div>
             </form>
             <div class="modal-actions">
                 <button id="cancel-device-modal" class="btn-cancel">Hủy</button>
