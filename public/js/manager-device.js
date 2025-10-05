@@ -932,17 +932,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     expandedCategories.delete(id);
                     if (icon) icon.className = 'fas fa-folder';
                 } else { // Mở rộng
-                    // Nếu là danh mục cấp gốc (không có parentId), đóng tất cả các mục khác trước khi mở mục này
+                    // Logic mới: Đóng tất cả các danh mục đồng cấp trước khi mở danh mục hiện tại.
                     const itemToExpand = allItemsCache.find(item => item.id === id);
-                    if (itemToExpand && itemToExpand.parentId === null) {
-                        // Lấy danh sách tất cả các mục cấp gốc
-                        const topLevelCategoryIds = allItemsCache
-                            .filter(item => item.parentId === null && item.type === 'category')
-                            .map(item => item.id);
-                        // Xóa tất cả các mục cấp gốc khỏi danh sách đang mở rộng
-                        topLevelCategoryIds.forEach(catId => expandedCategories.delete(catId));
+                    if (itemToExpand) {
+                        // Lấy parentId của mục đang được mở
+                        const parentIdOfItem = itemToExpand.parentId;
+
+                        // Tìm tất cả các mục đồng cấp (cùng parentId)
+                        const siblings = allItemsCache.filter(item => item.parentId === parentIdOfItem && item.type === 'category');
+
+                        // Đóng tất cả các mục đồng cấp bằng cách xóa chúng khỏi Set
+                        siblings.forEach(sibling => {
+                            expandedCategories.delete(sibling.id);
+                        });
                     }
-                    // Thêm mục hiện tại vào danh sách mở rộng
                     expandedCategories.add(id);
                     if (icon) icon.className = 'fas fa-folder-open';
                 }
