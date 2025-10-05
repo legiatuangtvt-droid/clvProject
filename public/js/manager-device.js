@@ -710,7 +710,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const afterX = recordText.substring(separatorIndex + separatorRegex.exec(recordText)[0].length);
             
             // Logic mới (V6): Tách riêng 4 cột đầu và phần mô tả để xử lý chính xác hơn
-            const beforePartsRaw = beforeX.split(/[\t\r\n]+/);
+            // SỬA LỖI: Lọc bỏ các phần tử rỗng do các tab thừa tạo ra (ví dụ: STT \t \t Tên thiết bị)
+            const beforePartsRaw = beforeX.split(/[\t\r\n]+/).filter(p => p.trim() !== '');
             const firstFourParts = beforePartsRaw.slice(0, 4).filter(p => p.trim() !== '');
             const descriptionPart = beforePartsRaw.slice(4).join(' ').trim();
 
@@ -725,15 +726,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const description = descriptionPart; // Gán mô tả đã được tách riêng
 
             // Xử lý linh hoạt 3 cột: Chủ đề, Tên, Mục đích
-            const mainInfoParts = firstFourParts.slice(1); // Bỏ qua cột STT
-            if (mainInfoParts.length === 1) {
-                // Nếu chỉ có 1 giá trị, ưu tiên gán cho Tên thiết bị
-                name = mainInfoParts[0];
-            } else {
-                // Nếu có nhiều hơn 1 giá trị, gán theo thứ tự thông thường
-                topic = mainInfoParts[0] || '';
-                name = mainInfoParts[1] || '';
-                purpose = mainInfoParts[2] || ''; // Cột thứ 4 (index 3) sẽ là mục đích
+            // SỬA LỖI: Logic gán cột linh hoạt hơn để xử lý trường hợp thiếu cột "Chủ đề"
+            const mainInfoParts = beforeX.split(/[\t\r\n]+/); // Tách lại để lấy cả các cột rỗng
+            const sttPart = mainInfoParts.shift() || ''; // Lấy và xóa STT khỏi mảng
+            const remainingParts = mainInfoParts.filter(p => p.trim() !== ''); // Lọc các phần tử rỗng còn lại
+
+            if (remainingParts.length === 1) {
+                name = remainingParts[0]; // Nếu chỉ còn 1 phần tử, đó là Tên
+            } else if (remainingParts.length >= 2) {
+                name = remainingParts[0]; // Phần tử đầu tiên là Tên
+                purpose = remainingParts[1]; // Phần tử thứ hai là Mục đích
+                // Bỏ qua Chủ đề nếu nó trống
             }
 
             // Tách các cột ở phần 2 (HS, ĐVT, ĐM, Tổng, Hỏng)
