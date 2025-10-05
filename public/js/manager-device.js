@@ -519,7 +519,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 allItemsCache.push({ id: docRef.id, ...data });
                 showToast('Thêm thiết bị mới thành công!', 'success', 3000);
             }
-            selectedNodeId = data.parentId;
             deviceModal.style.display = 'none';
             renderList(data.parentId); // Render lại đúng danh mục cha
         } catch (error) {
