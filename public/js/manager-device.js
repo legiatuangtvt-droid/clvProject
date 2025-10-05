@@ -1,5 +1,6 @@
 import {
     writeBatch,
+    serverTimestamp,
     collection,
     getDocs,
     addDoc,
@@ -24,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addSubjectBtn = document.getElementById('add-subject-btn');
     const addCategoryBtn = document.getElementById('add-category-btn');
     const addDeviceBtn = document.getElementById('add-device-btn');
+    const bulkImportBtn = document.getElementById('bulk-import-btn');
 
     // Category Modal Elements
     const categoryModal = document.getElementById('category-modal');
@@ -43,6 +45,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
 
+    // Bulk Import Modal Elements
+    const bulkImportModal = document.getElementById('bulk-import-modal');
+    const cancelBulkImportBtn = document.getElementById('cancel-bulk-import-btn');
+    const processBulkImportBtn = document.getElementById('process-bulk-import-btn');
+    const bulkImportPreviewModal = document.getElementById('bulk-import-preview-modal');
+    const cancelBulkImportPreviewBtn = document.getElementById('cancel-bulk-import-preview-btn');
+    const confirmBulkImportBtn = document.getElementById('confirm-bulk-import-btn');
+
+
     // --- STATE ---
     let allItemsCache = [];
     let selectedNodeId = null;
@@ -51,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let deleteFunction = null;
     let activeTopLevelCategoryId = null; // NEW: Track the top-level category being viewed
     let expandedCategories = new Set(); // Theo dõi các danh mục đang mở
+    let validRegistrationsToCreate = []; // Dùng cho nhập hàng loạt
 
     // --- INITIALIZATION ---
     const initializePage = async () => {
@@ -191,7 +203,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isAddingInline) {
                 html += `
                     <tr class="add-item-row" data-parent-id="${parentId}">
-                        <td colspan="12"><button class="btn-add-in-list"><i class="fas fa-plus"></i> Thêm thiết bị mới</button></td>
+                        <td colspan="12">
+                            <button class="btn-add-in-list add-single-device-btn"><i class="fas fa-plus"></i> Thêm thiết bị mới</button>
+                            <button class="btn-add-in-list bulk-import-in-list-btn"><i class="fas fa-file-import"></i> Nhập hàng loạt</button>
+                        </td>
                     </tr>`;
             }
         }
@@ -222,7 +237,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Nút "Thêm danh mục" luôn hoạt động.
         addCategoryBtn.disabled = false;
         // Chỉ cho phép thêm thiết bị hoặc nhập hàng loạt khi đang ở trong một danh mục (không phải ở gốc).
-        addDeviceBtn.disabled = !parentItem;
+        if (addDeviceBtn) addDeviceBtn.disabled = !parentItem;
+        if (bulkImportBtn) bulkImportBtn.disabled = !parentItem;
 
         const tableHTML = `
             <table class="device-table">
@@ -622,29 +638,156 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    const getCategoryPathString = (parentId) => {
+        const path = [];
+        let currentId = parentId;
+        while (currentId) {
+            const item = allItemsCache.find(i => i.id === currentId);
+            if (item) {
+                const displayName = (item.order) ? `${item.order}. ${item.name}` : item.name;
+                path.unshift(displayName);
+                currentId = item.parentId;
+            } else {
+                break;
+            }
+        }
+        return `Trang chủ / ${path.join(' / ')}`;
+    }
+
+    // --- BULK IMPORT ---
+    const openBulkImportModal = () => {
+        const parentItem = selectedNodeId ? allItemsCache.find(item => item.id === selectedNodeId) : null;
+        if (!parentItem) {
+            showToast('Vui lòng chọn một danh mục để nhập thiết bị vào.', 'info');
+            return;
+        }
+        document.getElementById('bulk-import-parent-name').textContent = getCategoryPathString(selectedNodeId);
+        document.getElementById('bulk-data-input').value = '';
+        bulkImportModal.style.display = 'flex';
+    };
+
+    const processAndPreviewBulkData = () => {
+        const input = document.getElementById('bulk-data-input').value.trim();
+        if (!input) {
+            showToast('Vui lòng dán dữ liệu từ Excel.', 'error');
+            return;
+        }
+
+        const lines = input.split('\n').map(line => line.split('\t'));
+        validRegistrationsToCreate = []; // Reset
+        const previewData = [];
+        const errors = [];
+
+        lines.forEach((parts, index) => {
+            if (parts.length < 9) {
+                errors.push(`Dòng ${index + 1}: Không đủ 9 cột dữ liệu tối thiểu.`);
+                previewData.push({ data: parts, status: 'has-error' });
+                return;
+            }
+
+            const [order, topic, name, purpose, description, usageGV, usageHS, unit, quota] = parts.map(p => p.trim());
+
+            if (!name) {
+                errors.push(`Dòng ${index + 1}: Tên thiết bị (cột 3) là bắt buộc.`);
+                previewData.push({ data: parts, status: 'has-error' });
+                return;
+            }
+
+            const usageObject = [];
+            if (usageGV.toLowerCase() === 'x') usageObject.push('GV');
+            if (usageHS.toLowerCase() === 'x') usageObject.push('HS');
+
+            // Lấy 2 cột cuối, nếu không có thì mặc định là 0
+            const quantity = parseInt(parts[9]?.trim()) || 0;
+            const broken = parseInt(parts[10]?.trim()) || 0;
+
+            const newDeviceData = {
+                order, topic, name, purpose, description, usageObject, unit, quota,
+                quantity: quantity,
+                broken: broken,
+                type: 'device',
+                parentId: selectedNodeId,
+                createdAt: serverTimestamp()
+            };
+
+            validRegistrationsToCreate.push(newDeviceData);
+            previewData.push({ data: parts, status: 'is-valid' });
+        });
+
+        // Render preview
+        const errorContainer = document.getElementById('bulk-import-error-section');
+        const previewContainer = document.getElementById('bulk-import-preview-container');
+        const confirmBtn = document.getElementById('confirm-bulk-import-btn');
+
+        if (errors.length > 0) {
+            errorContainer.innerHTML = `<h4>Phát hiện ${errors.length} lỗi:</h4><ul>${errors.map(e => `<li>${e}</li>`).join('')}</ul>`;
+            errorContainer.style.display = 'block';
+            confirmBtn.style.display = 'none';
+        } else {
+            errorContainer.style.display = 'none';
+            confirmBtn.style.display = 'inline-block';
+        }
+
+        let tableHTML = `<table class="preview-table"><thead><tr><th>Số TT</th><th>Chủ đề</th><th>Tên</th><th>Mục đích</th><th>Mô tả</th><th>GV</th><th>HS</th><th>ĐVT</th><th>ĐM</th><th>Tổng số</th><th>Hỏng</th></tr></thead><tbody>`;
+        previewData.forEach(row => {
+            tableHTML += `<tr class="${row.status}">${row.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+        });
+        tableHTML += `</tbody></table>`;
+        previewContainer.innerHTML = tableHTML;
+
+        bulkImportModal.style.display = 'none';
+        bulkImportPreviewModal.style.display = 'flex';
+    };
+
+    const commitBulkImport = async () => {
+        if (validRegistrationsToCreate.length === 0) {
+            showToast('Không có dữ liệu hợp lệ để nhập.', 'info');
+            return;
+        }
+        setButtonLoading(confirmBulkImportBtn, true);
+        const batch = writeBatch(firestore);
+        validRegistrationsToCreate.forEach(data => {
+            const newDocRef = doc(collection(firestore, 'devices'));
+            batch.set(newDocRef, data);
+        });
+        await batch.commit();
+        setButtonLoading(confirmBulkImportBtn, false);
+        bulkImportPreviewModal.style.display = 'none';
+        showToast(`Nhập thành công ${validRegistrationsToCreate.length} thiết bị!`, 'success');
+        await loadAllItems();
+        renderList(selectedNodeId);
+    };
+
     // --- EVENT LISTENERS ---
     const setupEventListeners = () => {
         // Mở modal
-        addCategoryBtn.addEventListener('click', () => openCategoryModal(false));
-        addDeviceBtn.addEventListener('click', addInlineDeviceRow); // <-- THAY ĐỔI Ở ĐÂY
+        addCategoryBtn?.addEventListener('click', () => openCategoryModal(false));
+        addDeviceBtn?.addEventListener('click', addInlineDeviceRow); // <-- THAY ĐỔI Ở ĐÂY
+        bulkImportBtn?.addEventListener('click', openBulkImportModal);
 
         // Đóng/Lưu modal Danh mục
-        cancelCategoryBtn.addEventListener('click', () => categoryModal.style.display = 'none');
-        saveCategoryBtn.addEventListener('click', saveCategory);
+        cancelCategoryBtn?.addEventListener('click', () => categoryModal.style.display = 'none');
+        saveCategoryBtn?.addEventListener('click', saveCategory);
 
         // Đóng/Lưu modal Thiết bị
-        cancelDeviceBtn.addEventListener('click', () => deviceModal.style.display = 'none');
-        saveDeviceBtn.addEventListener('click', saveDevice);
+        cancelDeviceBtn?.addEventListener('click', () => deviceModal.style.display = 'none');
+        saveDeviceBtn?.addEventListener('click', saveDevice);
 
         // Modal xác nhận xóa
-        cancelDeleteBtn.addEventListener('click', () => confirmDeleteModal.style.display = 'none');
-        confirmDeleteBtn.addEventListener('click', () => {
+        cancelDeleteBtn?.addEventListener('click', () => confirmDeleteModal.style.display = 'none');
+        confirmDeleteBtn?.addEventListener('click', () => {
             if (typeof deleteFunction === 'function') deleteFunction();
             confirmDeleteModal.style.display = 'none';
         });
 
+        // Bulk import modals
+        cancelBulkImportBtn?.addEventListener('click', () => bulkImportModal.style.display = 'none');
+        processBulkImportBtn?.addEventListener('click', processAndPreviewBulkData);
+        cancelBulkImportPreviewBtn?.addEventListener('click', () => bulkImportPreviewModal.style.display = 'none');
+        confirmBulkImportBtn?.addEventListener('click', commitBulkImport);
+
         // Event delegation cho breadcrumbs
-        breadcrumbContainer.addEventListener('click', (e) => {
+        breadcrumbContainer?.addEventListener('click', (e) => {
             const target = e.target;
             const breadcrumbItem = target.closest('.breadcrumb-item');
             if (!breadcrumbItem) return;
@@ -653,7 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Event delegation cho bảng bên phải
-        listContainer.addEventListener('click', (e) => { // Gộp 2 event listener thành 1
+        listContainer?.addEventListener('click', (e) => { // Gộp 2 event listener thành 1
             const target = e.target;
             const row = target.closest('tr');
             if (!row) return; // Click không nằm trong hàng nào, bỏ qua
@@ -670,9 +813,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return; // Dừng lại để không xử lý tiếp
             }
             // --- Xử lý cho nút "Thêm thiết bị mới" trong danh sách ---
-            if (target.closest('.btn-add-in-list')) {
+            if (target.closest('.add-single-device-btn')) {
                 addInlineDeviceRow();
                 target.closest('.add-item-row').remove(); // Ẩn nút sau khi click
+                return;
+            }
+            // --- Xử lý cho nút "Nhập hàng loạt" trong danh sách ---
+            if (target.closest('.bulk-import-in-list-btn')) {
+                openBulkImportModal();
                 return;
             }
 

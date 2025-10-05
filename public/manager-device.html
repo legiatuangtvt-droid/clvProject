@@ -49,8 +49,9 @@
                                     <!-- Breadcrumbs sẽ được JS render vào đây -->
                                 </div>
                                 <div class="page-actions">
-                                    <button id="add-category-btn" class="btn-secondary"><i class="fas fa-folder-plus"></i> Thêm Danh mục</button>
-                                    <button id="add-device-btn" class="btn-secondary"><i class="fas fa-plus-circle"></i> Thêm thiết bị</button>
+                                    <button id="add-category-btn" class="btn-secondary"><i class="fas fa-folder-plus"></i> Thêm Danh mục</button>                                    
+                                    <button id="bulk-import-btn" class="btn-primary" disabled><i class="fas fa-file-import"></i> Nhập hàng loạt</button>
+                                    <button id="add-device-btn" class="btn-primary" disabled><i class="fas fa-plus"></i> Thêm Thiết bị</button>
                                 </div>
                             </div>
                             <div id="device-list-container" class="table-container">
@@ -132,6 +133,45 @@
             <div class="modal-actions">
                 <button id="cancel-device-modal" class="btn-cancel">Hủy</button>
                 <button id="save-device-btn" class="btn-save">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Bulk Import -->
+    <div id="bulk-import-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content large">
+            <h2 id="bulk-import-modal-title">Nhập dữ liệu hàng loạt</h2>
+            <div class="instruction-text">
+                <p><i class="fas fa-info-circle"></i> Dán dữ liệu từ file Excel vào ô bên dưới. Đảm bảo các cột theo đúng thứ tự: <strong>Số TT, Chủ đề, Tên thiết bị, Mục đích, Mô tả, Dùng cho GV, Dùng cho HS, Đơn vị, Định mức, Tổng số, Hỏng</strong>. Hai cột cuối (Tổng số, Hỏng) có thể bỏ trống và sẽ được gán giá trị là 0.</p>
+                <p><strong>Lưu ý:</strong> Dữ liệu sẽ được thêm vào danh mục đang được chọn: <strong id="bulk-import-parent-name">Vui lòng chọn một danh mục</strong>.</p>
+            </div>
+            <div class="form-group">
+                <label for="bulk-data-input">Dữ liệu từ Excel</label>
+                <textarea id="bulk-data-input" rows="10" placeholder="Ví dụ:&#10;9&#x9;&#x9;Lò xo&#x9;Tạo lực đàn hồi&#x9;...&#x9;x&#x9;x&#x9;Cái&#x9;07"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-bulk-import-btn" class="btn-cancel">Hủy</button>
+                <button id="process-bulk-import-btn" class="btn-save">Xử lý và Xem trước</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Bulk Import Preview -->
+    <div id="bulk-import-preview-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content large">
+            <h2 id="bulk-import-preview-title">Xem trước dữ liệu nhập hàng loạt</h2>
+            <div class="instruction-text">
+                <p><i class="fas fa-info-circle"></i> Kiểm tra dữ liệu đã được phân tích dưới đây. Các dòng hợp lệ sẽ được thêm vào cơ sở dữ liệu. Các dòng có lỗi sẽ bị bỏ qua.</p>
+            </div>
+            <div id="bulk-import-error-section" style="display: none;">
+                <!-- Lỗi sẽ được hiển thị ở đây -->
+            </div>
+            <div id="bulk-import-preview-container" class="table-container">
+                <!-- Bảng xem trước sẽ được hiển thị ở đây -->
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-bulk-import-preview-btn" class="btn-cancel">Quay lại</button>
+                <button id="confirm-bulk-import-btn" class="btn-save">Xác nhận và Nhập</button>
             </div>
         </div>
     </div>

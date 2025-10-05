@@ -511,7 +511,7 @@
 }
 
 .btn-add-in-list {
-    width: 100%;
+    width: auto; /* Cho phép nút co giãn theo nội dung */
     padding: 8px 15px;
     font-weight: 600;
     color: var(--primary-color);
@@ -520,13 +520,73 @@
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
 }
 
 .btn-add-in-list:hover {
     background-color: var(--primary-color);
     color: var(--text-on-primary);
+}
+
+/* --- Bulk Import Preview Styles --- */
+#bulk-import-error-section {
+    background-color: var(--danger-light);
+    border-left: 4px solid var(--danger-color);
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 0 8px 8px 0;
+}
+
+#bulk-import-error-section h4 {
+    margin: 0 0 10px 0;
+    color: var(--danger-color);
+}
+
+#bulk-import-error-section ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.preview-table th, .preview-table td {
+    border: 1px solid var(--border-color);
+    padding: 8px;
+    text-align: left;
+}
+
+.preview-table thead th {
+    background-color: var(--surface-subtle-bg);
+    font-weight: 600;
+}
+
+.preview-table tbody tr.is-valid {
+    background-color: var(--success-light);
+}
+.preview-table tbody tr.has-error {
+    background-color: var(--danger-light);
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+/* --- NEW: Bulk Import Modal Textarea Style --- */
+#bulk-import-modal textarea {
+    width: 100%;
+    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color-strong);
+    border-radius: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: 'Courier New', Courier, monospace; /* Font chữ phù hợp cho dữ liệu cột */
+    line-height: 1.5;
+}
+
+#bulk-import-modal textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
+    outline: none;
 }
