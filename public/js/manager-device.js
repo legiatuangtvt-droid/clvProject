@@ -666,43 +666,100 @@ document.addEventListener('DOMContentLoaded', () => {
         bulkImportModal.style.display = 'flex';
     };
 
-    const processAndPreviewBulkData = () => {
+    const processAndPreviewBulkData = async () => {
         const input = document.getElementById('bulk-data-input').value.trim();
         if (!input) {
             showToast('Vui lòng dán dữ liệu từ Excel.', 'error');
             return;
         }
 
-        const lines = input.split('\n').map(line => line.split('\t'));
+        // --- NEW PARSING LOGIC ---
+        // Tách toàn bộ văn bản thành các bản ghi dựa trên dấu hiệu bắt đầu là một số (Số TT)
+        // Ví dụ: "1. ", "1.1 ", "1\t"
+        const recordsRaw = input.split(/(?:\r\n|\r|\n)(?=\d+(\.\d+)?[\s\t])/);
+
         validRegistrationsToCreate = []; // Reset
         const previewData = [];
         const errors = [];
 
-        lines.forEach((parts, index) => {
-            if (parts.length < 9) {
-                errors.push(`Dòng ${index + 1}: Không đủ 9 cột dữ liệu tối thiểu.`);
-                previewData.push({ data: parts, status: 'has-error' });
-                return;
+        for (let i = 0; i < recordsRaw.length; i++) {
+            const recordText = recordsRaw[i].trim();
+            if (!recordText) continue;
+            
+            // --- LOGIC PHÂN TÍCH MỚI (V4) ---
+            // Tách chuỗi thành 2 phần dựa trên cột 'x' (Dùng cho GV) làm điểm neo.
+            // Regex: tìm 'x' được bao quanh bởi các khoảng trắng (tab, enter, space)
+            const separatorRegex = /\s+x\s+/i;
+            const separatorIndex = recordText.search(separatorRegex);
+
+            if (separatorIndex === -1) {
+                errors.push(`Dòng ${i + 1}: Định dạng không hợp lệ. Không tìm thấy cột "Dùng cho GV" (có giá trị 'x').`);
+                previewData.push({ data: [recordText], status: 'has-error', originalText: recordText });
+                continue; // SỬA LỖI: Dùng continue để bỏ qua dòng lỗi và xử lý dòng tiếp theo, thay vì return để thoát hàm.
             }
 
-            const [order, topic, name, purpose, description, usageGV, usageHS, unit, quota] = parts.map(p => p.trim());
+            // Phần 1: Từ đầu đến trước cột 'x'
+            const beforeX = recordText.substring(0, separatorIndex);
+            // Phần 2: Từ sau cột 'x' đến hết
+            const afterX = recordText.substring(separatorIndex + separatorRegex.exec(recordText)[0].length);
 
-            if (!name) {
-                errors.push(`Dòng ${index + 1}: Tên thiết bị (cột 3) là bắt buộc.`);
-                previewData.push({ data: parts, status: 'has-error' });
-                return;
+            // Tách các cột ở phần 1 (Số TT, Chủ đề, Tên, Mục đích, Mô tả)
+            const beforeParts = beforeX.split(/[\t\r\n]+/);
+            if (beforeParts.length < 3) { // Cần ít nhất Số TT, Chủ đề, Tên
+                errors.push(`Dòng ${i + 1}: Thiếu thông tin trước cột "Tên thiết bị".`);
+                previewData.push({ data: [recordText], status: 'has-error', originalText: recordText });
+                continue;
+            }
+            const stt = beforeParts[0] || '';
+            const topic = beforeParts[1] || '';
+            const name = beforeParts[2] || '';
+            const purpose = beforeParts[3] || '';
+            // Mọi thứ còn lại trong phần 1 là Mô tả
+            const description = beforeParts.slice(4).join(' ').trim();
+
+            // Tách các cột ở phần 2 (HS, ĐVT, ĐM, Tổng, Hỏng)
+            // SỬA LỖI: Lọc bỏ các phần tử rỗng do các tab thừa tạo ra
+            const afterParts = afterX.split(/[\t\r\n]+/).filter(part => part.trim() !== '');
+            let currentAfterIndex = 0;
+            const usageGV = 'x'; // Cột GV là điểm neo
+            // Sửa lỗi: Thêm 'bộ/chiếc' vào danh sách đơn vị hợp lệ
+            const ALLOWED_UNITS = new Set(['bộ', 'cái', 'hộp', 'chiếc', 'cuộn', 'm', 'kg', 'bộ/chiếc']);
+
+            // Logic mới (V5): Kiểm tra cột HS, chỉ chấp nhận 'x' hoặc rỗng.
+            let usageHS = '';
+            const potentialHSValue = (afterParts[currentAfterIndex] || '').toLowerCase();
+
+            if (potentialHSValue === 'x') {
+                usageHS = 'x';
+                currentAfterIndex++; // Nếu là 'x', đọc cột Đơn vị từ phần tử tiếp theo
+            } 
+            // Nếu không phải 'x', thì cột HS được coi là rỗng.
+            // currentAfterIndex không tăng, và phần tử tiếp theo sẽ được coi là Đơn vị tính.
+
+            const unit = (afterParts[currentAfterIndex] || '').toLowerCase();
+            currentAfterIndex++;
+            const quota = afterParts[currentAfterIndex++] || '';
+            const quantityStr = afterParts[currentAfterIndex++] || '0';
+            const brokenStr = afterParts[currentAfterIndex++] || '0';
+
+            // Kiểm tra đơn vị tính hợp lệ
+            if (unit && !ALLOWED_UNITS.has(unit)) {
+                // Lấy lại giá trị gốc của đơn vị để hiển thị lỗi chính xác
+                const originalUnit = (afterX.split(/[\t\r\n]+/).filter(p => p.trim() !== ''))[usageHS === 'x' ? 1 : 0] || unit;
+                errors.push(`Dòng ${i + 1}: Đơn vị tính "${originalUnit}" không hợp lệ. Các giá trị được chấp nhận là: ${[...ALLOWED_UNITS].join(', ')}.`);
+                previewData.push({ data: [stt, topic, name, purpose, description, usageGV, usageHS, unit, quota, quantityStr, brokenStr], status: 'has-error', originalText: recordText });
+                continue;
             }
 
             const usageObject = [];
             if (usageGV.toLowerCase() === 'x') usageObject.push('GV');
             if (usageHS.toLowerCase() === 'x') usageObject.push('HS');
 
-            // Lấy 2 cột cuối, nếu không có thì mặc định là 0
-            const quantity = parseInt(parts[9]?.trim()) || 0;
-            const broken = parseInt(parts[10]?.trim()) || 0;
+            const quantity = parseInt(quantityStr) || 0;
+            const broken = parseInt(brokenStr) || 0;
 
             const newDeviceData = {
-                order, topic, name, purpose, description, usageObject, unit, quota,
+                order: stt, topic, name, purpose, description, usageObject, unit, quota,
                 quantity: quantity,
                 broken: broken,
                 type: 'device',
@@ -711,8 +768,8 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             validRegistrationsToCreate.push(newDeviceData);
-            previewData.push({ data: parts, status: 'is-valid' });
-        });
+            previewData.push({ data: [stt, topic, name, purpose, description, usageGV, usageHS, unit, quota, quantityStr, brokenStr], status: 'is-valid', originalText: recordText });
+        }
 
         // Render preview
         const errorContainer = document.getElementById('bulk-import-error-section');
@@ -722,7 +779,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (errors.length > 0) {
             errorContainer.innerHTML = `<h4>Phát hiện ${errors.length} lỗi:</h4><ul>${errors.map(e => `<li>${e}</li>`).join('')}</ul>`;
             errorContainer.style.display = 'block';
-            confirmBtn.style.display = 'none';
+            confirmBtn.style.display = validRegistrationsToCreate.length > 0 ? 'inline-block' : 'none'; // Chỉ ẩn nếu không có dòng nào hợp lệ
         } else {
             errorContainer.style.display = 'none';
             confirmBtn.style.display = 'inline-block';
@@ -730,7 +787,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let tableHTML = `<table class="preview-table"><thead><tr><th>Số TT</th><th>Chủ đề</th><th>Tên</th><th>Mục đích</th><th>Mô tả</th><th>GV</th><th>HS</th><th>ĐVT</th><th>ĐM</th><th>Tổng số</th><th>Hỏng</th></tr></thead><tbody>`;
         previewData.forEach(row => {
-            tableHTML += `<tr class="${row.status}">${row.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+            // SỬA LỖI: Đảm bảo tất cả các hàng đều có đủ 11 ô để không bị vỡ layout bảng
+            const cells = [...row.data];
+            while (cells.length < 11) {
+                cells.push('');
+            }
+            tableHTML += `<tr class="${row.status}">${cells.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
         });
         tableHTML += `</tbody></table>`;
         previewContainer.innerHTML = tableHTML;
@@ -783,7 +845,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bulk import modals
         cancelBulkImportBtn?.addEventListener('click', () => bulkImportModal.style.display = 'none');
         processBulkImportBtn?.addEventListener('click', processAndPreviewBulkData);
-        cancelBulkImportPreviewBtn?.addEventListener('click', () => bulkImportPreviewModal.style.display = 'none');
+        cancelBulkImportPreviewBtn?.addEventListener('click', () => {
+            bulkImportPreviewModal.style.display = 'none';
+            // Mở lại modal nhập liệu để người dùng có thể sửa
+            bulkImportModal.style.display = 'flex';
+        });
         confirmBulkImportBtn?.addEventListener('click', commitBulkImport);
 
         // Event delegation cho breadcrumbs
@@ -821,6 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- Xử lý cho nút "Nhập hàng loạt" trong danh sách ---
             if (target.closest('.bulk-import-in-list-btn')) {
                 openBulkImportModal();
+                target.closest('.add-item-row')?.remove(); // Ẩn nút sau khi click
                 return;
             }
 
