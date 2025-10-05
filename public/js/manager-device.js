@@ -462,9 +462,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 allItemsCache.push({ id: docRef.id, ...data });
                 showToast('Thêm danh mục mới thành công!', 'success', 3000);
             }
-            selectedNodeId = parentId;
             categoryModal.style.display = 'none';
-            renderList(parentId); // Render lại đúng danh mục cha
+            // Nếu là thêm mới, mở danh mục vừa tạo. Nếu là sửa, render lại danh mục cha.
+            const newCategoryId = currentEditingId ? parentId : allItemsCache[allItemsCache.length - 1].id;
+            if (!currentEditingId && newCategoryId) {
+                expandedCategories.add(newCategoryId); // Tự động mở danh mục mới
+            }
+            renderList(newCategoryId);
         } catch (error) {
             console.error("Lỗi khi lưu danh mục:", error);
             showToast('Đã có lỗi xảy ra khi lưu danh mục.', 'error');
