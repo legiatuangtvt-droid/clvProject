@@ -288,6 +288,12 @@
     color: var(--primary-color-dark); /* Màu chữ đậm hơn */
 }
 
+/* QUAN TRỌNG: Sửa lỗi lệch cột cho hàng danh mục */
+.device-table .category-row td[colspan="10"] {
+    /* Tổng độ rộng của 10 cột được gộp: 10+10+20+33+3+3+3+3+3+3 = 91% */
+    width: 91%;
+}
+
 /* --- NEW: Ancestor Category Row Style --- */
 .device-table .ancestor-category-row {
     background-color: #fdfdfe; /* Màu nền sáng hơn cả category-row */
