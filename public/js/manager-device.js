@@ -660,6 +660,24 @@ document.addEventListener('DOMContentLoaded', () => {
         return `Trang chủ / ${path.join(' / ')}`;
     }
 
+    // --- NEW: Handle Tab key in textarea ---
+    const handleTextareaTab = (event) => {
+        if (event.key === 'Tab') {
+            event.preventDefault(); // Ngăn chặn hành vi mặc định (chuyển focus)
+
+            const textarea = event.target;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+
+            // Chèn ký tự Tab vào vị trí con trỏ
+            textarea.value = textarea.value.substring(0, start) + '\t' + textarea.value.substring(end);
+
+            // Di chuyển con trỏ đến sau ký tự Tab vừa chèn
+            textarea.selectionStart = textarea.selectionEnd = start + 1;
+        }
+    };
+
+
     // --- BULK IMPORT ---
     const openBulkImportModal = () => {
         const parentItem = selectedNodeId ? allItemsCache.find(item => item.id === selectedNodeId) : null;
@@ -679,97 +697,47 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // --- NEW PARSING LOGIC ---
-        // Tách toàn bộ văn bản thành các bản ghi dựa trên dấu hiệu bắt đầu là một số (Số TT)
-        // Ví dụ: "1. ", "1.1 ", "1\t"
-        const recordsRaw = input.split(/(?:\r\n|\r|\n)(?=\d+(\.\d+)?[\s\t])/);
+        // Tách các dòng dựa trên ký tự xuống dòng. Cách này an toàn hơn regex
+        // vì nó không bị ảnh hưởng bởi nội dung có ký tự xuống dòng bên trong một ô.
+        const lines = input.split(/\r\n|\r|\n/);
 
         validRegistrationsToCreate = []; // Reset
         const previewData = [];
         const errors = [];
 
-        for (let i = 0; i < recordsRaw.length; i++) {
-            const recordText = recordsRaw[i].trim();
-            if (!recordText) continue;
-            
-            // --- LOGIC PHÂN TÍCH MỚI (V4) ---
-            // Tách chuỗi thành 2 phần dựa trên cột 'x' (Dùng cho GV) làm điểm neo.
-            // Regex: tìm 'x' được bao quanh bởi các khoảng trắng (tab, enter, space)
-            const separatorRegex = /\s+x\s+/i;
-            const separatorIndex = recordText.search(separatorRegex);
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
 
-            if (separatorIndex === -1) { // SỬA LỖI: Dùng continue để bỏ qua dòng lỗi và xử lý dòng tiếp theo, thay vì return để thoát hàm.
-                errors.push(`Dòng ${i + 1}: Định dạng không hợp lệ. Không tìm thấy cột "Dùng cho GV" (có giá trị 'x').`); 
-                previewData.push({ data: [recordText], status: 'has-error', originalText: recordText });
+            // Tách các cột trong một dòng bằng ký tự Tab
+            const parts = line.split('\t').map(p => p.trim());
+
+            // Cần ít nhất 3 cột: STT, Chủ đề, Tên thiết bị
+            if (parts.length < 3) {
+                errors.push(`Dòng ${i + 1}: Không đủ thông tin. Cần ít nhất 3 cột đầu tiên (Số TT, Chủ đề, Tên thiết bị).`);
+                previewData.push({ data: parts, status: 'has-error', originalText: line });
                 continue;
             }
 
-            // Phần 1: Từ đầu đến trước cột 'x'
-            const beforeX = recordText.substring(0, separatorIndex);
-            // Phần 2: Từ sau cột 'x' đến hết
-            const afterX = recordText.substring(separatorIndex + separatorRegex.exec(recordText)[0].length);
-            
-            // Logic mới (V6): Tách riêng 4 cột đầu và phần mô tả để xử lý chính xác hơn
-            // SỬA LỖI: Lọc bỏ các phần tử rỗng do các tab thừa tạo ra (ví dụ: STT \t \t Tên thiết bị)
-            const beforePartsRaw = beforeX.split(/[\t\r\n]+/).filter(p => p.trim() !== '');
-            const firstFourParts = beforePartsRaw.slice(0, 4).filter(p => p.trim() !== '');
-            const descriptionPart = beforePartsRaw.slice(4).join(' ').trim();
+            // Gán giá trị từ các cột đã tách bằng phương pháp Destructuring Assignment
+            const [
+                stt = '',
+                topic = '',
+                name = '',
+                purpose = '',
+                description = '',
+                usageGV = '',
+                usageHS = '',
+                unit = '',
+                quota = '',
+                quantityStr = '0',
+                brokenStr = '0'
+            ] = parts;
 
-            if (firstFourParts.length < 2) { // Cần ít nhất Số TT và Tên thiết bị
-                errors.push(`Dòng ${i + 1}: Thiếu thông tin tối thiểu (cần có Số TT và Tên thiết bị).`);
-                previewData.push({ data: [recordText], status: 'has-error', originalText: recordText });
-                continue;
-            }
-
-            const stt = firstFourParts[0] || '';
-            let topic = '', name = '', purpose = '';
-            const description = descriptionPart; // Gán mô tả đã được tách riêng
-
-            // Xử lý linh hoạt 3 cột: Chủ đề, Tên, Mục đích
-            // SỬA LỖI: Logic gán cột linh hoạt hơn để xử lý trường hợp thiếu cột "Chủ đề"
-            const mainInfoParts = beforeX.split(/[\t\r\n]+/); // Tách lại để lấy cả các cột rỗng
-            const sttPart = mainInfoParts.shift() || ''; // Lấy và xóa STT khỏi mảng
-            const remainingParts = mainInfoParts.filter(p => p.trim() !== ''); // Lọc các phần tử rỗng còn lại
-
-            if (remainingParts.length === 1) {
-                name = remainingParts[0]; // Nếu chỉ còn 1 phần tử, đó là Tên
-            } else if (remainingParts.length >= 2) {
-                name = remainingParts[0]; // Phần tử đầu tiên là Tên
-                purpose = remainingParts[1]; // Phần tử thứ hai là Mục đích
-                // Bỏ qua Chủ đề nếu nó trống
-            }
-
-            // Tách các cột ở phần 2 (HS, ĐVT, ĐM, Tổng, Hỏng)
-            // SỬA LỖI: Lọc bỏ các phần tử rỗng do các tab thừa tạo ra
-            const afterParts = afterX.split(/[\t\r\n]+/).filter(part => part.trim() !== '');
-            let currentAfterIndex = 0;
-            const usageGV = 'x'; // Cột GV là điểm neo
-            // Sửa lỗi: Thêm 'bộ/chiếc' vào danh sách đơn vị hợp lệ
-            const ALLOWED_UNITS = new Set(['bộ', 'cái', 'hộp', 'chiếc', 'cuộn', 'm', 'kg', 'bộ/chiếc']);
-
-            // Logic mới (V5): Kiểm tra cột HS, chỉ chấp nhận 'x' hoặc rỗng.
-            let usageHS = '';
-            const potentialHSValue = (afterParts[currentAfterIndex] || '').toLowerCase();
-
-            if (potentialHSValue === 'x') {
-                usageHS = 'x';
-                currentAfterIndex++; // Nếu là 'x', đọc cột Đơn vị từ phần tử tiếp theo
-            } 
-            // Nếu không phải 'x', thì cột HS được coi là rỗng.
-            // currentAfterIndex không tăng, và phần tử tiếp theo sẽ được coi là Đơn vị tính.
-
-            const unit = (afterParts[currentAfterIndex] || '').toLowerCase();
-            currentAfterIndex++;
-            const quota = afterParts[currentAfterIndex++] || '';
-            const quantityStr = afterParts[currentAfterIndex++] || '0';
-            const brokenStr = afterParts[currentAfterIndex++] || '0';
-
-            // Kiểm tra đơn vị tính hợp lệ
-            if (unit && !ALLOWED_UNITS.has(unit)) {
-                // Lấy lại giá trị gốc của đơn vị để hiển thị lỗi chính xác
-                const originalUnit = (afterX.split(/[\t\r\n]+/).filter(p => p.trim() !== ''))[usageHS === 'x' ? 1 : 0] || unit;
-                errors.push(`Dòng ${i + 1}: Đơn vị tính "${originalUnit}" không hợp lệ. Các giá trị được chấp nhận là: ${[...ALLOWED_UNITS].join(', ')}.`);
-                previewData.push({ data: [stt, topic, name, purpose, description, usageGV, usageHS, unit, quota, quantityStr, brokenStr], status: 'has-error', originalText: recordText });
+            // Tên thiết bị là trường bắt buộc
+            if (!name) {
+                errors.push(`Dòng ${i + 1}: Tên thiết bị không được để trống.`);
+                previewData.push({ data: parts, status: 'has-error', originalText: line });
                 continue;
             }
 
@@ -781,7 +749,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const broken = parseInt(brokenStr) || 0;
 
             const newDeviceData = {
-                order: stt, topic, name, purpose, description, usageObject, unit, quota,
+                order: stt,
+                topic: topic,
+                name: name,
+                purpose: purpose,
+                description: description,
+                usageObject: usageObject,
+                unit: unit,
+                quota: quota,
                 quantity: quantity,
                 broken: broken,
                 type: 'device',
@@ -790,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             validRegistrationsToCreate.push(newDeviceData);
-            previewData.push({ data: [stt, topic, name, purpose, description, usageGV, usageHS, unit, quota, quantityStr, brokenStr], status: 'is-valid', originalText: recordText });
+            previewData.push({ data: parts, status: 'is-valid', originalText: line });
         }
 
         // Render preview
