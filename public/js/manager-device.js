@@ -718,45 +718,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const recordText = recordsRaw[i].trim();
             if (!recordText) continue;
 
-            // Tách chuỗi thành 2 phần dựa trên cột 'x' (Dùng cho GV) làm điểm neo.
-            // Regex: tìm 'x' được bao quanh bởi các khoảng trắng (tab, enter, space)
-            const separatorRegex = /\s+x\s+/i;
-            const separatorIndex = recordText.search(separatorRegex);
+            // --- LOGIC MỚI: Tách toàn bộ dòng bằng ký tự Tab để xử lý chính xác các cột ---
+            const parts = recordText.split('\t');
 
-            if (separatorIndex === -1) {
-                errors.push(`Dòng ${i + 1}: Định dạng không hợp lệ. Không tìm thấy cột "Dùng cho GV" (có giá trị 'x').`);
+            // Cần ít nhất 6 cột (đến cột GV) để được coi là hợp lệ
+            if (parts.length < 6) {
+                errors.push(`Dòng ${i + 1}: Không đủ cột dữ liệu. Cần tối thiểu 6 cột.`);
                 previewData.push({ data: [recordText], status: 'has-error', originalText: recordText });
                 continue;
             }
 
-            // Phần 1: Từ đầu đến trước cột 'x'
-            const beforeX = recordText.substring(0, separatorIndex);
-            // Phần 2: Từ sau cột 'x' đến hết
-            const afterX = recordText.substring(separatorIndex + separatorRegex.exec(recordText)[0].length);
-
-            // Tách các cột ở phần 1 (trước 'x')
-            const beforeParts = beforeX.split('\t');
-            const stt = beforeParts[0]?.trim() || '';
-            const topic = beforeParts[1]?.trim() || '';
-            const name = beforeParts[2]?.trim() || '';
-            const purpose = beforeParts[3]?.trim() || '';
-            // Cột mô tả là phần còn lại của beforeParts, nối lại bằng ký tự xuống dòng
-            const description = beforeParts.slice(4).join('\n').trim();
+            const stt = parts[0]?.trim() || '';
+            const topic = parts[1]?.trim() || '';
+            const name = parts[2]?.trim() || '';
+            const purpose = parts[3]?.trim() || '';
+            const description = parts[4]?.trim() || '';
+            const usageGV = parts[5]?.trim() || '';
+            const usageHS = parts[6]?.trim() || '';
+            const unit = parts[7]?.trim() || '';
+            const quota = parts[8]?.trim() || '';
+            const quantityStr = parts[9]?.trim() || '0';
+            const brokenStr = parts[10]?.trim() || '0';
 
             if (!name) {
                 errors.push(`Dòng ${i + 1}: Tên thiết bị không được để trống.`);
                 previewData.push({ data: [recordText], status: 'has-error', originalText: recordText });
                 continue;
             }
-
-            // Tách các cột ở phần 2 (sau 'x')
-            const afterParts = afterX.split('\t').map(p => p.trim());
-            const usageGV = 'x'; // Cột GV là điểm neo
-            const usageHS = afterParts[0] || '';
-            const unit = afterParts[1] || '';
-            const quota = afterParts[2] || '';
-            const quantityStr = afterParts[3] || '0';
-            const brokenStr = afterParts[4] || '0';
 
             const usageObject = [];
             if (usageGV.toLowerCase() === 'x') usageObject.push('GV');
