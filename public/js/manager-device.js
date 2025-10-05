@@ -535,39 +535,28 @@ document.addEventListener('DOMContentLoaded', () => {
         return ids;
     };
 
-    // --- NEW: Hàm đệ quy để đóng tất cả các danh mục con ---
-    const collapseSubtree = (parentId) => {
-        const childrenRows = document.querySelectorAll(`tr[data-parent-id="${parentId}"]`);
-
-        childrenRows.forEach(childRow => {
-            const childId = childRow.dataset.id;
-            if (childRow.dataset.type === 'category') {
-                // Xóa khỏi danh sách các mục đang mở
-                expandedCategories.delete(childId);
-                // Đổi icon về thư mục đóng
-                const icon = childRow.querySelector('.col-name .fas');
-                if (icon) icon.className = 'fas fa-folder';
-                // Đệ quy để đóng các cấp sâu hơn
-                collapseSubtree(childId);
-            }
-        });
-    };
     // --- NEW: Hàm đệ quy để ẩn/hiện cây con ---
     const toggleSubtreeVisibility = (parentId, hide) => {
         const childrenRows = document.querySelectorAll(`tr[data-parent-id="${parentId}"]`);
 
         childrenRows.forEach(childRow => {
+            const childId = childRow.dataset.id;
             if (hide) {
                 // Nếu lệnh là ẩn, ẩn luôn hàng con này
                 childRow.classList.add('hidden');
                 // Và đệ quy để ẩn tất cả các con của nó
-                toggleSubtreeVisibility(childRow.dataset.id, true);
+                toggleSubtreeVisibility(childId, true);
             } else {
-                // Nếu lệnh là hiện, chỉ cần bỏ class 'hidden' của hàng con này.
-                // Việc hiển thị các cấp sâu hơn sẽ do trạng thái 'expanded' của chính nó quyết định.
+                // Nếu lệnh là hiện, chỉ hiện các con trực tiếp.
                 childRow.classList.remove('hidden');
-                if (childRow.dataset.type === 'category' && expandedCategories.has(childRow.dataset.id)) {
-                    toggleSubtreeVisibility(childRow.dataset.id, false);
+                // Đồng thời, đảm bảo tất cả các danh mục con cháu đều ở trạng thái đóng.
+                if (childRow.dataset.type === 'category') {
+                    expandedCategories.delete(childId); // Đóng danh mục con
+                    const icon = childRow.querySelector('.col-name .fas');
+                    if (icon) icon.className = 'fas fa-folder';
+
+                    // Ẩn tất cả các cấp sâu hơn của danh mục con này.
+                    toggleSubtreeVisibility(childId, true);
                 }
             }
         });
@@ -640,8 +629,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     expandedCategories.add(id);
                     toggleSubtreeVisibility(id, false); // Hiện các con trực tiếp
-                    // Đóng tất cả các danh mục con cháu bên trong
-                    collapseSubtree(id);
                     if (icon) icon.className = 'fas fa-folder-open';
                 }
             }
