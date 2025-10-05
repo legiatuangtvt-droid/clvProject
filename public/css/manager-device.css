@@ -171,12 +171,13 @@
 .device-table {
     width: 100%;
     border-collapse: collapse; /* Chuyển sang collapse để có đường kẻ liền mạch */
+    /* table-layout: fixed; QUAN TRỌNG: Buộc bảng tuân thủ độ rộng đã định nghĩa */
     font-size: 0.9rem;
 }
 
 .device-table th,
 .device-table td {
-    padding: 10px 12px;
+    padding: 5px 5px;
     text-align: left;
     vertical-align: middle;
     border-bottom: 1px solid var(--border-color); /* Thêm đường kẻ ngang */
@@ -191,7 +192,7 @@
     top: 0;
     z-index: 1;
     text-transform: uppercase; /* Viết hoa tiêu đề */
-    font-size: 0.8rem; /* Giảm kích thước chữ tiêu đề */
+    font-size: 0.7rem; /* Giảm kích thước chữ tiêu đề */
     letter-spacing: 0.5px; /* Tăng khoảng cách giữa các chữ */
     vertical-align: middle; /* Căn giữa theo chiều dọc */
     text-align: center; /* Căn giữa nội dung tiêu đề cột */
@@ -215,37 +216,36 @@
     background-color: #f1f5f9; /* Đổi màu nền khi hover */
 }
 
-.device-table .col-stt { width: 3%; text-align: center; }
-.device-table .col-topic { width: 10%; }
-.device-table .col-name { width: 10%; font-weight: 500; }
-.device-table .col-purpose { width: 15%; text-align: justify; }
+.device-table .col-stt { width: 3%; text-align: center; } /* Cột Số thứ tự */
+.device-table .col-topic { width: 10%; } /* Cột Chủ đề/Môn học */
+.device-table .col-name { width: 10%; font-weight: 500; } /* Cột Tên thiết bị/danh mục */
+.device-table .col-purpose { width: 20%; text-align: justify; } /* Cột Mục đích sử dụng (Tăng lên 20%) */
 .device-table th.col-description {
-    width: 39%;
+    width: 33%; /* Cột Mô tả (phần tiêu đề) */
 }
 .device-table td.col-description {
-    width: 39%;
+    width: 33%; /* Cột Mô tả (phần nội dung) */
     white-space: pre-wrap; /* Cho phép xuống dòng trong ô mô tả */
     word-break: break-word; /* Tự động ngắt từ nếu quá dài */
     max-width: 300px; /* Giới hạn chiều rộng tối đa */
     overflow: hidden; /* Ẩn phần bị tràn */
     text-overflow: ellipsis; /* Hiển thị dấu "..." */
-    text-align: justify; /* Chỉ căn đều cho nội dung, không phải tiêu đề */
+    text-align: justify; /* Căn đều nội dung mô tả cho dễ đọc */
 }
 .device-table tr.hidden {
     display: none;
 }
 
-
 .device-table .col-usage-gv,
 .device-table .col-usage-hs {
-    width: 3%;
+    width: 3%; /* Cột Cho GV mượn / Cho HS mượn */
     text-align: center;
 }
-.device-table .col-unit { width: 3%; text-align: center; }
-.device-table .col-quota { width: 3%; text-align: center; }
-.device-table .col-quantity { width: 3%; text-align: center; }
-.device-table .col-broken { width: 3%; text-align: center; }
-.device-table .col-actions { width: 5%; text-align: center; }
+.device-table .col-unit { width: 3%; text-align: center; } /* Cột Đơn vị tính */
+.device-table .col-quota { width: 3%; text-align: center; } /* Cột Định mức */
+.device-table .col-quantity { width: 3%; text-align: center; } /* Cột Số lượng */
+.device-table .col-broken { width: 3%; text-align: center; } /* Cột Hỏng */
+.device-table .col-actions { width: 11%; text-align: center; } /* Cột Hành động (sửa, xóa) (Giảm xuống 5%) */
 
 
 .device-table .item-name-cell {
