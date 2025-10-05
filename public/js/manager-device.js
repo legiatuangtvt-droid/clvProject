@@ -816,15 +816,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         setButtonLoading(confirmBulkImportBtn, true);
         const batch = writeBatch(firestore);
+        const newItemsForCache = [];
         validRegistrationsToCreate.forEach(data => {
             const newDocRef = doc(collection(firestore, 'devices'));
             batch.set(newDocRef, data);
+            newItemsForCache.push({ id: newDocRef.id, ...data });
         });
         await batch.commit();
+        allItemsCache.push(...newItemsForCache); // Chỉ thêm các mục mới vào cache
         setButtonLoading(confirmBulkImportBtn, false);
         bulkImportPreviewModal.style.display = 'none';
         showToast(`Nhập thành công ${validRegistrationsToCreate.length} thiết bị!`, 'success');
-        await loadAllItems();
         renderList(selectedNodeId);
     };
 
