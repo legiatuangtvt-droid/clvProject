@@ -188,20 +188,31 @@ const initializeTeacherRegisterPage = (user) => {
         } catch (error) { console.warn("Không thể tải gợi ý bài học:", error); }
     };
 
-    const populateModalSelectors = async (user) => {
-        // Tải PPDH
+    const populateModalSelectors = async () => {
         const subjectSelect = document.getElementById('reg-subject');
         subjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
-        if (currentUserInfo && currentUserInfo.group_subjects) {
-            const subjects = currentUserInfo.group_subjects;
-            if (subjects.length > 0) {
-                subjects.forEach(subject => {
-                    const isSelected = subject === currentUserInfo.subject ? 'selected' : '';
-                    subjectSelect.innerHTML += `<option value="${subject}" ${isSelected}>${subject}</option>`;
-                });
-            }
-        }
-
+    
+        if (!currentUserInfo) return;
+    
+        const allowedSubjects = new Set();
+    
+        // 1. Lấy các môn học từ tổ chuyên môn của giáo viên
+        (currentUserInfo.group_subjects || []).forEach(sub => allowedSubjects.add(sub));
+    
+        // 2. Lấy các môn học đặc biệt từ collection 'subjects'
+        const specialSubjectsQuery = query(
+            collection(firestore, 'subjects'),
+            where('schoolYear', '==', currentSchoolYear),
+            where('type', '==', 'special')
+        );
+        const specialSubjectsSnapshot = await getDocs(specialSubjectsQuery);
+        specialSubjectsSnapshot.forEach(doc => allowedSubjects.add(doc.data().name));
+    
+        // 3. Populate danh sách môn học vào select
+        [...allowedSubjects].sort().forEach(subject => {
+            subjectSelect.innerHTML += `<option value="${subject}">${subject}</option>`;
+        });
+    
         const methodsQuery = query(collection(firestore, 'teachingMethods'), where('schoolYear', '==', currentSchoolYear), orderBy('method'));
         const methodsSnapshot = await getDocs(methodsQuery);
         const methodContainer = document.getElementById('reg-method-container');
@@ -220,6 +231,12 @@ const initializeTeacherRegisterPage = (user) => {
                     </div>
                 `;
             });
+        }
+    
+        // 4. Tự động chọn môn học chính của giáo viên nếu có, hoặc môn học đã dùng lần cuối
+        const subjectToSelect = currentUserInfo.subject || lastUsedSubject;
+        if (subjectToSelect && allowedSubjects.has(subjectToSelect)) {
+            subjectSelect.value = subjectToSelect;
         }
     };
 
@@ -536,8 +553,9 @@ const initializeTeacherRegisterPage = (user) => {
             document.getElementById('reg-day').disabled = true;
             document.getElementById('reg-period').disabled = true;
             // Đặt môn học mặc định từ lần đăng ký trước
-            if (lastUsedSubject) {
-                document.getElementById('reg-subject').value = lastUsedSubject;
+            const subjectToSelect = currentUserInfo.subject || lastUsedSubject;
+            if (subjectToSelect) {
+                document.getElementById('reg-subject').value = subjectToSelect;
             }
         }
         registerModal.style.display = 'flex';
@@ -1091,8 +1109,8 @@ const initializeTeacherRegisterPage = (user) => {
 
             await loadTeachersInGroup();
             await loadRegistrationRule(); // Tải quy tắc đăng ký
-            await loadTimePlan(user);
-            await populateModalSelectors(user);
+            await loadTimePlan(user); // Cần user để gọi updateSelectedWeek
+            await populateModalSelectors(); // Không cần user nữa
             await loadLastUsedSubject(user);
 
         } catch (error) {
