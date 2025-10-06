@@ -572,6 +572,14 @@
     color: #6c757d;
 }
 
+/* Căn giữa các cột số lượng trong bảng xem trước */
+.preview-table th:nth-child(10),
+.preview-table td:nth-child(10),
+.preview-table th:nth-child(11),
+.preview-table td:nth-child(11) {
+    text-align: center;
+}
+
 /* --- NEW: Bulk Import Modal Textarea Style --- */
 #bulk-import-modal textarea {
     width: 100%;
