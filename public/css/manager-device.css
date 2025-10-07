@@ -279,6 +279,13 @@
     font-size: 1rem; /* Tăng kích thước chữ một chút */
 }
 
+.device-table .category-row .item-name-cell .category-subject-tag {
+    font-weight: 400;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-left: 8px;
+}
+
 /* --- NEW: Parent Category Row Style --- */
 .device-table .parent-category-row {
     background-color: #e9ecef; /* Màu nền đậm hơn một chút so với các danh mục con */
@@ -392,6 +399,34 @@
 }
 .checkbox-group label {
     cursor: pointer;
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+/* --- NEW: Category Modal Specific Styles --- */
+
+/* Áp dụng style chung cho input và select trong modal danh mục */
+#category-modal input[type="text"],
+#category-modal select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color-strong);
+    border-radius: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#category-modal select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
 }
 
 /* --- Responsive Styles --- */
@@ -649,6 +684,14 @@
     display: flex;
     gap: 25px;
 }
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
 
 .checkbox-item {
     display: flex;

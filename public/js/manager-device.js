@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeTopLevelCategoryId = null; // NEW: Track the top-level category being viewed
     let expandedCategories = new Set(); // Theo dõi các danh mục đang mở
     let validRegistrationsToCreate = []; // Dùng cho nhập hàng loạt
+    let allSubjectsCache = []; // Cache cho danh sách môn học
 
     // --- INITIALIZATION ---
     const initializePage = async () => {
@@ -83,12 +84,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const snapshot = await getDocs(q);
             allItemsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+            await loadAllSubjects(); // Tải danh sách môn học
             renderList(null); // Hiển thị nội dung gốc ban đầu
         } catch (error) {
             console.error("Lỗi khi tải dữ liệu:", error);
             listContainer.innerHTML = '<p class="error-message">Không thể tải dữ liệu từ cơ sở dữ liệu.</p>';
         }
     };
+
+    const loadAllSubjects = async () => {
+        try {
+            // Giả định năm học hiện tại đã được xác định.
+            // Nếu chưa, cần thêm logic để lấy năm học mới nhất.
+            const q = query(collection(firestore, 'subjects'), orderBy('name'));
+            const snapshot = await getDocs(q);
+            allSubjectsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error("Lỗi khi tải danh sách môn học:", error);
+            showToast('Không thể tải danh sách môn học.', 'error');
+        }
+    };
+
+
 
     // --- UI RENDERING ---
     const renderBreadcrumbs = (parentId) => {
@@ -176,7 +193,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td colspan="10" class="col-name">
                             <div class="item-name-cell" style="padding-left: ${indent}px;">
                                 <i class="fas ${iconClass} category-toggle-icon"></i>
-                                <span class="item-link" data-field="category-name">${item.name}</span>
+                                <span class="item-link" data-field="category-name">
+                                    ${item.name}
+                                    ${depth === 0 && item.subject ? `<span class="category-subject-tag">(${item.subject})</span>` : ''}
+                                </span>
                             </div>
                         </td>
                         <td class="col-actions">
@@ -372,10 +392,15 @@ document.addEventListener('DOMContentLoaded', () => {
         currentEditingId = isEditing ? data.id : null;
         categoryForm.reset();
         categoryModalTitle.textContent = isEditing ? 'Sửa Danh mục' : 'Thêm Danh mục';
-
+    
         const parentSelectGroup = document.getElementById('category-parent-select-group');
         const parentSelect = document.getElementById('category-parent-select');
-
+        const subjectSelectGroup = document.getElementById('category-subject-select-group');
+        const subjectSelect = document.getElementById('category-subject-select');
+    
+        // Xác định xem có phải là danh mục cấp cao nhất không
+        const isTopLevel = isEditing ? !data.parentId : !selectedNodeId;
+    
         if (isEditing) {
             document.getElementById('category-name').value = data.name || '';
             document.getElementById('category-order').value = data.order !== undefined ? data.order : '';
@@ -386,7 +411,22 @@ document.addEventListener('DOMContentLoaded', () => {
             // Khi thêm mới, vị trí là danh mục hiện tại, nên không cần hiển thị selector
             parentSelectGroup.style.display = 'none';
         }
-
+    
+        // Xử lý hiển thị và điền dữ liệu cho dropdown Môn học
+        if (isTopLevel) {
+            subjectSelectGroup.style.display = 'block';
+            subjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
+            allSubjectsCache.forEach(subject => {
+                subjectSelect.innerHTML += `<option value="${subject.name}">${subject.name}</option>`;
+            });
+            if (isEditing) {
+                subjectSelect.value = data.subject || '';
+            }
+        } else {
+            subjectSelectGroup.style.display = 'none';
+            subjectSelect.innerHTML = '';
+        }
+    
         categoryModal.style.display = 'flex';
         // Focus vào trường được chỉ định hoặc trường tên mặc định
         const fieldToFocus = focusFieldId ? document.getElementById(focusFieldId) : document.getElementById('category-name');
@@ -442,17 +482,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let parentId;
         let shouldUpdateSelectedNode = false;
+        const isTopLevel = currentEditingId ? !document.getElementById('category-parent-select').value : !selectedNodeId;
+
         if (currentEditingId) { // Nếu đang sửa
             parentId = document.getElementById('category-parent-select').value || null;
         } else { // Nếu thêm mới
             parentId = selectedNodeId; // parentId là mục đang xem
         }
 
+        const subject = isTopLevel ? document.getElementById('category-subject-select').value || null : null;
+
         const data = {
             name: name,
             order: document.getElementById('category-order').value.trim(),
             type: 'category',
-            parentId: parentId
+            parentId: parentId,
+            // Chỉ thêm trường subject nếu nó có giá trị
+            ...(subject && {
+                subject: subject
+            })
         };
 
         try {
@@ -986,6 +1034,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Ưu tiên xử lý các nút hành động trước
             if (target.closest('.delete-item-btn')) {
                 handleDelete(id, type);
+            } else if (target.closest('.edit-item-btn')) {
+                // Sửa lỗi: Thêm lại handler cho nút sửa của danh mục
+                openItemModal(type, true, itemData);
             } 
             // Xử lý click vào ô có thể sửa
             else if (target.closest('td[data-field]')) {
