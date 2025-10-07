@@ -555,12 +555,13 @@
 .preview-table th, .preview-table td {
     border: 1px solid var(--border-color);
     padding: 8px;
-    text-align: left;
+    vertical-align: middle; /* Căn giữa theo chiều dọc */
 }
 
 .preview-table thead th {
     background-color: var(--surface-subtle-bg);
     font-weight: 600;
+    text-align: center; /* Căn giữa tất cả tiêu đề cột */
 }
 
 .preview-table tbody tr.is-valid {
@@ -572,12 +573,16 @@
     color: #6c757d;
 }
 
-/* Căn giữa các cột số lượng trong bảng xem trước */
-.preview-table th:nth-child(10),
-.preview-table td:nth-child(10),
-.preview-table th:nth-child(11),
-.preview-table td:nth-child(11) {
+/* Căn giữa nội dung các cột, ngoại trừ các cột có nội dung dài */
+.preview-table td {
     text-align: center;
+}
+
+/* Căn đều cho các cột có nội dung dài để dễ đọc */
+.preview-table td:nth-child(3), /* Cột Tên */
+.preview-table td:nth-child(4), /* Cột Mục đích */
+.preview-table td:nth-child(5) { /* Cột Mô tả */
+    text-align: justify;
 }
 
 /* --- NEW: Bulk Import Modal Textarea Style --- */
