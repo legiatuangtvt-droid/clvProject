@@ -843,11 +843,18 @@ document.addEventListener('DOMContentLoaded', () => {
         bulkImportBtn?.addEventListener('click', openBulkImportModal);
 
         // Đóng/Lưu modal Danh mục
-        cancelCategoryBtn?.addEventListener('click', () => categoryModal.style.display = 'none');
+        cancelCategoryBtn?.addEventListener('click', () => {
+            categoryModal.style.display = 'none';
+            // Render lại danh sách để hiển thị lại các nút hành động nếu chúng đã bị ẩn
+            renderList(selectedNodeId);
+        });
         saveCategoryBtn?.addEventListener('click', saveCategory);
 
         // Thêm sự kiện Enter để lưu cho modal Danh mục
         categoryForm?.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                cancelCategoryBtn.click();
+            }
             if (e.key === 'Enter') {
                 e.preventDefault(); // Ngăn hành vi mặc định của form
                 saveCategoryBtn.click();
@@ -856,6 +863,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Thêm sự kiện Enter để lưu cho modal Thiết bị
         deviceForm?.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                cancelDeviceBtn.click();
+            }
             // Chỉ thực hiện khi phím Enter được nhấn và không phải trong textarea
             if (e.key === 'Enter' && e.target.tagName.toLowerCase() !== 'textarea') {
                 e.preventDefault();
@@ -865,11 +875,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Thêm sự kiện Enter để xác nhận xóa
         confirmDeleteModal?.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                cancelDeleteBtn.click();
+            }
             if (e.key === 'Enter') confirmDeleteBtn.click();
         });
 
         // Đóng/Lưu modal Thiết bị
-        cancelDeviceBtn?.addEventListener('click', () => deviceModal.style.display = 'none');
+        cancelDeviceBtn?.addEventListener('click', () => {
+            deviceModal.style.display = 'none';
+            // Render lại danh sách để hiển thị lại các nút hành động nếu chúng đã bị ẩn
+            renderList(selectedNodeId);
+        });
         saveDeviceBtn?.addEventListener('click', saveDevice);
 
         // Modal xác nhận xóa
@@ -888,6 +905,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         // Thêm sự kiện Enter để xử lý cho modal Nhập hàng loạt
         bulkImportModal?.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                cancelBulkImportBtn.click();
+            }
             if (e.key === 'Enter' && e.target.tagName.toLowerCase() !== 'textarea') {
                 e.preventDefault();
                 processBulkImportBtn.click();
@@ -905,6 +925,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         // Thêm sự kiện Enter để xác nhận nhập
         bulkImportPreviewModal?.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                cancelBulkImportPreviewBtn.click();
+            }
             if (e.key === 'Enter') confirmBulkImportBtn.click();
         });
 
