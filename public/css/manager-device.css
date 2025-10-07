@@ -429,6 +429,65 @@
     background-size: 16px 12px;
 }
 
+/* --- NEW: Multi-select Subject Styles --- */
+.custom-select-wrapper {
+    position: relative;
+}
+
+.custom-select-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid var(--border-color-strong);
+    border-radius: 8px;
+    cursor: text;
+    background-color: #fff;
+}
+
+.custom-select-container:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
+}
+
+.subject-tag {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--primary-light);
+    color: var(--primary-color-dark);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.remove-tag {
+    margin-left: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.custom-select-container input {
+    flex-grow: 1;
+    border: none;
+    outline: none;
+    padding: 5px;
+    min-width: 150px;
+}
+
+.subject-dropdown-list {
+    position: absolute;
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 1001; /* Cao hơn modal-content */
+}
+
 /* --- Responsive Styles --- */
 @media (max-width: 768px) {
     .device-table-container {

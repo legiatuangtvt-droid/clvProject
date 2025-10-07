@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <i class="fas ${iconClass} category-toggle-icon"></i>
                                 <span class="item-link" data-field="category-name">
                                     ${item.name}
-                                    ${depth === 0 && item.subject ? `<span class="category-subject-tag">(${item.subject})</span>` : ''}
+                                    ${depth === 0 && item.subjects && item.subjects.length > 0 ? `<span class="category-subject-tag">(${item.subjects.join(', ')})</span>` : ''}
                                 </span>
                             </div>
                         </td>
@@ -395,12 +395,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
         const parentSelectGroup = document.getElementById('category-parent-select-group');
         const parentSelect = document.getElementById('category-parent-select');
-        const subjectSelectGroup = document.getElementById('category-subject-select-group');
-        const subjectSelect = document.getElementById('category-subject-select');
+        const subjectGroup = document.getElementById('category-subject-select-group');
     
         // Xác định xem có phải là danh mục cấp cao nhất không
         const isTopLevel = isEditing ? !data.parentId : !selectedNodeId;
     
+        // Reset và thiết lập lại bộ chọn môn học đa lựa chọn
+        setupSubjectMultiSelect();
         if (isEditing) {
             document.getElementById('category-name').value = data.name || '';
             document.getElementById('category-order').value = data.order !== undefined ? data.order : '';
@@ -413,20 +414,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     
         // Xử lý hiển thị và điền dữ liệu cho dropdown Môn học
-        if (isTopLevel) {
-            subjectSelectGroup.style.display = 'block';
-            subjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
-            allSubjectsCache.forEach(subject => {
-                subjectSelect.innerHTML += `<option value="${subject.name}">${subject.name}</option>`;
+        subjectGroup.style.display = isTopLevel ? 'block' : 'none';
+        if (isTopLevel && isEditing && data.subjects) {
+            const subjectsContainer = document.getElementById('category-subjects-container');
+            data.subjects.forEach(subjectName => {
+                addSubjectTag(subjectName, subjectsContainer);
             });
-            if (isEditing) {
-                subjectSelect.value = data.subject || '';
-            }
-        } else {
-            subjectSelectGroup.style.display = 'none';
-            subjectSelect.innerHTML = '';
         }
-    
+
         categoryModal.style.display = 'flex';
         // Focus vào trường được chỉ định hoặc trường tên mặc định
         const fieldToFocus = focusFieldId ? document.getElementById(focusFieldId) : document.getElementById('category-name');
@@ -434,6 +429,72 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => fieldToFocus.focus(), 100); // Delay nhỏ để đảm bảo modal hiển thị
         }
     };
+
+    // --- SUBJECT MULTI-SELECT LOGIC ---
+    const setupSubjectMultiSelect = () => {
+        const wrapper = document.getElementById('category-subjects-select-wrapper');
+        const container = document.getElementById('category-subjects-container');
+        const searchInput = document.getElementById('category-subject-search-input');
+        const dropdown = document.getElementById('category-subject-dropdown');
+
+        // Xóa các tag cũ và reset input
+        container.querySelectorAll('.subject-tag').forEach(tag => tag.remove());
+        searchInput.value = '';
+
+        const filterSubjects = () => {
+            const filterText = searchInput.value.toLowerCase();
+            const selectedSubjects = new Set(Array.from(container.querySelectorAll('.subject-tag')).map(tag => tag.firstChild.textContent));
+            
+            const filtered = allSubjectsCache.filter(subject => 
+                !selectedSubjects.has(subject.name) && subject.name.toLowerCase().includes(filterText)
+            );
+
+            dropdown.innerHTML = filtered.map(subject => `<div class="subject-dropdown-item">${subject.name}</div>`).join('');
+            dropdown.style.display = filtered.length > 0 ? 'block' : 'none';
+        };
+
+        searchInput.onkeyup = filterSubjects;
+        searchInput.onfocus = filterSubjects;
+
+        dropdown.onclick = (e) => {
+            if (e.target.classList.contains('subject-dropdown-item')) {
+                addSubjectTag(e.target.textContent, container);
+                searchInput.value = '';
+                filterSubjects();
+                searchInput.focus();
+            }
+        };
+
+        // Đóng dropdown khi click ra ngoài
+        document.addEventListener('click', (e) => {
+            if (!wrapper.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    };
+
+    const addSubjectTag = (subjectName, container) => {
+        const searchInput = document.getElementById('category-subject-search-input');
+        const tag = document.createElement('span');
+        tag.className = 'subject-tag';
+        tag.textContent = subjectName;
+
+        const removeBtn = document.createElement('span');
+        removeBtn.className = 'remove-tag';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.onclick = () => {
+            tag.remove();
+        };
+
+        tag.appendChild(removeBtn);
+        container.insertBefore(tag, searchInput);
+    };
+
+    const getSelectedSubjects = () => {
+        return Array.from(document.querySelectorAll('#category-subjects-container .subject-tag'))
+            .map(tag => tag.firstChild.textContent.trim());
+    };
+
 
     const openDeviceModal = (isEditing = false, data = {}, focusFieldId = null) => {
         currentEditingId = isEditing ? data.id : null;
@@ -490,17 +551,15 @@ document.addEventListener('DOMContentLoaded', () => {
             parentId = selectedNodeId; // parentId là mục đang xem
         }
 
-        const subject = isTopLevel ? document.getElementById('category-subject-select').value || null : null;
+        const subjects = isTopLevel ? getSelectedSubjects() : [];
 
         const data = {
             name: name,
             order: document.getElementById('category-order').value.trim(),
             type: 'category',
             parentId: parentId,
-            // Chỉ thêm trường subject nếu nó có giá trị
-            ...(subject && {
-                subject: subject
-            })
+            // Lưu dưới dạng mảng, ngay cả khi rỗng
+            subjects: subjects
         };
 
         try {

@@ -82,9 +82,15 @@
                     <select id="category-parent-select"></select>
                 </div>
                 <div class="form-group form-group-span-2" id="category-subject-select-group" style="display: none;">
-                    <label for="category-subject-select">Môn học tương ứng</label>
-                    <select id="category-subject-select"></select>
-                    <p class="form-note">Chỉ áp dụng cho danh mục cấp cao nhất (môn học).</p>
+                    <label for="category-subject-search-input">Môn học tương ứng</label>
+                    <div id="category-subjects-select-wrapper" class="custom-select-wrapper">
+                        <div id="category-subjects-container" class="custom-select-container">
+                            <!-- Các thẻ môn học đã chọn sẽ được chèn vào đây -->
+                            <input type="text" id="category-subject-search-input" placeholder="Tìm và chọn môn học...">
+                        </div>
+                        <div id="category-subject-dropdown" class="subject-dropdown-list" style="display: none;"></div>
+                    </div>
+                    <p class="form-note">Chỉ áp dụng cho danh mục cấp cao nhất. Có thể chọn nhiều môn học.</p>
                 </div>
             </form>
             <div class="modal-actions">
