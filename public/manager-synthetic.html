@@ -170,8 +170,14 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="reg-equipment-input">Thiết bị sử dụng (cách nhau bởi dấu phẩy) <span class="required-star">*</span></label>
-                    <textarea id="reg-equipment-input" rows="2" placeholder="Ví dụ: Máy chiếu, Bảng tương tác" required></textarea>
+                    <div class="fieldset-group">
+                        <label>Thiết bị sử dụng <span class="required-star">*</span></label>
+                        <div class="equipment-input-group">
+                            <textarea id="reg-equipment-input" rows="3" placeholder="Chọn thiết bị từ danh sách hoặc nhập thủ công..." required></textarea>
+                            <button type="button" id="open-equipment-search-modal-btn" class="btn-secondary" title="Tìm kiếm và chọn thiết bị"><i class="fas fa-search"></i></button>
+                        </div>
+                        <p class="form-note">Nhập thủ công các thiết bị cách nhau bởi dấu phẩy. Ví dụ: Máy chiếu (SL: 1), Bảng tương tác</p>
+                    </div>
                 </div>
             </form>
             <div class="modal-actions">
@@ -218,6 +224,26 @@
             <div class="modal-actions">
                 <button id="cancel-lab-selection-btn" class="btn-cancel">Hủy</button>
                 <button id="confirm-lab-selection-btn" class="btn-save">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================================== -->
+    <!-- ================ NEW: EQUIPMENT SEARCH MODAL ================== -->
+    <!-- =============================================================== -->
+    <div id="equipment-search-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content large">
+            <h2 id="equipment-search-modal-title">Tìm kiếm và Chọn Thiết bị</h2>
+            <div class="equipment-search-controls">
+                <input type="text" id="equipment-search-input" placeholder="Tìm kiếm thiết bị theo tên...">
+                <span id="equipment-search-info"></span>
+            </div>
+            <div id="equipment-search-list-container" class="equipment-search-list-container">
+                <!-- Danh sách thiết bị sẽ được JS chèn vào đây -->
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-equipment-search-btn" class="btn-cancel">Hủy</button>
+                <button id="confirm-equipment-selection-btn" class="btn-save">Xác nhận lựa chọn</button>
             </div>
         </div>
     </div>

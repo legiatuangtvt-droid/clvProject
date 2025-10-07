@@ -436,3 +436,119 @@
     border-color: var(--primary-color);
     background-color: var(--primary-light);
 }
+
+/* =============================================================== */
+/* ================ NEW: EQUIPMENT SEARCH MODAL ================== */
+/* =============================================================== */
+
+.equipment-search-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#equipment-search-input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+#equipment-search-info {
+    font-style: italic;
+    color: var(--text-secondary-color);
+}
+
+.equipment-search-list-container {
+    max-height: 50vh; /* Giới hạn chiều cao và cho phép cuộn */
+    overflow-y: auto;
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--background-color-light);
+}
+
+.equipment-category-group {
+    margin-bottom: 10px;
+    border: 1px solid transparent; /* Tránh nhảy layout khi thêm border lúc open */
+}
+
+.equipment-category-group[open] {
+    border-color: var(--border-color-light);
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.equipment-category-group summary {
+    font-weight: bold;
+    cursor: pointer;
+    padding: 8px;
+    background-color: var(--background-color-hover);
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+.equipment-item-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.equipment-item-row:last-child {
+    border-bottom: none;
+}
+
+.equipment-item-row.disabled {
+    background-color: #f8f9fa;
+    color: #adb5bd;
+    cursor: not-allowed;
+}
+
+.equipment-item-row.disabled .equipment-name {
+    text-decoration: line-through;
+}
+
+.equipment-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.equipment-available {
+    font-size: 0.85em;
+    color: var(--text-secondary-color);
+}
+
+.equipment-quantity-input {
+    width: 70px;
+    text-align: center;
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+/* Nút bấm để mở modal tìm kiếm */
+.equipment-input-group {
+    display: flex;
+    align-items: flex-start; /* Căn các item theo đầu */
+    gap: 5px;
+}
+
+.equipment-input-group textarea {
+    flex-grow: 1;
+    resize: vertical; /* Cho phép thay đổi chiều cao */
+}
+
+.equipment-input-group button {
+    padding: 10px 12px;
+    height: auto; /* Để chiều cao tự động theo padding */
+    flex-shrink: 0; /* Không co lại */
+}

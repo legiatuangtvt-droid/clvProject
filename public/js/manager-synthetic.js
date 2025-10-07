@@ -35,6 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const equipmentStatsBtn = document.getElementById('equipment-stats-btn');
     const equipmentStatsModal = document.getElementById('equipment-stats-modal');
     const closeEquipmentStatsModalBtn = document.getElementById('close-equipment-stats-modal');
+    // NEW: Equipment Search Modal Elements
+    const equipmentSearchModal = document.getElementById('equipment-search-modal');
+    const openEquipmentSearchModalBtn = document.getElementById('open-equipment-search-modal-btn');
+    const cancelEquipmentSearchBtn = document.getElementById('cancel-equipment-search-btn');
+    const confirmEquipmentSelectionBtn = document.getElementById('confirm-equipment-selection-btn');
+    const equipmentSearchInput = document.getElementById('equipment-search-input');
 
     // State variables
     let currentSchoolYear = null;
@@ -47,8 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let allSubjects = new Set();
     let allRegistrations = [];
     let selectedWeekNumber = null;
+    let allDeviceItemsCache = []; // NEW: Cache for all device/category items
     let currentEditingRegId = null;
     let deleteFunction = null;
+    let tempEquipmentSelection = new Map(); // Tạm thời lưu trữ lựa chọn thiết bị trong modal
 
     const slotDetailModal = document.getElementById('slot-detail-modal');
 
@@ -68,7 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadAllGroups(),
                 loadAllMethods(),
                 loadTimePlan(),
-                populateModalSelectors()
+                populateModalSelectors(),
+                loadAllDeviceData() // NEW: Load device data
             ]);
 
             // Populate filters after all data is loaded
@@ -82,6 +91,18 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Lỗi khởi tạo trang:", error);
             scheduleContainer.innerHTML = '<p class="error-message">Không thể tải dữ liệu trang.</p>';
+        }
+    };
+
+    // --- NEW: Load all items from 'devices' collection ---
+    const loadAllDeviceData = async () => {
+        try {
+            const q = query(collection(firestore, 'devices'), orderBy('order'));
+            const snapshot = await getDocs(q);
+            allDeviceItemsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error("Lỗi khi tải danh mục thiết bị:", error);
+            showToast('Không thể tải danh mục thiết bị.', 'error');
         }
     };
 
@@ -628,6 +649,10 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('reg-class').value = reg.className;
             document.getElementById('reg-lesson-name').value = reg.lessonName;
             document.getElementById('reg-equipment-input').value = reg.equipment?.join(', ') || '';
+
+            // NEW: Reset and hide equipment selection UI
+            document.getElementById('equipment-selection-container').style.display = 'none';
+
             reg.teachingMethod?.forEach(method => {
                 const checkbox = document.querySelector(`#reg-method-container input[value="${method}"]`);
                 if (checkbox) checkbox.checked = true;
@@ -711,7 +736,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const equipmentValue = document.getElementById('reg-equipment-input').value.trim();
+        // --- NEW: Logic to get equipment based on selected mode ---
+        // Logic cũ đã bị loại bỏ. Logic mới chỉ cần lấy giá trị từ textarea.
+        // Việc định dạng giá trị này đã được xử lý bởi modal chọn thiết bị.
+        const finalEquipmentList = document.getElementById('reg-equipment-input').value.trim()
+            .split(',')
+            .map(item => item.trim())
+            .filter(Boolean);
+
         const className = document.getElementById('reg-class').value.trim();
         const date = document.getElementById('reg-day').value;
         const period = parseInt(document.getElementById('reg-period').value);
@@ -723,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Validate required fields
-        if (!teacherId || !date || !period || !className || !document.getElementById('reg-subject').value || !document.getElementById('reg-lesson-name').value || !equipmentValue) {
+        if (!teacherId || !date || isNaN(period) || !className || !document.getElementById('reg-subject').value || !document.getElementById('reg-lesson-name').value) {
             showToast('Vui lòng điền đầy đủ các trường bắt buộc (*).', 'error');
             registerForm.reportValidity();
             return;
@@ -845,14 +877,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-
-        // --- CHUẨN HÓA LẠI DANH SÁCH THIẾT BỊ TRƯỚC KHI LƯU ---
-        let finalEquipmentList = equipmentValue.split(',').map(item => item.trim()).filter(Boolean);
-        // 1. Luôn xóa các mục liên quan đến thực hành do người dùng nhập để tránh giả mạo
-        finalEquipmentList = finalEquipmentList.filter(item => !item.startsWith('Thực hành tại') && item !== 'Thực hành trên lớp');
-        // 2. Thêm lại mục thực hành chính xác dựa trên kết quả kiểm tra `labUsage`
-        if (labUsage?.status === 'occupied') finalEquipmentList.push(`Thực hành tại ${labUsage.labName}`);
-        if (labUsage?.status === 'in_class') finalEquipmentList.push('Thực hành trên lớp');
 
         const weekSelect = document.getElementById('reg-week');
         const finalWeekNumber = currentEditingRegId ? parseInt(weekSelect.value) : selectedWeekNumber;
@@ -1220,7 +1244,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const slot = e.target.closest('.slot');
             const mobileSlot = e.target.closest('.mobile-slot');
             if (slot || mobileSlot) { // Click on any slot on desktop or mobile
-                openSlotDetailModal(slot.dataset.date, slot.dataset.period);
+                // Sửa lỗi: Đảm bảo 'slot' hoặc 'mobileSlot' không phải là null trước khi truy cập dataset
+                const targetSlot = slot || mobileSlot;
+                if (targetSlot && targetSlot.dataset.date && targetSlot.dataset.period)
+                    openSlotDetailModal(targetSlot.dataset.date, targetSlot.dataset.period);
             } 
         });
 
@@ -1613,8 +1640,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('reg-class').addEventListener('input', loadLessonSuggestions);
 
         // Tự động thêm/xóa 'Tivi' khi chọn PPDH 'Công nghệ thông tin'
-        const methodContainer = document.getElementById('reg-method-container');
-        methodContainer.addEventListener('change', (e) => {
+        document.getElementById('reg-method-container').addEventListener('change', (e) => {
             if (e.target.type === 'checkbox' && e.target.value === 'Thực hành') {
                 handlePracticeCheckboxChange(e.target.checked);
                 return; // Dừng lại để không chạy logic của 'Công nghệ thông tin' nếu không cần
@@ -1640,6 +1666,174 @@ document.addEventListener('DOMContentLoaded', () => {
                 equipmentInput.value = equipmentList.join(', ');
             }
         });
+        
+        // --- NEW: Event listeners for the new Equipment Search Modal ---
+        if (openEquipmentSearchModalBtn) {
+            openEquipmentSearchModalBtn.addEventListener('click', openEquipmentSearchModal);
+            cancelEquipmentSearchBtn.addEventListener('click', () => equipmentSearchModal.style.display = 'none');
+            confirmEquipmentSelectionBtn.addEventListener('click', confirmEquipmentSelection);
+            equipmentSearchInput.addEventListener('input', filterEquipmentInModal);
+        }
+    };
+
+    // --- NEW: Functions for Equipment Search Modal ---
+
+    const openEquipmentSearchModal = async () => {
+        const container = document.getElementById('equipment-search-list-container');
+        const date = document.getElementById('reg-day').value;
+        const subjectName = document.getElementById('reg-subject').value;
+        const period = parseInt(document.getElementById('reg-period').value);
+
+        if (!date || isNaN(period)) {
+            showToast('Vui lòng chọn ngày và tiết học trước khi chọn thiết bị.', 'error');
+            return;
+        }
+        // --- NEW: Check if a subject is selected ---
+        if (!subjectName) {
+            showToast('Vui lòng chọn môn học trước khi chọn thiết bị.', 'error');
+            // Hiển thị thông báo trong modal thay vì đóng nó
+            equipmentSearchModal.style.display = 'flex';
+            container.innerHTML = '<p class="form-note">Vui lòng chọn một môn học trong form đăng ký để xem danh sách thiết bị tương ứng.</p>';
+            return;
+        }
+
+        container.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách thiết bị...</p>';
+        equipmentSearchModal.style.display = 'flex';
+        equipmentSearchInput.value = ''; // Reset search
+
+        // Parse the current textarea value to pre-fill the modal
+        tempEquipmentSelection.clear();
+        const currentEquipment = document.getElementById('reg-equipment-input').value.trim();
+        if (currentEquipment) {
+            currentEquipment.split(',').forEach(item => {
+                const match = item.match(/(.+)\s\(SL:\s*(\d+)\)/);
+                if (match) {
+                    const [, name, quantity] = match;
+                    tempEquipmentSelection.set(name.trim(), parseInt(quantity));
+                }
+            });
+        }
+
+        // Fetch real-time availability
+        const registeredQuantities = await getRegisteredQuantitiesForSlot(date, period);
+
+        // --- NEW: Find the specific top-level category for the selected subject ---
+        const topCategory = allDeviceItemsCache.find(item => 
+            item.type === 'category' && 
+            !item.parentId && 
+            item.subjects?.includes(subjectName)
+        );
+
+        let modalHTML = '';
+
+        if (topCategory) {
+            const devices = getDevicesRecursive(topCategory.id);
+            // --- NEW: Calculate availability and sort the device list ---
+            const devicesWithAvailability = devices.map(device => {
+                const alreadyRegistered = registeredQuantities.get(device.name) || 0;
+                const available = (device.quantity || 0) - (device.broken || 0) - alreadyRegistered;
+                return { ...device, available };
+            });
+
+            // Sort: available items first, then by original order
+            devicesWithAvailability.sort((a, b) => {
+                if (a.available > 0 && b.available <= 0) return -1; // a comes first
+                if (a.available <= 0 && b.available > 0) return 1;  // b comes first
+                // If both are available or both are unavailable, sort by original order
+                return String(a.order || '').localeCompare(String(b.order || ''));
+            });
+
+            if (devicesWithAvailability.length > 0) {
+                // Không cần thẻ <details> nữa vì chỉ có một danh mục chính
+                modalHTML += `<div class="equipment-category-group-single">`;
+                devicesWithAvailability.forEach(device => {
+                    const isDisabled = device.available <= 0;
+                    const preSelectedQuantity = tempEquipmentSelection.get(device.name) || 0;
+        
+                    modalHTML += `
+                        <div class="equipment-item-row ${isDisabled ? 'disabled' : ''}" data-device-name="${device.name}">
+                            <span class="equipment-name" title="${device.name}">${device.name}</span>
+                            <span class="equipment-available">(Còn lại: ${device.available})</span>
+                            <input type="number" class="equipment-quantity-input" min="0" max="${device.available + preSelectedQuantity}" value="${preSelectedQuantity}" ${isDisabled && preSelectedQuantity === 0 ? 'disabled' : ''}>
+                        </div>
+                    `;
+                });
+                modalHTML += `</div>`;
+            }
+        } else {
+            modalHTML = `<p class="form-note">Môn học <strong>${subjectName}</strong> chưa được gán danh mục thiết bị nào.</p>`;
+        }
+
+        container.innerHTML = modalHTML || '<p class="form-note">Không có thiết bị nào trong danh mục.</p>';
+        updateEquipmentSearchInfo();
+    };
+
+    const getRegisteredQuantitiesForSlot = async (date, period) => {
+        const registeredQuantities = new Map();
+        try {
+            const q = query(
+                collection(firestore, 'registrations'),
+                where('date', '==', date),
+                where('period', '==', period)
+            );
+            const snapshot = await getDocs(q);
+            snapshot.forEach(doc => {
+                if (doc.id === currentEditingRegId) return; // Skip the current registration being edited
+                const reg = doc.data();
+                (reg.equipment || []).forEach(item => {
+                    const match = item.match(/(.+)\s\(SL:\s*(\d+)\)/);
+                    if (match) {
+                        const [, name, quantity] = match;
+                        registeredQuantities.set(name.trim(), (registeredQuantities.get(name.trim()) || 0) + parseInt(quantity));
+                    }
+                });
+            });
+        } catch (error) {
+            console.error("Lỗi khi tải số lượng thiết bị đã đăng ký:", error);
+        }
+        return registeredQuantities;
+    };
+
+    const confirmEquipmentSelection = () => {
+        const equipmentList = [];
+        document.querySelectorAll('#equipment-search-list-container .equipment-item-row').forEach(row => {
+            const quantityInput = row.querySelector('.equipment-quantity-input');
+            const quantity = parseInt(quantityInput.value);
+            if (quantity > 0) {
+                const deviceName = row.dataset.deviceName;
+                equipmentList.push(`${deviceName} (SL: ${quantity})`);
+            }
+        });
+
+        document.getElementById('reg-equipment-input').value = equipmentList.join(', ');
+        equipmentSearchModal.style.display = 'none';
+    };
+
+    const filterEquipmentInModal = () => {
+        const filterText = equipmentSearchInput.value.toLowerCase();
+        const allRows = document.querySelectorAll('#equipment-search-list-container .equipment-item-row');
+        
+        allRows.forEach(row => {
+            const deviceName = row.dataset.deviceName.toLowerCase();
+            if (deviceName.includes(filterText)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Show/hide category groups if they become empty
+        document.querySelectorAll('.equipment-category-group').forEach(group => {
+            const visibleRows = group.querySelectorAll('.equipment-item-row:not([style*="display: none"])');
+            group.style.display = visibleRows.length > 0 ? '' : 'none';
+        });
+        updateEquipmentSearchInfo();
+    };
+
+    const updateEquipmentSearchInfo = () => {
+        const totalVisible = document.querySelectorAll('#equipment-search-list-container .equipment-item-row:not([style*="display: none"])').length;
+        const searchInfo = document.getElementById('equipment-search-info');
+        searchInfo.textContent = `Hiển thị ${totalVisible} thiết bị.`;
     };
 
     // --- HELPERS ---
@@ -1664,6 +1858,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!dateString) return '';
         const [year, month, day] = dateString.split('-');
         return `${day}/${month}/${year}`;
+    };
+
+        // Helper to be used by both old and new equipment selection logic
+    const getDevicesRecursive = (parentId) => {
+        let devices = [];
+        const children = allDeviceItemsCache.filter(item => item.parentId === parentId);
+        children.forEach(child => {
+            if (child.type === 'device') {
+                devices.push(child);
+            } else if (child.type === 'category') {
+                devices = devices.concat(getDevicesRecursive(child.id));
+            }
+        });
+        return devices.sort((a, b) => String(a.order || '').localeCompare(String(b.order || '')));
     };
 
     // --- RUN ---
