@@ -1728,6 +1728,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (topCategory) {
             const devices = getDevicesRecursive(topCategory.id);
+            // --- NEW: Get lesson name to check for relevance ---
+            const lessonName = document.getElementById('reg-lesson-name').value.trim().toLowerCase();
+            // Split lesson name into keywords, ignoring short/common words
+            const lessonKeywords = lessonName ? lessonName.split(' ').filter(k => k.length > 2) : [];
+
             // --- NEW: Calculate availability and sort the device list ---
             const devicesWithAvailability = devices.map(device => {
                 const alreadyRegistered = registeredQuantities.get(device.name) || 0;
@@ -1735,11 +1740,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 return { ...device, available };
             });
 
-            // Sort: available items first, then by original order
+            // Sort with 3 levels of priority: Availability > Relevance > Original Order
             devicesWithAvailability.sort((a, b) => {
-                if (a.available > 0 && b.available <= 0) return -1; // a comes first
-                if (a.available <= 0 && b.available > 0) return 1;  // b comes first
-                // If both are available or both are unavailable, sort by original order
+                // 1. Availability check (highest priority)
+                const aIsAvailable = a.available > 0;
+                const bIsAvailable = b.available > 0;
+                if (aIsAvailable !== bIsAvailable) {
+                    return aIsAvailable ? -1 : 1;
+                }
+
+                // 2. Relevance check (second priority, only for available items)
+                if (aIsAvailable && bIsAvailable && lessonKeywords.length > 0) {
+                    const aName = a.name.toLowerCase();
+                    const bName = b.name.toLowerCase();
+                    const aIsRelevant = lessonKeywords.some(keyword => aName.includes(keyword));
+                    const bIsRelevant = lessonKeywords.some(keyword => bName.includes(keyword));
+                    if (aIsRelevant !== bIsRelevant) {
+                        return aIsRelevant ? -1 : 1;
+                    }
+                }
+                // 3. Original order (lowest priority)
                 return String(a.order || '').localeCompare(String(b.order || ''));
             });
 
