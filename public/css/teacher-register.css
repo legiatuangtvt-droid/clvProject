@@ -456,10 +456,6 @@
     background-color: var(--background-color-light);
 }
 
-.equipment-category-group-single {
-    /* Style for the single group container if needed */
-}
-
 .equipment-item-row {
     display: grid;
     grid-template-columns: 1fr auto auto;
