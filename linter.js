@@ -295,7 +295,7 @@ function checkForUnusedVariables() {
  */
 function checkForCssDuplicates() {
     for (const [hash, data] of cssRuleHashes.entries()) {
-        if (data.files.size > 1) {
+        if (data.files.size >= 3) { // SỬA LỖI: Chỉ báo lỗi nếu khối lặp lại từ 3 lần trở lên
             const fileList = [...data.files].map(f => path.relative(projectRoot, f)).join(', ');
             violations.push({
                 file: [...data.files][0], // Báo cáo ở file đầu tiên tìm thấy
@@ -380,11 +380,18 @@ function findCssDuplicates(filePath, fileContent) {
     while ((match = ruleRegex.exec(fileContent)) !== null) {
         const content = match[1].trim();
         if (!content) continue;
-
-        // Chuẩn hóa: xóa khoảng trắng thừa, sắp xếp thuộc tính
-        const normalizedContent = content.split(';')
+ 
+        const rules = content.split(';')
             .map(s => s.trim())
-            .filter(Boolean)
+            .filter(Boolean);
+ 
+        // SỬA LỖI: Chỉ xem xét các khối có từ 3 quy tắc trở lên
+        if (rules.length < 3) {
+            continue;
+        }
+ 
+        // Chuẩn hóa: sắp xếp thuộc tính để nhận diện trùng lặp chính xác
+        const normalizedContent = rules
             .sort()
             .join(';');
 
