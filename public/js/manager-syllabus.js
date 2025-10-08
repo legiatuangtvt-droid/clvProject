@@ -403,6 +403,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 confirmDeleteBtn.classList.add('btn-danger');
             }, 300);
         });
+
+        // Global listener for Escape key to close modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (bulkImportModal.style.display === 'flex') cancelBulkImportModalBtn.click();
+                else if (confirmDeleteModal.style.display === 'flex') cancelDeleteBtn.click();
+            }
+        });
     };
 
     initializePage();

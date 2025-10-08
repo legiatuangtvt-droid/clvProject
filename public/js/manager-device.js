@@ -1140,6 +1140,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderList(id); // Vẽ lại toàn bộ cây với trạng thái mới
             }
         });
+
+        // Global listener for Escape key to close modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (categoryModal.style.display === 'flex') cancelCategoryBtn.click();
+                else if (deviceModal.style.display === 'flex') cancelDeviceBtn.click();
+                else if (confirmDeleteModal.style.display === 'flex') cancelDeleteBtn.click();
+                else if (bulkImportModal.style.display === 'flex') cancelBulkImportBtn.click();
+                else if (bulkImportPreviewModal.style.display === 'flex') cancelBulkImportPreviewBtn.click();
+            }
+        });
     };
 
     // --- Khởi chạy ---

@@ -1336,6 +1336,16 @@ document.addEventListener('DOMContentLoaded', () => {
             conflictWarningModal.style.display = 'none';
         });
     };
+
+    // Global listener for Escape key to close modals
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            // Tìm modal đang hiển thị và kích hoạt nút hủy của nó
+            if (registerModal.style.display === 'flex') document.getElementById('cancel-register-modal').click();
+            else if (slotDetailModal.style.display === 'flex') document.getElementById('close-slot-detail-modal').click();
+            else if (equipmentSearchModal.style.display === 'flex') document.getElementById('cancel-equipment-search-btn').click();
+        }
+    });
     
     const showEquipmentStats = () => {
          const selectedWeek = timePlan.find(w => w.weekNumber === selectedWeekNumber);

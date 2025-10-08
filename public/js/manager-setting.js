@@ -1673,6 +1673,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Global listener for Escape key to close modals
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            // Tìm và đóng modal đang mở
+            if (groupModal.style.display === 'flex') closeModal(groupModal);
+            else if (teacherModal.style.display === 'flex') closeModal(teacherModal);
+            else if (confirmDeleteModal.style.display === 'flex') closeModal(confirmDeleteModal);
+            else if (schoolYearModal.style.display === 'flex') closeModal(schoolYearModal);
+            else if (methodModal.style.display === 'flex') closeModal(methodModal);
+            else if (subjectModal.style.display === 'flex') closeModal(subjectModal);
+            else if (weekEditModal.style.display === 'flex') closeModal(weekEditModal);
+        }
+    });
+
+
     // Xử lý click trong container của các phương pháp (delegation)
     methodsContainer.addEventListener('click', async (e) => {
         const target = e.target;
