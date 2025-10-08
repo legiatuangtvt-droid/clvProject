@@ -1249,8 +1249,10 @@ textarea.form-control {
     min-height: 38px;
 }
 
-.inline-add-row .item-name-cell,
-.inline-edit-row .item-name-cell {
+/* NEW: Quy tắc chung cho cell chứa icon và text */
+.item-name-cell,
+.inline-add-row .item-name-cell, /* Giữ lại để đảm bảo độ đặc hiệu nếu cần */
+.inline-edit-row .item-name-cell { /* Giữ lại để đảm bảo độ đặc hiệu nếu cần */
     display: flex;
     align-items: center;
     gap: 8px;

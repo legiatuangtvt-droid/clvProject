@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 regsInPeriod.forEach((reg, index) => {
                     let rowClass = '';
-                    if (period === currentPeriod) rowClass = 'current-period';
+                    if (period === currentPeriod) rowClass = 'current-period bg-success-light'; // Giữ class ngữ nghĩa và thêm class tiện ích
                     if (period === nextPeriod) rowClass = 'next-period';
 
                     tableHTML += `<tr class="${rowClass}">`;

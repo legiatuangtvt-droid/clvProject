@@ -44,9 +44,6 @@
 }
 
 /* Làm nổi bật tiết học đang/sắp diễn ra */
-.today-reg-table tr.current-period td {
-    background-color: var(--success-light);
-}
 .today-reg-table tr.next-period td {
     background-color: var(--info-light);
 }

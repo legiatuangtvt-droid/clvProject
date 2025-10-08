@@ -117,12 +117,6 @@
 .device-table .col-actions { width: 5%; } /* Cột Hành động (sửa, xóa) */
 
 
-.device-table .item-name-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px; /* Thêm lại khoảng cách giữa icon và text */
-}
-
 /* --- NEW: Category Row Specific Styles --- */
 .device-table .category-row {
     background-color: var(--surface-subtle-bg); /* Màu nền giống header để nổi bật */
@@ -184,9 +178,6 @@
     font-weight: 600;
 }
 
-.preview-table tbody tr.is-valid {
-    background-color: var(--success-light);
-}
 .preview-table tbody tr.has-error {
     background-color: var(--danger-light);
     text-decoration: line-through;
