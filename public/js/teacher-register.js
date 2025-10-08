@@ -29,6 +29,13 @@ const initializeTeacherRegisterPage = (user) => {
     const conflictWarningModal = document.getElementById('conflict-warning-modal');
     const registerModal = document.getElementById('register-modal');
     const registerForm = document.getElementById('register-form');
+    // NEW: Equipment Search Modal Elements
+    const equipmentSearchModal = document.getElementById('equipment-search-modal');
+    const openEquipmentSearchModalBtn = document.getElementById('open-equipment-search-modal-btn');
+    const cancelEquipmentSearchBtn = document.getElementById('cancel-equipment-search-btn');
+    const confirmEquipmentSelectionBtn = document.getElementById('confirm-equipment-selection-btn');
+    const equipmentSearchInput = document.getElementById('equipment-search-input');
+
 
     let currentSchoolYear = null;
     let currentUserInfo = null; // Lưu thông tin giáo viên (id, name, group_id, group_name)
@@ -40,6 +47,9 @@ const initializeTeacherRegisterPage = (user) => {
     let lastUsedSubject = null; // Lưu môn học từ lần đăng ký cuối
     let registrationRule = 'none'; // Quy tắc đăng ký, mặc định là không giới hạn
     let selectedWeekNumber = null;
+    let allDeviceItemsCache = []; // NEW: Cache for all device/category items
+    let tempEquipmentSelection = new Map(); // Tạm thời lưu trữ lựa chọn thiết bị trong modal
+
 
     const loadRegistrationRule = async () => {
         try {
@@ -155,6 +165,18 @@ const initializeTeacherRegisterPage = (user) => {
             }
         } catch (error) {
             console.warn("Không thể tải môn học sử dụng lần cuối:", error);
+        }
+    };
+
+    // --- NEW: Load all items from 'devices' collection ---
+    const loadAllDeviceData = async () => {
+        try {
+            const q = query(collection(firestore, 'devices'), orderBy('order'));
+            const snapshot = await getDocs(q);
+            allDeviceItemsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error("Lỗi khi tải danh mục thiết bị:", error);
+            showToast('Không thể tải danh mục thiết bị.', 'error');
         }
     };
 
@@ -930,24 +952,15 @@ const initializeTeacherRegisterPage = (user) => {
                 // This block will run whether saveRegistration succeeds or fails (returns early).
                 // A small delay to let the user see the success/error toast before the button resets.
                 setTimeout(() => {
-                    // Check if the modal is still open before resetting the button.
-                    // If save was successful, the modal closes and we don't need to reset.
-                    if (registerModal.style.display === 'flex') {
-                        saveBtn.disabled = false;
-                        saveBtn.innerHTML = originalBtnHTML;
-                    }
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalBtnHTML;
                 }, 300); // 300ms delay
             }
         })();
     });
     document.getElementById('cancel-register-modal').addEventListener('click', () => registerModal.style.display = 'none');
-    // registerModal.addEventListener('click', (e) => {
-    //     if (e.target === registerModal) registerModal.style.display = 'none';
-    // });
 
-    // Đóng modal cảnh báo trùng lịch
     document.getElementById('close-conflict-modal').addEventListener('click', () => {
-        // --- LOGIC MỚI: TỰ ĐỘNG CẬP NHẬT TEXTAREA KHI ĐÓNG CẢNH BÁO TRÙNG PHÒNG HỌC ---
         const labName = conflictWarningModal.dataset.labName;
         if (labName) {
             const equipmentInput = document.getElementById('reg-equipment-input');
@@ -956,7 +969,6 @@ const initializeTeacherRegisterPage = (user) => {
             if (currentEquipment.includes(practiceText)) {
                 equipmentInput.value = currentEquipment.replace(practiceText, 'Thực hành trên lớp');
             }
-            // Xóa data attribute sau khi sử dụng
             delete conflictWarningModal.dataset.labName;
         }
         conflictWarningModal.style.display = 'none';
@@ -1048,6 +1060,44 @@ const initializeTeacherRegisterPage = (user) => {
         equipmentInput.value = equipmentList.join(', ');
     };
 
+    const confirmEquipmentSelection = () => {
+        const equipmentList = [];
+        document.querySelectorAll('#equipment-search-list-container .equipment-item-row').forEach(row => {
+            const quantityInput = row.querySelector('.equipment-quantity-input');
+            const quantity = parseInt(quantityInput.value);
+            if (quantity > 0) {
+                const deviceName = row.dataset.deviceName;
+                equipmentList.push(`${deviceName} (SL: ${quantity})`);
+            }
+        });
+
+        document.getElementById('reg-equipment-input').value = equipmentList.join(', ');
+        equipmentSearchModal.style.display = 'none';
+    };
+
+    const filterEquipmentInModal = () => {
+        const filterText = equipmentSearchInput.value.toLowerCase();
+        const allRows = document.querySelectorAll('#equipment-search-list-container .equipment-item-row');
+        
+        allRows.forEach(row => {
+            const deviceName = row.dataset.deviceName.toLowerCase();
+            if (deviceName.includes(filterText)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        updateEquipmentSearchInfo();
+    };
+
+    const updateEquipmentSearchInfo = () => {
+        const totalVisible = document.querySelectorAll('#equipment-search-list-container .equipment-item-row:not([style*="display: none"])').length;
+        const searchInfo = document.getElementById('equipment-search-info');
+        searchInfo.textContent = `Hiển thị ${totalVisible} thiết bị.`;
+    };
+
+
     // Thêm sự kiện để tải gợi ý bài học khi thay đổi môn hoặc lớp
     document.getElementById('reg-subject').addEventListener('change', loadLessonSuggestions);
     document.getElementById('reg-class').addEventListener('input', loadLessonSuggestions);
@@ -1082,8 +1132,151 @@ const initializeTeacherRegisterPage = (user) => {
             }
             equipmentInput.value = equipmentList.join(', ');
         }
+
+        // NEW: Logic for "Thiết bị dạy học" checkbox
+        if (e.target.type === 'checkbox' && e.target.value === 'Thiết bị dạy học') {
+            const equipmentSearchBtn = document.getElementById('open-equipment-search-modal-btn');
+            if (e.target.checked) {
+                equipmentSearchBtn.style.display = 'inline-block';
+            } else {
+                equipmentSearchBtn.style.display = 'none';
+            if (!e.target.checked) {
+                const equipmentInput = document.getElementById('reg-equipment-input');
+                // Remove only items that look like they were added from a search modal (they have "(SL: ...)")
+                let currentEquipment = equipmentInput.value.split(',').map(item => item.trim()).filter(Boolean);
+                const itemsToKeep = currentEquipment.filter(item => !/\(SL:\s*\d+\)/.test(item));
+                
+                // Only show toast if something was actually removed
+                if (itemsToKeep.length < currentEquipment.length) {
+                    showToast('Đã xóa các thiết bị dạy học đã chọn.', 'info');
+                }
+                equipmentInput.value = itemsToKeep.join(', ');
+            }
+            }
+        }
     });
 
+    // --- NEW: Functions for Equipment Search Modal ---
+    const openEquipmentSearchModal = async () => {
+        const container = document.getElementById('equipment-search-list-container');
+        const date = document.getElementById('reg-day').value;
+        const subjectName = document.getElementById('reg-subject').value;
+        const period = parseInt(document.getElementById('reg-period').value);
+
+        if (!date || isNaN(period)) {
+            showToast('Vui lòng chọn ngày và tiết học trước khi chọn thiết bị.', 'error');
+            return;
+        }
+        if (!subjectName) {
+            showToast('Vui lòng chọn môn học trước khi chọn thiết bị.', 'error');
+            equipmentSearchModal.style.display = 'flex';
+            container.innerHTML = '<p class="form-note">Vui lòng chọn một môn học trong form đăng ký để xem danh sách thiết bị tương ứng.</p>';
+            return;
+        }
+
+        container.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách thiết bị...</p>';
+        equipmentSearchModal.style.display = 'flex';
+        equipmentSearchInput.value = ''; // Reset search
+
+        // Parse the current textarea value to pre-fill the modal
+        tempEquipmentSelection.clear();
+        const currentEquipment = document.getElementById('reg-equipment-input').value.trim();
+        if (currentEquipment) {
+            currentEquipment.split(',').forEach(item => {
+                const match = item.match(/(.+)\s\(SL:\s*(\d+)\)/);
+                if (match) {
+                    const [, name, quantity] = match;
+                    tempEquipmentSelection.set(name.trim(), parseInt(quantity));
+                }
+            });
+        }
+
+        // Fetch real-time availability
+        const registeredQuantities = await getRegisteredQuantitiesForSlot(date, period);
+
+        const topCategory = allDeviceItemsCache.find(item =>
+            item.type === 'category' &&
+            !item.parentId &&
+            item.subjects?.includes(subjectName)
+        );
+
+        let modalHTML = '';
+
+        if (topCategory) {
+            const devices = getDevicesRecursive(topCategory.id);
+            const lessonName = document.getElementById('reg-lesson-name').value.trim().toLowerCase();
+            const lessonKeywords = lessonName ? lessonName.split(' ').filter(k => k.length > 2) : [];
+
+            const devicesWithAvailability = devices.map(device => {
+                const alreadyRegistered = registeredQuantities.get(device.name) || 0;
+                const available = (device.quantity || 0) - (device.broken || 0) - alreadyRegistered;
+                return { ...device, available };
+            });
+
+            devicesWithAvailability.sort((a, b) => {
+                const aIsAvailable = a.available > 0;
+                const bIsAvailable = b.available > 0;
+                if (aIsAvailable !== bIsAvailable) return aIsAvailable ? -1 : 1;
+
+                if (aIsAvailable && bIsAvailable && lessonKeywords.length > 0) {
+                    const aName = a.name.toLowerCase();
+                    const bName = b.name.toLowerCase();
+                    const aIsRelevant = lessonKeywords.some(keyword => aName.includes(keyword));
+                    const bIsRelevant = lessonKeywords.some(keyword => bName.includes(keyword));
+                    if (aIsRelevant !== bIsRelevant) return aIsRelevant ? -1 : 1;
+                }
+                return String(a.order || '').localeCompare(String(b.order || ''));
+            });
+
+            if (devicesWithAvailability.length > 0) {
+                modalHTML += `<div class="equipment-category-group-single">`;
+                devicesWithAvailability.forEach(device => {
+                    const isDisabled = device.available <= 0;
+                    const preSelectedQuantity = tempEquipmentSelection.get(device.name) || 0;
+
+                    modalHTML += `
+                        <div class="equipment-item-row ${isDisabled ? 'disabled' : ''}" data-device-name="${device.name}">
+                            <span class="equipment-name" title="${device.name}">${device.name}</span>
+                            <span class="equipment-available">(Còn lại: ${device.available})</span>
+                            <input type="number" class="equipment-quantity-input" min="0" max="${device.available + preSelectedQuantity}" value="${preSelectedQuantity}" ${isDisabled && preSelectedQuantity === 0 ? 'disabled' : ''}>
+                        </div>
+                    `;
+                });
+                modalHTML += `</div>`;
+            }
+        } else {
+            modalHTML = `<p class="form-note">Môn học <strong>${subjectName}</strong> chưa được gán danh mục thiết bị nào.</p>`;
+        }
+
+        container.innerHTML = modalHTML || '<p class="form-note">Không có thiết bị nào trong danh mục.</p>';
+        updateEquipmentSearchInfo();
+    };
+
+    const getRegisteredQuantitiesForSlot = async (date, period) => {
+        const registeredQuantities = new Map();
+        try {
+            const q = query(
+                collection(firestore, 'registrations'),
+                where('date', '==', date),
+                where('period', '==', period)
+            );
+            const snapshot = await getDocs(q);
+            snapshot.forEach(doc => {
+                if (doc.id === currentEditingRegId) return; // Skip the current registration being edited
+                const reg = doc.data();
+                (reg.equipment || []).forEach(item => {
+                    const match = item.match(/(.+)\s\(SL:\s*(\d+)\)/);
+                    if (match) {
+                        const [, name, quantity] = match;
+                        registeredQuantities.set(name.trim(), (registeredQuantities.get(name.trim()) || 0) + parseInt(quantity));
+                    }
+                });
+            });
+        } catch (error) {
+            console.error("Lỗi khi tải số lượng thiết bị đã đăng ký:", error);
+        }
+        return registeredQuantities;
+    };
     // --- HELPERS ---
     const formatDate = (dateString) => {
         if (!dateString) return '';
@@ -1091,6 +1284,19 @@ const initializeTeacherRegisterPage = (user) => {
         return `${day}/${month}/${year}`;
     };
 
+    // Helper to be used by both old and new equipment selection logic
+    const getDevicesRecursive = (parentId) => {
+        let devices = [];
+        const children = allDeviceItemsCache.filter(item => item.parentId === parentId);
+        children.forEach(child => {
+            if (child.type === 'device') {
+                devices.push(child);
+            } else if (child.type === 'category') {
+                devices = devices.concat(getDevicesRecursive(child.id));
+            }
+        });
+        return devices.sort((a, b) => String(a.order || '').localeCompare(String(b.order || '')));
+    };
     // --- KHỞI CHẠY LOGIC CHÍNH CỦA TRANG ---
     const start = async () => {
         try {
@@ -1111,6 +1317,7 @@ const initializeTeacherRegisterPage = (user) => {
             await loadRegistrationRule(); // Tải quy tắc đăng ký
             await loadTimePlan(user); // Cần user để gọi updateSelectedWeek
             await populateModalSelectors(); // Không cần user nữa
+            await loadAllDeviceData(); // NEW: Tải dữ liệu thiết bị
             await loadLastUsedSubject(user);
 
         } catch (error) {
@@ -1118,6 +1325,14 @@ const initializeTeacherRegisterPage = (user) => {
             scheduleContainer.innerHTML = '<p class="error-message">Không thể tải dữ liệu trang.</p>';
         }
     };
+
+    // --- NEW: Event listeners for Equipment Search Modal ---
+    if (openEquipmentSearchModalBtn) {
+        openEquipmentSearchModalBtn.addEventListener('click', openEquipmentSearchModal);
+        cancelEquipmentSearchBtn.addEventListener('click', () => equipmentSearchModal.style.display = 'none');
+        confirmEquipmentSelectionBtn.addEventListener('click', confirmEquipmentSelection);
+        equipmentSearchInput.addEventListener('input', filterEquipmentInModal);
+    }
 
     start(); // Bắt đầu thực thi
 };

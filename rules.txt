@@ -101,10 +101,12 @@ service cloud.firestore {
       }
     }
     
-    // Cho phép người dùng đã đăng nhập đọc dữ liệu
-    // Cụ thể, cho phép manager đọc và ghi vào collection 'devices'
+    // Quy tắc cho danh mục thiết bị
     match /devices/{deviceId=**} {
-      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.rule == 'manager';
+      // Manager, Teacher, Supervisory có thể đọc
+      allow read: if isManager() || isTeacher() || isSupervisory();
+      // Chỉ Manager có thể ghi
+      allow write: if isManager();
     }
 
     // Các lượt đăng ký
