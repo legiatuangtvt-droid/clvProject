@@ -55,27 +55,30 @@ function getFilePriority(filePath) {
  * @param {string} fileContent Nội dung tệp HTML.
  */
 function checkCssOrderInHtml(filePath, fileContent) {
-    const cssLinks = [...fileContent.matchAll(/<link.*rel="stylesheet".*href="(.*?)".*>/g)].map(m => m[1].split('?')[0]); // Bỏ query string nếu có
+    // Lấy tất cả các link CSS trỏ đến thư mục /css/
+    const cssLinks = [...fileContent.matchAll(/<link.*rel="stylesheet".*href="([^"]*css\/[^"]+\.css)".*>/g)]
+        .map(m => path.basename(m[1].split('?')[0])); // Chỉ lấy tên file
+
     if (cssLinks.length === 0) return;
 
-    const sharedLayoutIndex = cssLinks.findIndex(link => /shared-layout\.css$/.test(link));
-    const roleLayoutIndex = cssLinks.findIndex(link => /(manager|teacher|supervisory)-layout\.css$/.test(link));
+    const sharedLayoutIndex = cssLinks.indexOf('shared-layout.css');
 
-    // Chỉ kiểm tra nếu cả hai file layout đều tồn tại
-    if (sharedLayoutIndex !== -1 && roleLayoutIndex !== -1) {
-        if (sharedLayoutIndex > roleLayoutIndex) {
-            const sharedLayoutFile = cssLinks[sharedLayoutIndex];
-            const roleLayoutFile = cssLinks[roleLayoutIndex];
-
+    // Nếu không tìm thấy shared-layout.css thì không cần kiểm tra
+    if (sharedLayoutIndex === -1) return;
+    
+    // Tìm file CSS "riêng" đầu tiên (không phải shared-layout.css)
+    const firstSpecificCssIndex = cssLinks.findIndex(link => link !== 'shared-layout.css');
+    
+    // Nếu có file riêng và file chung được đặt sau file riêng đầu tiên -> Báo lỗi
+    if (firstSpecificCssIndex !== -1 && sharedLayoutIndex > firstSpecificCssIndex) {
+        const specificCssFile = cssLinks[firstSpecificCssIndex];
             violations.push({
                 file: filePath,
                 type: 'CSS Order',
                 line: null,
                 priority: getFilePriority(filePath),
-                // Thông báo lỗi mới, rõ ràng hơn
-                message: `Thứ tự CSS sai: '${sharedLayoutFile}' (cấp 1) phải được đặt trước '${roleLayoutFile}' (cấp 2).`
+                message: `Thứ tự CSS sai: file chung 'shared-layout.css' phải được đặt trước file riêng '${specificCssFile}'.`
             });
-        }
     }
 }
 
