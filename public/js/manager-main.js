@@ -9,7 +9,7 @@ import {
     getDoc
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { firestore } from "./firebase-config.js";
-import { showToast } from "./toast.js";
+import { showToast } from "./toast.js";import { formatDate } from "./utils.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     // Chỉ thực thi code nếu element chính tồn tại

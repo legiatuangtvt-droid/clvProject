@@ -1,6 +1,7 @@
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, writeBatch, where, getDoc, limit } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { firestore } from "./firebase-config.js";
-import { showToast } from "./toast.js";
+import { showToast, setButtonLoading } from "./toast.js";
+import { formatDate } from "./utils.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     // Chỉ thực thi code nếu element chính tồn tại
@@ -66,14 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return null;
         }
         return snapshot.docs[0].ref;
-    };
-
-    const formatDate = (dateString) => {
-        if (!dateString || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-            return dateString; // Trả về chuỗi gốc nếu không đúng định dạng yyyy-mm-dd
-        }
-        const [year, month, day] = dateString.split('-');
-        return `${day}/${month}/${year}`;
     };
 
     const formatDateToYYYYMMDD = (date) => {

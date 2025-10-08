@@ -14,6 +14,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { auth, firestore } from "./firebase-config.js";
 import { showToast, setButtonLoading } from "./toast.js";
+import { formatDate, getDevicesRecursive } from "./utils.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!document.getElementById('schedule-container')) return;
@@ -1765,7 +1766,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let modalHTML = '';
 
         if (topCategory) {
-            const devices = getDevicesRecursive(topCategory.id);
+            const devices = getDevicesRecursive(topCategory.id, allDeviceItemsCache);
             // --- NEW: Get lesson name to check for relevance ---
             const lessonName = document.getElementById('reg-lesson-name').value.trim().toLowerCase();
             // Split lesson name into keywords, ignoring short/common words

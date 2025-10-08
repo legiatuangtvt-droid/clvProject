@@ -8,6 +8,7 @@ import {
     getDoc
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { firestore } from "./firebase-config.js";
+import { formatDate } from "./utils.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     // Chỉ thực thi code nếu các element cần thiết tồn tại

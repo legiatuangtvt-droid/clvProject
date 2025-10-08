@@ -15,6 +15,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import { auth, firestore } from "./firebase-config.js";
+import { formatDate, getDevicesRecursive } from "./utils.js";
 import { showToast } from "./toast.js";
 
 const initializeTeacherRegisterPage = (user) => {
@@ -1203,7 +1204,7 @@ const initializeTeacherRegisterPage = (user) => {
         let modalHTML = '';
 
         if (topCategory) {
-            const devices = getDevicesRecursive(topCategory.id);
+            const devices = getDevicesRecursive(topCategory.id, allDeviceItemsCache);
             const lessonName = document.getElementById('reg-lesson-name').value.trim().toLowerCase();
             const lessonKeywords = lessonName ? lessonName.split(' ').filter(k => k.length > 2) : [];
 
@@ -1276,26 +1277,6 @@ const initializeTeacherRegisterPage = (user) => {
             console.error("Lỗi khi tải số lượng thiết bị đã đăng ký:", error);
         }
         return registeredQuantities;
-    };
-    // --- HELPERS ---
-    const formatDate = (dateString) => {
-        if (!dateString) return '';
-        const [year, month, day] = dateString.split('-');
-        return `${day}/${month}/${year}`;
-    };
-
-    // Helper to be used by both old and new equipment selection logic
-    const getDevicesRecursive = (parentId) => {
-        let devices = [];
-        const children = allDeviceItemsCache.filter(item => item.parentId === parentId);
-        children.forEach(child => {
-            if (child.type === 'device') {
-                devices.push(child);
-            } else if (child.type === 'category') {
-                devices = devices.concat(getDevicesRecursive(child.id));
-            }
-        });
-        return devices.sort((a, b) => String(a.order || '').localeCompare(String(b.order || '')));
     };
     // --- KHỞI CHẠY LOGIC CHÍNH CỦA TRANG ---
     const start = async () => {
