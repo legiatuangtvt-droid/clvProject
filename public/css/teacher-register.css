@@ -499,6 +499,14 @@
     border-radius: 4px;
 }
 
+.equipment-input-group {
+    display: flex;
+    align-items: flex-start; /* Căn các item theo đầu */
+    gap: 5px;
+}
+
 .equipment-input-group button {
     height: auto; /* Để chiều cao tự động theo padding */
+    padding: 10px 12px;
+    flex-shrink: 0; /* Không co lại */
 }
