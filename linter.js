@@ -454,53 +454,81 @@ function scanDirectory(dir) {
 /**
  * In báo cáo ra console.
  */
-function printReport() {
-    console.log(`\n--- BÁO CÁO KIỂM TRA MÃ NGUỒN (Đã quét ${fileCount.total} files: ${fileCount.html} HTML, ${fileCount.css} CSS, ${fileCount.js} JS) ---`);
-    if (violations.length === 0) {
-        console.log('\x1b[32m%s\x1b[0m', '✅ Tuyệt vời! Không tìm thấy vi phạm nào.');
-        return;
-    }
-
+function printReport(targetFile = null) {
     // Sắp xếp các vi phạm theo mức độ ưu tiên (cao đến thấp), sau đó theo tên tệp
     violations.sort((a, b) => {
         if (b.priority !== a.priority) return b.priority - a.priority;
         return a.file.localeCompare(b.file);
     });
 
-    console.log(`\x1b[31m%s\x1b[0m`, `❌ Tìm thấy tổng cộng ${violations.length} vi phạm (sắp xếp theo mức độ ưu tiên):\n`);
+    if (targetFile) {
+        // --- CHẾ ĐỘ KIỂM TRA FILE CỤ THỂ ---
+        const relativeTargetPath = path.relative(projectRoot, targetFile);
+        const fileViolations = violations.filter(v => path.relative(projectRoot, v.file) === relativeTargetPath);
 
-    const violationsByFile = violations.reduce((acc, v) => {
-        const relativePath = path.relative(projectRoot, v.file);
-        if (!acc[relativePath]) {
-            acc[relativePath] = [];
+        if (fileViolations.length === 0) {
+            console.log(`\n\x1b[32m✅ SUCCESS!\x1b[0m File \x1b[33m${relativeTargetPath}\x1b[0m đã được refactor thành công.`);
+            
+            // Tìm file tiếp theo cần sửa (file không phải là file vừa sửa xong)
+            const nextViolation = violations.find(v => path.relative(projectRoot, v.file) !== relativeTargetPath);
+            if (nextViolation) {
+                const nextFileToFix = path.relative(projectRoot, nextViolation.file);
+                console.log('\nTiếp theo, hãy xử lý file này:');
+                console.log(`\x1b[36mnode linter.js ${nextFileToFix}\x1b[0m`);
+            } else {
+                console.log('\n\x1b[1m\x1b[32m✨✨✨ CHÚC MỪNG! Toàn bộ dự án đã được dọn dẹp! ✨✨✨\x1b[0m');
+            }
+        } else {
+            console.log(`\n\x1b[31m❌ RECHECK:\x1b[0m File \x1b[33m${relativeTargetPath}\x1b[0m vẫn còn \x1b[31m${fileViolations.length}\x1b[0m lỗi:`);
+            fileViolations.forEach((v, index) => {
+                const lineInfo = v.line ? ` (Dòng ${v.line})` : '';
+                console.log(`  ${index + 1}. [\x1b[36m${v.type}\x1b[0m][Ưu tiên: ${v.priority}]${lineInfo}: ${v.message}`);
+            });
+            console.log('\nSau khi sửa, hãy chạy lại lệnh sau để kiểm tra:');
+            console.log(`\x1b[36mnode linter.js ${relativeTargetPath}\x1b[0m`);
         }
-        acc[relativePath].push(v);
-        return acc;
-    }, {});
 
-    for (const file in violationsByFile) {
-        console.log(`\x1b[1m\x1b[33mFile: ${file}\x1b[0m`); // In đậm, màu vàng
-        const fileViolations = violationsByFile[file];
-        // Sắp xếp các lỗi trong cùng một file theo dòng
-        fileViolations.sort((a, b) => (a.line || 0) - (b.line || 0));
-        fileViolations.forEach(v => {
+    } else {
+        // --- CHẾ ĐỘ TÌM LỖI (MẶC ĐỊNH) ---
+        console.log(`\n--- BÁO CÁO KIỂM TRA MÃ NGUỒN (Đã quét ${fileCount.total} files) ---`);
+        if (violations.length === 0) {
+            console.log('\x1b[32m%s\x1b[0m', '✅ Tuyệt vời! Không tìm thấy vi phạm nào.');
+            return;
+        }
+
+        // Chỉ lấy file đầu tiên trong danh sách đã sắp xếp
+        const highestPriorityFile = path.relative(projectRoot, violations[0].file);
+        const violationsForFile = violations.filter(v => path.relative(projectRoot, v.file) === highestPriorityFile);
+
+        console.log(`\n\x1b[33m⚠️ File cần refactor tiếp theo (ưu tiên cao nhất):\x1b[0m \x1b[1m${highestPriorityFile}\x1b[0m`);
+        console.log(`Tìm thấy \x1b[31m${violationsForFile.length}\x1b[0m lỗi trong file này:`);
+
+        violationsForFile.forEach((v, index) => {
             const lineInfo = v.line ? ` (Dòng ${v.line})` : '';
-            console.log(`  - [\x1b[36m${v.type}\x1b[0m][Ưu tiên: ${v.priority}]${lineInfo}: ${v.message}`);
+            console.log(`  ${index + 1}. [\x1b[36m${v.type}\x1b[0m][Ưu tiên: ${v.priority}]${lineInfo}: ${v.message}`);
         });
 
         // Thêm dòng prompt gợi ý cho AI
-        const aiPrompt = `[PROMPT_SUGGESTION]Dựa vào các vi phạm trên, hãy refactor file ${file}`;
+        const aiPrompt = `[PROMPT_SUGGESTION]Dựa vào các vi phạm trên, hãy refactor file ${highestPriorityFile}`;
         console.log(`\n  \x1b[35m${aiPrompt}\x1b[0m`); // In màu tím cho dễ nhận biết
 
-        console.log(''); // Thêm dòng trống cho dễ đọc
+        console.log('\nSau khi refactor file này, hãy chạy lệnh sau để kiểm tra lại:');
+        console.log(`\x1b[36mnode linter.js ${highestPriorityFile}\x1b[0m`);
     }
 }
 
 // --- Chạy chương trình ---
+const targetFile = process.argv[2] ? path.join(projectRoot, process.argv[2]) : null;
+
+if (targetFile && !fs.existsSync(targetFile)) {
+    console.error(`\x1b[31m Lỗi: Không tìm thấy file '${process.argv[2]}'. Vui lòng kiểm tra lại đường dẫn.\x1b[0m`);
+    return;
+}
+
 console.log('Bắt đầu quét dự án...');
 scanDirectory(publicDir);
 checkForUnusedClasses(); // Chạy kiểm tra class không sử dụng sau khi đã quét hết
 checkForUnusedVariables(); // Chạy kiểm tra biến CSS không sử dụng
 checkForCssDuplicates(); // Chạy kiểm tra CSS trùng lặp
 checkForJsDuplicates(); // Chạy kiểm tra JS trùng lặp
-printReport();
+printReport(targetFile);

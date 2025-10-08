@@ -44,6 +44,7 @@ body {
     overflow: hidden; /* Ngăn không cho body có thanh cuộn */
     background-color: var(--body-bg);
 }
+
 /* --- Shared Top Bar Styles --- */
 .top-bar {
     background: #fff;
@@ -826,7 +827,6 @@ body {
 .content-card:not(:last-child) {
     margin-bottom: 20px;
 }
-
 /* ==========================================================================
    NỘI DUNG GỘP TỪ components.css
    ========================================================================== */
@@ -1080,4 +1080,221 @@ body {
     margin: 0 0 5px 0;
     font-size: 2.2rem;
     color: var(--text-dark);
+}
+
+/* ==========================================================================
+   NEW: UTILITY & SHARED CLASSES (Refactored)
+   ========================================================================== */
+
+.hidden {
+    display: none !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.font-weight-600 {
+    font-weight: 600;
+}
+
+.text-danger {
+    color: var(--danger-color);
+}
+
+.position-relative {
+    position: relative;
+}
+
+.bg-hover:hover {
+    background-color: #f1f5f9;
+}
+
+.bg-success-light {
+    background-color: var(--success-light);
+}
+
+.btn-add-in-list:hover {
+    background-color: var(--primary-color);
+    color: var(--text-on-primary);
+}
+
+.required-star {
+    color: var(--danger-color);
+}
+
+.item-actions .icon-button:hover {
+    background-color: #e9ecef;
+}
+
+/* --- Shared SortableJS Styles --- */
+.sortable-ghost {
+    opacity: 0.4;
+    background: #c8ebfb;
+}
+.sortable-chosen {
+    background: #f0f8ff; /* Màu nền nhẹ cho mục đang được chọn */
+}
+.sortable-drag {
+    cursor: grabbing;
+}
+
+/* --- Shared Form Styles --- */
+.form-control {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color-strong);
+    border-radius: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
+    outline: none;
+}
+
+/* Cho phép textarea có class form-control có thể thay đổi kích thước theo chiều dọc */
+textarea.form-control {
+    resize: vertical;
+}
+
+.form-control.filter-select,
+.form-control.custom-select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+
+.checkbox-group {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    padding-top: 5px;
+}
+
+.checkbox-group label {
+    cursor: pointer;
+}
+
+/* --- Shared Bulk Import Styles --- */
+.bulk-import-error-section {
+    background-color: var(--danger-light);
+    border-left: 4px solid var(--danger-color);
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 0 8px 8px 0;
+}
+.bulk-import-error-section h4 {
+    margin: 0 0 10px 0;
+    color: var(--danger-color);
+}
+.bulk-import-error-section ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+/* --- NEW: Shared Inline Add/Edit Row Styles (from manager-device.css) --- */
+.inline-add-row, .inline-edit-row {
+    box-shadow: inset 0 0 10px rgba(0, 123, 255, 0.1);
+}
+
+.inline-add-row {
+    background-color: #e6f7ff; /* Màu nền xanh dương nhạt để làm nổi bật */
+}
+
+.inline-edit-row {
+    background-color: #fffbe6; /* Màu vàng nhạt cho chế độ sửa */
+}
+
+.inline-add-row td, .inline-edit-row td {
+    padding: 8px 5px;
+    vertical-align: middle;
+}
+
+.inline-add-row input[type="text"],
+.inline-add-row input[type="number"],
+.inline-add-row textarea,
+.inline-edit-row input[type="text"],
+.inline-edit-row input[type="number"],
+.inline-edit-row textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #b0c4de;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+    background-color: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.inline-add-row input:focus,
+.inline-add-row textarea:focus,
+.inline-edit-row input:focus,
+.inline-edit-row textarea:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    outline: none;
+}
+
+.inline-add-row textarea,
+.inline-edit-row textarea {
+    resize: vertical;
+    min-height: 38px;
+}
+
+.inline-add-row .item-name-cell,
+.inline-edit-row .item-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inline-add-row .item-name-cell .fas,
+.inline-edit-row .item-name-cell .fas {
+    color: #007bff;
+}
+
+.inline-add-row .save-inline-btn i {
+    color: var(--success-color);
+}
+
+.inline-add-row .cancel-inline-btn i {
+    color: var(--danger-color);
+}
+
+/* --- NEW: Shared Multi-select Subject Styles (from manager-device.css) --- */
+.custom-select-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid var(--border-color-strong);
+    border-radius: 8px;
+    cursor: text;
+    background-color: var(--surface-bg);
+}
+
+.subject-tag {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.remove-tag {
+    margin-left: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
 }

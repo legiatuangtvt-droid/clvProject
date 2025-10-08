@@ -551,7 +551,7 @@
 }
 
 .group-card.collapsed .collapse-icon {
-    transform: rotate(-90deg);
+    transform: rotate(-90deg); /* This is a common style */
 }
 
 .form-note {
@@ -1246,19 +1246,4 @@
 }
 .subject-tag-remove-btn:hover {
     color: #212529;
-}
-
-#group-subject-search-input {
-    flex-grow: 1;
-    border: none;
-    outline: none;
-    padding: 5px;
-    background-color: transparent;
-    min-width: 150px; /* Đảm bảo input có độ rộng tối thiểu */
-}
-
-.subject-dropdown-list .dropdown-item.disabled {
-    background-color: #f8f9fa;
-    color: #adb5bd;
-    cursor: not-allowed;
 }

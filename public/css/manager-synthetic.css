@@ -83,11 +83,6 @@
     transition: background-color 0.2s;
 }
 
-/* --- NEW: Utility class to hide elements --- */
-.hidden {
-    display: none !important;
-}
-
 .slot:hover {
     background-color: var(--info-light);
 }
@@ -124,19 +119,6 @@
 .method-icon-summary.icon-th { color: var(--warning-color); } /* Orange for Practice */
 .method-icon-summary.icon-tbdh { color: var(--primary-color); } /* Teal for Equipment */
 
-/* --- Checkbox Group for Methods in Modal --- */
-.checkbox-group-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    max-height: 150px;
-    overflow-y: auto;
-    border: 1px solid var(--border-color-strong);
-    padding: 15px;
-    border-radius: 8px;
-    background-color: var(--surface-bg);
-}
-
 .checkbox-item {
     display: flex;
     align-items: center;
@@ -152,18 +134,6 @@
 
 .required-star {
     color: var(--danger-color);
-}
-
-/* --- Modal Form (Copied from teacher-register.css) --- */
-.register-form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 2 cột bằng nhau */
-    gap: 15px 20px; /* 15px khoảng cách dọc, 20px khoảng cách ngang */
-}
-
-/* Class để một form-group chiếm trọn 2 cột */
-.form-group-span-2 {
-    grid-column: span 2;
 }
 
 /* Ghi đè style cho các input/select trong modal để đồng bộ */
@@ -193,26 +163,6 @@
     .form-group-span-2 { grid-column: span 1; }
 }
 
-/* --- Fieldset Group Styling (Copied from teacher-register.css) --- */
-.fieldset-group {
-    position: relative; /* Làm mốc định vị cho label */
-    padding: 25px 15px 15px 15px; /* Tăng padding-top để có chỗ cho label */
-    margin-top: 15px; /* Thêm khoảng cách trên */
-    border: 1px solid #ccc;
-    border-radius: 8px;
-}
-
-.fieldset-group > label {
-    position: absolute;
-    top: -12px; /* Dịch chuyển label lên trên, nằm trên đường viền */
-    left: 10px; /* Khoảng cách từ lề trái */
-    background-color: var(--surface-bg); /* Màu nền của label phải giống màu nền của modal */
-    padding: 0 5px; /* Tạo khoảng trống hai bên chữ để che đường viền */
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-light);
-}
-
 /* Style cho selector bị vô hiệu hóa */
 #register-modal .form-group select:disabled,
 #register-modal .form-group input:disabled,
@@ -220,39 +170,6 @@
     background-color: #e9ecef; /* Màu nền xám nhạt */
     cursor: not-allowed;
 }
-
-/* --- Modal Subtitle Actions --- */
-.modal-subtitle-actions {
-    margin-top: -15px;
-    margin-bottom: 20px;
-    text-align: right;
-}
-
-.btn-link {
-    background: none;
-    border: none;
-    color: var(--primary-color);
-    cursor: pointer;
-    font-size: 0.9rem;
-    padding: 0;
-    text-decoration: underline;
-}
-.btn-link:hover {
-    color: var(--primary-hover);
-}
-
-/* Style cho nút Hủy (di chuyển từ inline style) */
-.btn-cancel {
-    background-color: var(--surface-subtle-bg);
-    color: var(--text-light);
-    border: 1px solid var(--border-color-strong);
-}
-
-.btn-cancel:hover {
-    background-color: var(--border-color);
-    border-color: var(--border-color-strong);
-}
-
 
 /* --- NEW: Slot Detail Modal --- */
 .slot-detail-body {
@@ -396,10 +313,6 @@
     text-transform: uppercase;
     font-size: 0.8rem;
     letter-spacing: 0.5px;
-}
-
-.filter-group label {
-    margin: 0px;
 }
 
 /* --- NEW: Lab Selection Modal --- */

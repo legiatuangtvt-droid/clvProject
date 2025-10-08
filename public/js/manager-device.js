@@ -138,19 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .filter(item => item.parentId === parentId)
             .sort((a, b) => String(a.order || '').localeCompare(String(b.order || ''), undefined, { numeric: true, sensitivity: 'base' }));
 
-        // Tách danh mục đang được chọn (selectedNodeId) ra và đẩy xuống cuối
-        // SỬA LỖI: Sử dụng activeTopLevelCategoryId thay vì selectedNodeId
-        if (activeTopLevelCategoryId && depth === 0) {
-            const selectedItemInfo = allItemsCache.find(item => item.id === activeTopLevelCategoryId);
-            if (selectedItemInfo && selectedItemInfo.parentId === null) { // Double-check it's a top-level item
-                const selectedItemIndex = children.findIndex(item => item.id === activeTopLevelCategoryId);
-                if (selectedItemIndex > -1) {
-                    const [selectedItem] = children.splice(selectedItemIndex, 1);
-                    children.push(selectedItem);
-                }
-            }
-        }
-
         let html = '';
         const indent = depth * 25; // 25px per level
 
@@ -160,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const usageGV = usageObject.includes('GV');
                 const usageHS = usageObject.includes('HS');
                 html += `
-                    <tr data-id="${item.id}" data-type="device" data-parent-id="${parentId || 'root'}" style="padding-left: ${indent}px;">
+                    <tr data-id="${item.id}" data-type="device" data-parent-id="${parentId || 'root'}" class="bg-hover" style="padding-left: ${indent}px;">
                         <td class="col-stt" data-field="device-order">${item.order || ''}</td>
                         <td class="col-topic" data-field="device-topic">${item.topic || ''}</td>
                         <td class="col-name" data-field="device-name">
@@ -188,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isExpanded = expandedCategories.has(item.id);
                 const iconClass = isExpanded ? 'fa-folder-open' : 'fa-folder';
                 html += `
-                    <tr data-id="${item.id}" data-type="category" data-parent-id="${parentId || 'root'}" class="category-row">
+                    <tr data-id="${item.id}" data-type="category" data-parent-id="${parentId || 'root'}" class="category-row bg-hover">
                         <td class="col-stt" data-field="category-order">${item.order || ''}</td>
                         <td colspan="10" class="col-name">
                             <div class="item-name-cell" style="padding-left: ${indent}px;">
@@ -277,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <th class="col-broken" rowspan="2">Hỏng</th>
                         <th class="col-actions" rowspan="2">Hành động</th>
                     </tr>
-                    <tr>
+                    <tr class="sticky-header-second-row">
                         <th class="col-usage-gv">GV</th>
                         <th class="col-usage-hs">HS</th>
                     </tr>
@@ -292,6 +279,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (parentId) {
             const activeRow = listContainer.querySelector(`tr[data-id="${parentId}"]`);
             if (activeRow) activeRow.classList.add('parent-category-row');
+        }
+
+        // Cập nhật chiều cao của hàng header đầu tiên cho sticky header
+        const firstHeaderRow = listContainer.querySelector('.device-table thead tr:first-child');
+        if (firstHeaderRow) {
+            const height = firstHeaderRow.offsetHeight;
+            document.documentElement.style.setProperty('--header-row1-height', `${height}px`);
         }
     };
 
