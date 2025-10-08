@@ -312,8 +312,14 @@ function checkForJsDuplicates() {
     for (const [hash, data] of jsFunctionHashes.entries()) {
         if (data.files.size > 1) {
             const fileList = [...data.files].map(f => path.relative(projectRoot, f)).join(', ');
-            const functionName = data.content.match(/function\s+([a-zA-Z0-9_]+)\s*\(/)?.[1] || 'anonymous';
-            violations.push({ file: [...data.files][0], type: 'Duplicated JS', line: null, priority: 1, message: `Hàm '${functionName}' bị lặp lại trong các tệp: ${fileList}. Đề xuất chuyển vào một tệp helper chung (ví dụ: 'utils.js').` });
+            // Sử dụng tên hàm đã được lưu từ trước
+            const functionName = data.name; 
+            violations.push({ 
+                file: [...data.files][0], 
+                type: 'Duplicated JS', 
+                line: null, priority: 1, 
+                message: `Hàm '${functionName}' bị lặp lại trong các tệp: ${fileList}. Đề xuất chuyển vào một tệp helper chung (ví dụ: 'utils.js').` 
+            });
         }
     }
 }
@@ -392,12 +398,25 @@ function findCssDuplicates(filePath, fileContent) {
  * @param {string} fileContent Nội dung tệp.
  */
 function findJsDuplicates(filePath, fileContent) {
-    const funcRegex = /(async\s+)?function\s+[a-zA-Z0-9_]+\s*\([^)]*\)\s*\{[\s\S]*?\}/g;
+    // Regex mới:
+    // 1. (const|let|var)\s+([a-zA-Z0-9_]+)\s*=\s*(async\s*)?\([^)]*\)\s*=>\s*\{[\s\S]*?\}
+    //    - Bắt các arrow function được gán cho biến (const, let, var).
+    // 2. (async\s+)?function\s+([a-zA-Z0-9_]+)\s*\([^)]*\)\s*\{[\s\S]*?\}
+    //    - Bắt các function declaration thông thường.
+    const funcRegex = /(?:(const|let|var)\s+([a-zA-Z0-9_]+)\s*=\s*(async\s*)?\([^)]*\)\s*=>\s*\{[\s\S]*?\}|(async\s+)?function\s+([a-zA-Z0-9_]+)\s*\([^)]*\)\s*\{[\s\S]*?\})/g;
     let match;
     while ((match = funcRegex.exec(fileContent)) !== null) {
-        const funcContent = match[0].replace(/\s+/g, ' '); // Chuẩn hóa đơn giản
-        if (!jsFunctionHashes.has(funcContent)) jsFunctionHashes.set(funcContent, { files: new Set(), content: match[0] });
-        jsFunctionHashes.get(funcContent).files.add(filePath);
+        const fullFunctionString = match[0];
+        // Lấy tên hàm từ các capturing group khác nhau của regex
+        const functionName = match[2] || match[6] || 'anonymous'; 
+
+        // Chuẩn hóa bằng cách xóa khoảng trắng thừa để so sánh chính xác hơn
+        const normalizedContent = fullFunctionString.replace(/\s+/g, ' '); 
+
+        if (!jsFunctionHashes.has(normalizedContent)) {
+            jsFunctionHashes.set(normalizedContent, { files: new Set(), content: fullFunctionString, name: functionName });
+        }
+        jsFunctionHashes.get(normalizedContent).files.add(filePath);
     }
 }
 /**
@@ -465,6 +484,11 @@ function printReport() {
             const lineInfo = v.line ? ` (Dòng ${v.line})` : '';
             console.log(`  - [\x1b[36m${v.type}\x1b[0m][Ưu tiên: ${v.priority}]${lineInfo}: ${v.message}`);
         });
+
+        // Thêm dòng prompt gợi ý cho AI
+        const aiPrompt = `[PROMPT_SUGGESTION]Dựa vào các vi phạm trên, hãy refactor file ${file}`;
+        console.log(`\n  \x1b[35m${aiPrompt}\x1b[0m`); // In màu tím cho dễ nhận biết
+
         console.log(''); // Thêm dòng trống cho dễ đọc
     }
 }
