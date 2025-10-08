@@ -640,6 +640,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const daySelect = document.getElementById('reg-day');
         const periodSelect = document.getElementById('reg-period');
 
+        // NEW: Hide equipment search button by default
+        document.getElementById('open-equipment-search-modal-btn').style.display = 'none';
+
         if (regId) {
             const reg = allRegistrations.find(r => r.id === regId); // Use allRegistrations to find it
             modalTeacherSelect.value = reg.teacherId;
@@ -652,6 +655,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // NEW: Reset and hide equipment selection UI
             document.getElementById('equipment-selection-container').style.display = 'none';
+
+            // NEW: Show equipment search button if TBDH is checked
+            if (reg.teachingMethod?.includes('Thiết bị dạy học')) {
+                document.getElementById('open-equipment-search-modal-btn').style.display = 'inline-block';
+            }
 
             reg.teachingMethod?.forEach(method => {
                 const checkbox = document.querySelector(`#reg-method-container input[value="${method}"]`);
@@ -672,7 +680,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Cập nhật danh sách ngày dựa trên tuần đã chọn
             populateDayAndPeriodSelectors(reg.weekNumber);
             daySelect.value = reg.date; // Đặt lại ngày sau khi populate
-            periodSelect.value = reg.period; // Đặt lại tiết sau khi populate
 
             // Thêm sự kiện để cập nhật ngày khi đổi tuần
             weekSelect.onchange = (e) => {
@@ -1674,6 +1681,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     equipmentList = equipmentList.filter(item => item.toLowerCase() !== 'tivi');
                 }
                 equipmentInput.value = equipmentList.join(', ');
+            }
+
+            // NEW: Show/hide equipment search button and clear input
+            if (e.target.type === 'checkbox' && e.target.value === 'Thiết bị dạy học') {
+                const equipmentSearchBtn = document.getElementById('open-equipment-search-modal-btn');
+                const equipmentInput = document.getElementById('reg-equipment-input');
+
+                if (e.target.checked) {
+                    equipmentSearchBtn.style.display = 'inline-block';
+                } else {
+                    equipmentSearchBtn.style.display = 'none';
+
+                    // Remove only items that were added from the search modal (they have "(SL: ...)")
+                    let currentEquipment = equipmentInput.value.split(',').map(item => item.trim()).filter(Boolean);
+                    const itemsToKeep = currentEquipment.filter(item => !/\(SL:\s*\d+\)/.test(item));
+                    
+                    if (itemsToKeep.length < currentEquipment.length) {
+                        showToast('Đã xóa các thiết bị đã chọn.', 'info');
+                    }
+                    equipmentInput.value = itemsToKeep.join(', ');
+                }
             }
         });
         
