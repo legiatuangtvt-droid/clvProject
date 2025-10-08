@@ -1,7 +1,6 @@
 /* --- Bố cục cột cho trang Tổng hợp --- */
 .two-column-layout { /* Sử dụng class dùng chung */
     grid-template-columns: minmax(0, 320px) 1fr; /* Sidebar tối đa 320px, co lại được; content chiếm phần còn lại */
-    margin-top: 15px;
 }
 
 .two-column-sidebar .filter-controls {
@@ -105,7 +104,7 @@
     justify-content: center;
     height: 100%;
     gap: 8px;
-    padding: 5px;
+    padding: 3px;
 }
 
 .slot-summary-count {
