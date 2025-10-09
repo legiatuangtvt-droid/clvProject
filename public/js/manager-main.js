@@ -219,7 +219,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getGroupCount = async (schoolYear) => {
-        const groupsQuery = query(collection(firestore, 'groups'), where("schoolYear", "==", schoolYear));
+        const groupsQuery = query(
+            collection(firestore, 'groups'), 
+            where("schoolYear", "==", schoolYear),
+            where("status", "==", "active") // CHỈ ĐẾM TỔ ĐANG HOẠT ĐỘNG
+        );
         const groupsSnapshot = await getDocs(groupsQuery);
         groupCountEl.textContent = groupsSnapshot.size;
         return groupsSnapshot.docs.map(doc => doc.data().group_id); // Trả về mảng group_id để dùng cho việc đếm giáo viên
@@ -258,40 +262,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getTeacherCount = async (schoolYear) => {
-        // Vì giáo viên không có trường schoolYear, ta phải đếm qua các tổ
-        const groupsQuery = query(collection(firestore, 'groups'), where("schoolYear", "==", schoolYear));
-        const groupsSnapshot = await getDocs(groupsQuery);
-
-        if (groupsSnapshot.empty) {
-            teacherCountEl.textContent = '0';
-            return;
-        }
-
-        const groupIds = groupsSnapshot.docs.map(doc => doc.data().group_id);
-
-        // --- FIX: Xử lý lỗi 400 Bad Request khi groupIds rỗng hoặc quá 30 ---
-        if (groupIds.length === 0) {
-            teacherCountEl.textContent = '0';
-            return;
-        }
-
-        // Chia mảng groupIds thành các chunk nhỏ hơn (tối đa 30 phần tử mỗi chunk)
-        const CHUNK_SIZE = 30;
-        const chunks = [];
-        for (let i = 0; i < groupIds.length; i += CHUNK_SIZE) {
-            chunks.push(groupIds.slice(i, i + CHUNK_SIZE));
-        }
-
-        // Thực hiện các truy vấn song song cho từng chunk
-        const queryPromises = chunks.map(chunk => {
-            const teachersQuery = query(collection(firestore, 'teachers'), where('group_id', 'in', chunk));
-            return getDocs(teachersQuery);
-        });
-
-        const snapshots = await Promise.all(queryPromises);
-
-        // Cộng dồn kết quả từ tất cả các snapshot
-        const totalTeachers = snapshots.reduce((acc, snapshot) => acc + snapshot.size, 0);
+        // Đếm tất cả giáo viên đang hoạt động trong năm học đó.
+        // Vì giáo viên không có trường schoolYear, ta sẽ đếm tất cả giáo viên đang hoạt động.
+        // Đây là một giả định hợp lý vì giáo viên thường thuộc về một trường duy nhất.
+        const teachersQuery = query(
+            collection(firestore, 'teachers'),
+            where('status', '==', 'active')
+        );
+        const snapshot = await getDocs(teachersQuery);
+        const totalTeachers = snapshot.size;
         teacherCountEl.textContent = totalTeachers;
     };
 

@@ -67,6 +67,11 @@
                                 <h2>Danh sách Tổ chuyên môn & Giáo viên</h2>
                                 <button id="add-group-btn" class="btn-primary"><i class="fas fa-plus"></i> Thêm Tổ</button>
                             </div>
+                            <!-- NEW: Container for unassigned teachers -->
+                            <div id="unassigned-teachers-container" style="display: none;">
+                                <!-- Card for unassigned teachers will be rendered here by JS -->
+                            </div>
+                            <!-- Container for regular groups -->
                             <div id="groups-container"><p>Vui lòng chọn một năm học để xem dữ liệu.</p></div>
                         </div>
                         <div id="teaching-methods" class="tab-content">
@@ -82,7 +87,6 @@
                             <div class="page-header">
                                 <h2>Danh mục Môn học</h2>
                                 <div class="page-header-actions">
-                                    <button id="sync-subjects-btn" class="btn-secondary" title="Quét các tổ chuyên môn và tự động thêm các môn học còn thiếu vào danh sách này"><i class="fas fa-sync-alt"></i> Đồng bộ từ Tổ</button>
                                     <button id="add-subject-btn" class="btn-primary"><i class="fas fa-plus"></i> Thêm Môn học</button>
                                 </div>
                             </div>
@@ -99,68 +103,6 @@
                                 <p><strong>Lưu ý:</strong> Các môn học được đánh dấu là "Đặc biệt" (ví dụ: HĐTN) sẽ tự động hiển thị cho tất cả giáo viên mà không cần phân công tại đây.</p>
                             </div>
                             <div id="subject-assignments-container"><p>Vui lòng chọn một năm học để xem dữ liệu.</p></div>
-                        </div>
-
-                        <!-- Tab Sửa lỗi dữ liệu -->
-                        <div id="data-repair" class="tab-content">
-                            <!-- Card cho chức năng chạy tất cả -->
-                            <div class="repair-section-card all-repairs-card">
-                                <div class="content-header">
-                                    <h2>Tự động sửa lỗi hàng loạt</h2>
-                                    <button id="run-all-repairs-btn" class="btn-danger"><i class="fas fa-magic"></i> Chạy tất cả chức năng sửa lỗi</button>
-                                </div>
-                                <div class="instruction-text">
-                                    <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tự động chạy tuần tự cả 3 công cụ sửa lỗi bên dưới. Tiến trình sẽ được hiển thị ở đây.</p>
-                                </div>
-                                <div id="all-repairs-status-container">
-                                    <!-- Trạng thái chạy tất cả sẽ hiển thị ở đây -->
-                                </div>
-                            </div>
-
-                            <!-- Card cho chức năng sửa Teacher ID -->
-                            <div class="repair-section-card">
-                                <div class="content-header">
-                                    <h2>Sửa lỗi Teacher ID (Tài khoản bị xóa)</h2>
-                                    <button id="find-orphaned-regs-btn" class="btn-primary"><i class="fas fa-user-slash"></i> Quét ID giáo viên mồ côi</button>
-                                </div>
-                                <div class="instruction-text">
-                                    <p><i class="fas fa-info-circle"></i> Chức năng này sẽ quét toàn bộ các lượt đăng ký để tìm những đăng ký có `teacherId` không còn tồn tại trong danh sách giáo viên hiện tại (do tài khoản giáo viên đã bị xóa và tạo lại).</p>
-                                    <p>Sau khi quét, bạn có thể chọn giáo viên mới để gán lại cho các lượt đăng ký bị "mồ côi" này.</p>
-                                </div>
-                                <div id="data-repair-results-container">
-                                    <!-- Kết quả quét sẽ được hiển thị ở đây -->
-                                </div>
-                            </div>
-
-                            <!-- Card cho chức năng sửa Môn học -->
-                            <div class="repair-section-card">
-                                <div class="content-header">
-                                    <h2>Sửa lỗi sai môn học</h2>
-                                    <button id="find-subject-mismatch-btn" class="btn-primary"><i class="fas fa-book"></i> Quét môn học không khớp</button>
-                                </div>
-                                <div class="instruction-text">
-                                    <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tìm các lượt đăng ký có môn học không khớp với môn học chính của giáo viên. Bạn có thể tự động sửa tất cả các lỗi này về đúng môn học đã được phân công.</p>
-                                    <p><strong>Ngoại lệ:</strong> GV môn <strong>Sinh học</strong> được phép dạy <strong>Công nghệ nông nghiệp</strong>. GV môn <strong>Vật lí</strong> được phép dạy <strong>Công nghệ công nghiệp</strong>.</p>
-                                </div>
-                                <div id="subject-repair-results-container">
-                                    <!-- Kết quả quét lỗi môn học sẽ hiển thị ở đây -->
-                                </div>
-                            </div>
-
-                            <!-- Card cho chức năng sửa Group ID -->
-                            <div class="repair-section-card">
-                                <div class="content-header">
-                                    <h2>Sửa lỗi thiếu ID Tổ chuyên môn</h2>
-                                    <button id="find-missing-groupid-btn" class="btn-primary"><i class="fas fa-sitemap"></i> Quét đăng ký thiếu ID Tổ</button>
-                                </div>
-                                <div class="instruction-text">
-                                    <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tìm các lượt đăng ký không được lưu `groupId` (thường là dữ liệu cũ). Việc thiếu `groupId` có thể khiến báo cáo hiển thị sai tổ chuyên môn nếu giáo viên đã chuyển tổ.</p>
-                                    <p>Sau khi quét, bạn có thể tự động cập nhật `groupId` chính xác cho các lượt đăng ký này dựa trên thông tin tổ của giáo viên tại thời điểm quét.</p>
-                                </div>
-                                <div id="groupid-repair-results-container">
-                                    <!-- Kết quả quét lỗi groupId sẽ hiển thị ở đây -->
-                                </div>
-                            </div>
                         </div>
 
                         <div id="time-plan" class="tab-content">
@@ -202,6 +144,114 @@
                             </div>
                             <div class="modal-actions" style="justify-content: flex-end; margin-top: 20px;">
                                 <button id="save-rules-btn" class="btn-save"><i class="fas fa-save"></i> Lưu Quy tắc</button>
+                            </div>
+                        </div>
+
+                        <!-- Tab Sửa lỗi dữ liệu -->
+                        <div id="data-repair" class="tab-content">
+                            <div class="data-repair-layout">
+                                <!-- Card cho chức năng di chuyển dữ liệu (Migration) -->
+                                <div class="repair-section-card">
+                                    <div class="content-header">
+                                        <h2>Di chuyển dữ liệu (Migration)</h2>
+                                        <button id="run-teacher-status-migration-btn" class="btn-warning"><i class="fas fa-database"></i> Cập nhật 'status' cho Giáo viên</button>
+                                    </div>
+                                    <div class="instruction-text">
+                                        <p><i class="fas fa-info-circle"></i> <strong>Mục đích:</strong> Chức năng này sẽ quét toàn bộ danh sách giáo viên. Với mỗi giáo viên chưa có trường <strong>`status`</strong>, script sẽ tự động thêm trường <strong>`status: 'active'`</strong>.</p>
+                                        <p><strong>Quan trọng:</strong> Bạn chỉ cần chạy chức năng này <strong>MỘT LẦN DUY NHẤT</strong> sau khi triển khai tính năng "xóa mềm".</p>
+                                    </div>
+                                    <div id="teacher-status-migration-log" class="data-repair-results-container" style="display: none;">
+                                        <!-- Log sẽ hiển thị ở đây -->
+                                    </div>
+                                </div>
+
+                                <!-- Card cho chức năng di chuyển dữ liệu (Migration) cho Tổ -->
+                                <div class="repair-section-card">
+                                    <div class="content-header">
+                                        <h2>Di chuyển dữ liệu (Migration)</h2>
+                                        <button id="run-group-status-migration-btn" class="btn-warning"><i class="fas fa-database"></i> Cập nhật 'status' cho Tổ</button>
+                                    </div>
+                                    <div class="instruction-text">
+                                        <p><i class="fas fa-info-circle"></i> <strong>Mục đích:</strong> Chức năng này sẽ quét toàn bộ danh sách tổ chuyên môn. Với mỗi tổ chưa có trường <strong>`status`</strong>, script sẽ tự động thêm trường <strong>`status: 'active'`</strong>.</p>
+                                    </div>
+                                    <div id="group-status-migration-log" class="data-repair-results-container" style="display: none;">
+                                        <!-- Log sẽ hiển thị ở đây -->
+                                    </div>
+                                </div>
+
+                                <!-- Card cho chức năng di chuyển dữ liệu (Migration) cho Môn học -->
+                                <div class="repair-section-card">
+                                    <div class="content-header">
+                                        <h2>Di chuyển dữ liệu (Migration)</h2>
+                                        <button id="run-subject-status-migration-btn" class="btn-warning"><i class="fas fa-database"></i> Cập nhật 'status' cho Môn học</button>
+                                    </div>
+                                    <div class="instruction-text">
+                                        <p><i class="fas fa-info-circle"></i> <strong>Mục đích:</strong> Chức năng này sẽ quét toàn bộ danh sách môn học. Với mỗi môn học chưa có trường <strong>`status`</strong>, script sẽ tự động thêm trường <strong>`status: 'active'`</strong>.</p>
+                                    </div>
+                                    <div id="subject-status-migration-log" class="data-repair-results-container" style="display: none;">
+                                        <!-- Log sẽ hiển thị ở đây -->
+                                    </div>
+                                </div>
+
+                                <!-- Card cho chức năng chạy tất cả -->
+                                <div class="repair-section-card all-repairs-card">
+                                    <div class="content-header">
+                                        <h2>Tự động sửa lỗi hàng loạt</h2>
+                                        <button id="run-all-repairs-btn" class="btn-danger"><i class="fas fa-magic"></i> Chạy tất cả chức năng sửa lỗi</button>
+                                    </div>
+                                    <div class="instruction-text">
+                                        <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tự động chạy tuần tự cả 3 công cụ sửa lỗi bên dưới. Tiến trình sẽ được hiển thị ở đây.</p>
+                                    </div>
+                                    <div id="all-repairs-status-container">
+                                        <!-- Trạng thái chạy tất cả sẽ hiển thị ở đây -->
+                                    </div>
+                                </div>
+
+                                <!-- Card cho chức năng sửa Teacher ID -->
+                                <div class="repair-section-card">
+                                    <div class="content-header">
+                                        <h2>Sửa lỗi Teacher ID (Tài khoản bị xóa)</h2>
+                                        <button id="find-orphaned-regs-btn" class="btn-primary"><i class="fas fa-user-slash"></i> Quét ID giáo viên mồ côi</button>
+                                    </div>
+                                    <div class="instruction-text">
+                                        <p><i class="fas fa-info-circle"></i> <strong>Mục đích:</strong> Dùng để tìm các lượt đăng ký có `teacherId` (UID) không còn tồn tại trong danh sách giáo viên đang hoạt động. Lỗi này thường xảy ra khi:</p>
+                                        <ul style="margin: 0; padding-left: 30px;"><li>Giáo viên được cấp tài khoản đăng nhập mới (thay đổi UID).</li><li>Tài khoản giáo viên cũ bị xóa khỏi hệ thống Authentication.</li></ul>
+                                        <p>Sau khi quét, bạn có thể chọn giáo viên mới để gán lại cho các lượt đăng ký bị "mồ côi" này.</p>
+                                    </div>
+                                    <div id="data-repair-results-container" class="data-repair-results-container">
+                                        <!-- Kết quả quét sẽ được hiển thị ở đây -->
+                                    </div>
+                                </div>
+
+                                <!-- Card cho chức năng sửa Môn học -->
+                                <div class="repair-section-card">
+                                    <div class="content-header">
+                                        <h2>Sửa lỗi sai môn học</h2>
+                                        <button id="find-subject-mismatch-btn" class="btn-primary"><i class="fas fa-book"></i> Quét môn học không khớp</button>
+                                    </div>
+                                    <div class="instruction-text">
+                                        <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tìm các lượt đăng ký có môn học không khớp với môn học chính của giáo viên. Bạn có thể tự động sửa tất cả các lỗi này về đúng môn học đã được phân công.</p>
+                                        <p><strong>Ngoại lệ:</strong> GV môn <strong>Sinh học</strong> được phép dạy <strong>Công nghệ nông nghiệp</strong>. GV môn <strong>Vật lí</strong> được phép dạy <strong>Công nghệ công nghiệp</strong>.</p>
+                                    </div>
+                                    <div id="subject-repair-results-container" class="data-repair-results-container">
+                                        <!-- Kết quả quét lỗi môn học sẽ hiển thị ở đây -->
+                                    </div>
+                                </div>
+
+                                <!-- Card cho chức năng sửa Group ID -->
+                                <div class="repair-section-card">
+                                    <div class="content-header">
+                                        <h2>Sửa lỗi thiếu ID Tổ chuyên môn</h2>
+                                        <button id="find-missing-groupid-btn" class="btn-primary"><i class="fas fa-sitemap"></i> Quét đăng ký thiếu ID Tổ</button>
+                                    </div>
+                                    <div class="instruction-text">
+                                        <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tìm các lượt đăng ký không được lưu `groupId` (thường là dữ liệu cũ). Việc thiếu `groupId` có thể khiến báo cáo hiển thị sai tổ chuyên môn nếu giáo viên đã chuyển tổ.</p>
+                                        <p>Sau khi quét, bạn có thể tự động cập nhật `groupId` chính xác cho các lượt đăng ký này dựa trên thông tin tổ của giáo viên tại thời điểm quét.</p>
+                                    </div>
+                                    <div id="groupid-repair-results-container" class="data-repair-results-container">
+                                        <!-- Kết quả quét lỗi groupId sẽ hiển thị ở đây -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -267,7 +317,7 @@
                             <div id="timings-preview-container" class="timings-container">
                                 <div class="timing-season-card">
                                     <h3 id="active-schedule-title"><i class="fas fa-clock"></i> Khung thời gian áp dụng hiện tại</h3>
-                                    <div id="active-schedule-container">
+                                    <div id="active-schedule-container" class="active-schedule-layout">
                                         <!-- Khung thời gian của mùa đang áp dụng sẽ được hiển thị ở đây -->
                                         <p>Đang tải khung thời gian...</p>
                                     </div>
@@ -281,7 +331,7 @@
     </div>
 
     <!-- Modal cho Tổ chuyên môn -->
-    <div id="group-modal" class="modal-overlay" style="display: none;">
+    <div id="group-modal" class="modal-overlay modal-group" style="display: none;">
         <div class="modal-content">
             <h2 id="group-modal-title">Thêm Tổ chuyên môn</h2>
             <div class="form-group">
@@ -293,8 +343,8 @@
                 <label for="group-subjects-select">Các môn học thuộc tổ</label>
                 <div id="group-subjects-select-wrapper" class="custom-select-wrapper">
                     <div id="group-subjects-container" class="custom-select-container">
-                        <!-- Các thẻ môn học đã chọn sẽ được chèn vào đây -->
-                        <input type="text" id="group-subject-search-input" placeholder="Tìm và chọn môn học...">
+                        <div id="group-selected-subjects" class="selected-subjects-area"></div>
+                        <input type="text" id="group-subject-search-input" class="subject-search-input" placeholder="Tìm và chọn môn học..." autocomplete="off">
                     </div>
                     <div id="group-subject-dropdown" class="subject-dropdown-list" style="display: none;"></div>
                 </div>
@@ -312,7 +362,7 @@
     </div>
 
     <!-- Modal cho Phương pháp dạy học -->
-    <div id="method-modal" class="modal-overlay" style="display: none;">
+    <div id="method-modal" class="modal-overlay modal-method" style="display: none;">
         <div class="modal-content">
             <h2 id="method-modal-title">Thêm Phương pháp dạy học</h2>
             <div class="form-group">
@@ -332,7 +382,7 @@
     </div>
 
     <!-- Modal cho Năm học -->
-    <div id="school-year-modal" class="modal-overlay" style="display: none;">
+    <div id="school-year-modal" class="modal-overlay modal-school-year" style="display: none;">
         <div class="modal-content">
             <h2>Thêm năm học mới</h2>
             <div class="form-group">
@@ -352,7 +402,7 @@
     </div>
 
     <!-- Modal cho Môn học -->
-    <div id="subject-modal" class="modal-overlay" style="display: none;">
+    <div id="subject-modal" class="modal-overlay modal-subject" style="display: none;">
         <div class="modal-content">
             <h2 id="subject-modal-title">Thêm Môn học</h2>
             <div class="form-group">
@@ -361,7 +411,7 @@
             </div>
             <div class="form-group">
                 <label for="subject-type-select">Loại môn học</label>
-                <select id="subject-type-select" class="filter-select">
+                <select id="subject-type-select" class="form-control">
                     <option value="regular">Môn học thông thường (thuộc tổ chuyên môn)</option>
                     <option value="special">Môn học đặc biệt (dành cho mọi giáo viên)</option>
                 </select>
@@ -382,17 +432,17 @@
     </div>
 
     <!-- Modal cho Phân công Môn học -->
-    <div id="assignment-modal" class="modal-overlay" style="display: none;">
+    <div id="assignment-modal" class="modal-overlay modal-assignment" style="display: none;">
         <div class="modal-content">
             <h2 id="assignment-modal-title">Phân công môn học phụ</h2>
             <div class="form-group form-group-inline">
                 <label>Môn học chính</label>
                 <input type="text" id="primary-subject-display" class="form-control" readonly>
             </div>
-            <div class="form-group form-group-inline">
+            <div class="form-group form-group-inline custom-select-wrapper">
                 <label for="subject-search-input">Chọn các môn học phụ được phép đăng ký</label>
-                <div id="custom-select-wrapper">
-                    <div id="custom-select-container" class="custom-select-container">
+                <div>
+                    <div class="custom-select-container">
                         <!-- Các thẻ đã chọn sẽ được chèn vào đây -->
                         <input type="text" id="subject-search-input" placeholder="Tìm và chọn môn học...">
                     </div>
@@ -407,7 +457,7 @@
     </div>
 
     <!-- Modal cho Giáo viên -->
-    <div id="teacher-modal" class="modal-overlay" style="display: none;">
+    <div id="teacher-modal" class="modal-overlay modal-teacher" style="display: none;">
         <div class="modal-content">
             <form id="teacher-form">
                 <h2 id="teacher-modal-title">Thêm Giáo viên</h2>
@@ -442,7 +492,7 @@
     </div>
 
     <!-- Modal cho Chỉnh sửa Tuần -->
-    <div id="week-edit-modal" class="modal-overlay" style="display: none;">
+    <div id="week-edit-modal" class="modal-overlay modal-week-edit" style="display: none;">
         <div class="modal-content">
             <h2 id="week-edit-modal-title">Chỉnh sửa Tuần <span id="week-edit-number"></span></h2>
             <div class="form-group">
@@ -467,7 +517,7 @@
 
 
     <!-- Modal xác nhận xóa -->
-    <div id="confirm-delete-modal" class="modal-overlay" style="display: none;">
+    <div id="confirm-delete-modal" class="modal-overlay modal-confirm-delete" style="display: none;">
         <div class="modal-content">
             <h2 id="confirm-delete-message">Xác nhận xóa</h2>
             <p id="confirm-delete-message">Bạn có chắc chắn muốn xóa mục này không? Hành động này không thể hoàn tác.</p>

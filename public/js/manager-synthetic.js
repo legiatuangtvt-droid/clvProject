@@ -109,7 +109,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DATA LOADING ---
     const loadAllTeachers = async () => {
-        const teachersQuery = query(collection(firestore, 'teachers'), orderBy('teacher_name'));
+        const teachersQuery = query(
+            collection(firestore, 'teachers'),
+            where('status', '==', 'active'), // CHỈ LẤY GV ĐANG HOẠT ĐỘNG
+            orderBy('teacher_name')
+        );
         const teachersSnapshot = await getDocs(teachersQuery);
         allTeachers = teachersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -173,7 +177,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const populateModalSelectors = async () => {
         // --- NEW LOGIC: Load all subjects from the 'subjects' collection ---
-        const subjectsQuery = query(collection(firestore, 'subjects'), where('schoolYear', '==', currentSchoolYear), orderBy('name'));
+        const subjectsQuery = query(
+            collection(firestore, 'subjects'), 
+            where('schoolYear', '==', currentSchoolYear), 
+            where('status', '==', 'active'), // CHỈ LẤY MÔN HỌC ĐANG HOẠT ĐỘNG
+            orderBy('name'));
         const subjectsSnapshot = await getDocs(subjectsQuery);
         allSubjects.clear();
         subjectsSnapshot.forEach(doc => allSubjects.add(doc.data().name));
@@ -1807,10 +1815,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalHTML += `<div class="equipment-category-group-single">`;
                 devicesWithAvailability.forEach(device => {
                     const isDisabled = device.available <= 0;
-                    const preSelectedQuantity = tempEquipmentSelection.get(device.name) || 0;
+                    const preSelectedQuantity = tempEquipmentSelection.get(device.name) || 0; 
         
                     modalHTML += `
-                        <div class="equipment-item-row ${isDisabled ? 'disabled' : ''}" data-device-name="${device.name}">
+                        <div class="equipment-item-row ${isDisabled ? 'item-row-disabled' : ''}" data-device-name="${device.name}">
                             <span class="equipment-name" title="${device.name}">${device.name}</span>
                             <span class="equipment-available">(Còn lại: ${device.available})</span>
                             <input type="number" class="equipment-quantity-input" min="0" max="${device.available + preSelectedQuantity}" value="${preSelectedQuantity}" ${isDisabled && preSelectedQuantity === 0 ? 'disabled' : ''}>

@@ -99,7 +99,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const loadCurrentTeacherInfo = async (user) => {
-        const teacherQuery = query(collection(firestore, 'teachers'), where('uid', '==', user.uid), limit(1));
+        const teacherQuery = query(
+            collection(firestore, 'teachers'), 
+            where('uid', '==', user.uid),
+            where('status', '==', 'active'), // CHỈ LẤY GV ĐANG HOẠT ĐỘNG
+            limit(1));
         const teacherSnapshot = await getDocs(teacherQuery);
         if (!teacherSnapshot.empty) {
             currentTeacherInfo = { id: teacherSnapshot.docs[0].id, ...teacherSnapshot.docs[0].data() };
@@ -107,8 +111,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const loadTeachersInGroup = async () => {
-        if (!currentTeacherInfo?.group_id) return;
-        const teachersQuery = query(collection(firestore, 'teachers'), where('group_id', '==', currentTeacherInfo.group_id));
+        if (!currentTeacherInfo?.group_id) return; 
+        const teachersQuery = query(
+            collection(firestore, 'teachers'), 
+            where('group_id', '==', currentTeacherInfo.group_id),
+            where('status', '==', 'active') // CHỈ LẤY GV ĐANG HOẠT ĐỘNG
+        );
         const teachersSnapshot = await getDocs(teachersQuery);
         teachersInGroup = teachersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     };
@@ -254,7 +262,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- NEW LOGIC: Load subjects from 'subjects' collection ---
         const subjectsQuery = query(
             collection(firestore, 'subjects'),
-            where('schoolYear', '==', currentSchoolYear)
+            where('schoolYear', '==', currentSchoolYear),
+            where('status', '==', 'active') // CHỈ LẤY MÔN HỌC ĐANG HOẠT ĐỘNG
         );
         const subjectsSnapshot = await getDocs(subjectsQuery);
         const group = groupMap.get(currentTeacherInfo.group_id); // Lấy thông tin tổ từ map đã tải

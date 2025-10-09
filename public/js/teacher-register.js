@@ -119,7 +119,11 @@ const initializeTeacherRegisterPage = (user) => {
     const loadCurrentUserInfo = async (user) => {
         if (!user) return; // Thêm kiểm tra để đảm bảo user tồn tại
 
-        const teacherQuery = query(collection(firestore, 'teachers'), where('uid', '==', user.uid), limit(1));
+        const teacherQuery = query(
+            collection(firestore, 'teachers'), 
+            where('uid', '==', user.uid),
+            where('status', '==', 'active'), // CHỈ LẤY GV ĐANG HOẠT ĐỘNG
+            limit(1));
         const teacherSnapshot = await getDocs(teacherQuery);
 
         if (teacherSnapshot.empty) {
@@ -145,7 +149,11 @@ const initializeTeacherRegisterPage = (user) => {
 
     const loadTeachersInGroup = async () => {
         if (!currentUserInfo?.group_id) return;
-        const teachersQuery = query(collection(firestore, 'teachers'), where('group_id', '==', currentUserInfo.group_id));
+        const teachersQuery = query(
+            collection(firestore, 'teachers'), 
+            where('group_id', '==', currentUserInfo.group_id),
+            where('status', '==', 'active') // CHỈ LẤY GV ĐANG HOẠT ĐỘNG
+        );
         const teachersSnapshot = await getDocs(teachersQuery);
         teachersInGroup = teachersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     };
@@ -226,7 +234,8 @@ const initializeTeacherRegisterPage = (user) => {
         const specialSubjectsQuery = query(
             collection(firestore, 'subjects'),
             where('schoolYear', '==', currentSchoolYear),
-            where('type', '==', 'special')
+            where('type', '==', 'special'),
+            where('status', '==', 'active') // CHỈ LẤY MÔN HỌC ĐANG HOẠT ĐỘNG
         );
         const specialSubjectsSnapshot = await getDocs(specialSubjectsQuery);
         specialSubjectsSnapshot.forEach(doc => allowedSubjects.add(doc.data().name));

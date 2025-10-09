@@ -351,7 +351,7 @@ body {
     gap: 10px;
 }
 
-.btn-save, .btn-cancel, .btn-danger, .btn-secondary, .btn-primary {
+.btn-save, .btn-cancel, .btn-danger, .btn-secondary, .btn-primary, .btn-warning {
     padding: 10px 20px;
     font-size: 0.9rem;
     font-weight: 600;
@@ -366,7 +366,7 @@ body {
     text-decoration: none; /* Cho các thẻ <a> */
 }
 
-.btn-primary:hover, .btn-secondary:hover, .btn-save:hover, .btn-danger:hover, .btn-cancel:hover {
+.btn-primary:hover, .btn-secondary:hover, .btn-save:hover, .btn-danger:hover, .btn-cancel:hover, .btn-warning:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
@@ -401,6 +401,10 @@ body {
 
 .btn-danger { background-color: var(--danger-color); color: var(--text-on-primary); border-color: var(--danger-color); }
 .btn-danger:hover { background-color: #c82333; border-color: #bd2130; }
+
+.btn-warning { background-color: var(--warning-color); color: var(--text-on-primary); border-color: var(--warning-color); }
+.btn-warning:hover { background-color: #e08e0b; border-color: #d3850a; }
+
 
 /* --- NEW: Button Loading Spinner --- */
 .btn-spinner {
@@ -1139,6 +1143,14 @@ body {
     cursor: grabbing;
 }
 
+/* --- NEW: Shared Disabled Item Row Style --- */
+.item-row-disabled {
+    background-color: #f8f9fa;
+    color: #adb5bd;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
 /* --- Shared Form Styles --- */
 .form-control {
     width: 100%;
@@ -1154,6 +1166,13 @@ body {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
     outline: none;
+}
+
+/* NEW: Shared style for disabled form controls */
+.form-control:disabled {
+    background-color: #e9ecef; /* Màu nền xám nhạt, đồng bộ với Bootstrap */
+    cursor: not-allowed;
+    opacity: 0.7; /* Giảm độ mờ để dễ nhìn hơn một chút */
 }
 
 /* Cho phép textarea có class form-control có thể thay đổi kích thước theo chiều dọc */
@@ -1273,21 +1292,33 @@ textarea.form-control {
 
 /* --- NEW: Shared Multi-select Subject Styles (from manager-device.css) --- */
 .custom-select-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    display: block; /* Chuyển sang block để các phần tử con có thể chiếm toàn bộ chiều rộng */
     padding: 5px 10px;
     border: 1px solid var(--border-color-strong);
     border-radius: 8px;
     cursor: text;
     background-color: var(--surface-bg);
 }
+/* NEW: Vùng chứa các thẻ đã chọn */
+.selected-subjects-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-bottom: 8px; /* Tạo khoảng cách với input tìm kiếm bên dưới */
+}
+
+/* NEW: Input tìm kiếm bên trong container */
+.custom-select-container .subject-search-input {
+    border: none;
+    outline: none;
+    width: 100%;
+}
 
 .subject-tag {
     display: inline-flex;
     align-items: center;
-    background-color: var(--primary-light);
-    color: var(--primary-dark);
+    background-color: var(--success-light); /* Màu nền xanh lá nhạt */
+    color: var(--primary-dark); /* Giữ màu chữ đậm để dễ đọc */
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 0.85rem;

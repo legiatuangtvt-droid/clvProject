@@ -96,7 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Giả định năm học hiện tại đã được xác định.
             // Nếu chưa, cần thêm logic để lấy năm học mới nhất.
-            const q = query(collection(firestore, 'subjects'), orderBy('name'));
+            const q = query(
+                collection(firestore, 'subjects'),
+                where('status', '==', 'active'), // CHỈ LẤY MÔN HỌC ĐANG HOẠT ĐỘNG
+                orderBy('name')
+            );
             const snapshot = await getDocs(q);
             allSubjectsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (error) {

@@ -45,49 +45,6 @@
     background-color: #f1f5f9;
 }
 
-/* --- Header của trang & Selector Năm học --- */
-.school-year-selector-header {
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 20px;
-    border-radius: 8px;
-}
-
-.selector-container {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    max-width: 500px; /* Giới hạn chiều rộng để trông gọn gàng hơn */
-}
-
-.selector-container label {
-    font-weight: 600;
-    margin-bottom: 0;
-}
-
-.selector-container #school-year-select {
-    min-width: 130px; /* Đặt độ rộng tối thiểu thay vì co giãn */
-    padding: 10px 15px;
-    font-size: 1rem;
-    border: 1px solid #ced4da;
-    border-radius: 6px;
-    background-color: #fff;
-    font-weight: 500;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.selector-container #school-year-select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(26, 188, 156, 0.25);
-    outline: none;
-}
-
-/* Kế thừa style từ shared-layout.css cho nút */
-.selector-container .btn-secondary {
-    flex-shrink: 0; /* Ngăn nút bị co lại */
-}
-
 /* --- Header của trang --- */
 .page-header {
     display: flex;
@@ -174,7 +131,7 @@
 }
 
 /* --- NEW: Data Repair Tab Improvements --- */
-#data-repair-content {
+.data-repair-layout {
     display: flex;
     flex-direction: column;
     gap: 30px; /* Khoảng cách giữa các card chức năng */
@@ -192,23 +149,8 @@
     box-shadow: var(--card-shadow-hover);
 }
 
-.data-repair-results-container,
-#subject-repair-results-container,
-#groupid-repair-results-container {
+.data-repair-results-container {
     margin-top: 25px;
-}
-
-.repair-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 15px;
-}
-
-.repair-header h4 {
-    margin: 0;
 }
 
 .repair-list {
@@ -318,6 +260,12 @@
     transform: rotate(-180deg);
 }
 
+.active-schedule-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Layout lưới linh hoạt */
+    gap: 25px;
+}
+
 .repair-details .repair-list,
 .repair-details .weekly-plan-table {
     padding: 20px;
@@ -348,6 +296,7 @@
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     transition: box-shadow 0.25s ease, transform 0.25s ease;
+    cursor: pointer; /* Thêm con trỏ để báo hiệu có thể click */
 }
 
 .item-card:hover {
@@ -381,12 +330,12 @@
     flex-direction: column;
     transition: box-shadow 0.25s ease;
 }
-
 .group-card:hover {
     box-shadow: var(--card-shadow-hover);
     transform: translateY(-5px);
     transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
     border: 1px solid var(--primary-color);
+    cursor: pointer;
 }
 
 .group-header {
@@ -394,8 +343,7 @@
     align-items: center;
     padding: 15px 20px;
     background-color: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
-    cursor: pointer; /* Thêm con trỏ để báo hiệu có thể click để thu/mở */
+    border-bottom: 1px solid #e9ecef; 
 }
 
 .group-title-container {
@@ -415,13 +363,6 @@
     margin: 0;
     font-size: 1.2rem;
     color: var(--text-dark);
-}
-
-.collapse-icon {
-    margin-left: 15px;
-    margin-right: 10px;
-    color: var(--text-light);
-    transition: transform 0.3s ease-in-out;
 }
 
 .item-actions {
@@ -458,6 +399,7 @@
     padding: 12px 20px 12px 15px; /* Giảm padding trái */
     border-bottom: 1px solid #f1f1f1;
     transition: background-color 0.2s;
+    cursor: pointer;
 }
 
 .teacher-item:hover {
@@ -523,14 +465,14 @@
 }
 
 /* --- NEW: Cải thiện Form trong Modal Giáo viên --- */
-#teacher-modal .form-group textarea,
-#teacher-modal .form-group select {
+.modal-teacher .form-group textarea,
+.modal-teacher .form-group select {
     transition: border-color 0.2s, box-shadow 0.2s;
     width: auto;
 }
 
-#teacher-modal .form-group textarea:focus,
-#teacher-modal .form-group select:focus {
+.modal-teacher .form-group textarea:focus,
+.modal-teacher .form-group select:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.2rem rgba(26, 188, 156, 0.25);
     outline: none;
@@ -548,10 +490,6 @@
 
 .group-card.collapsed .add-teacher-btn {
     display: none;
-}
-
-.group-card.collapsed .collapse-icon {
-    transform: rotate(-90deg); /* This is a common style */
 }
 
 .form-note {
@@ -749,7 +687,7 @@
     color: var(--text-light);
 }
 
-.rule-option input[type="radio"]:checked + label strong {
+.rule-option:has(input:checked) label strong {
     color: var(--primary-color);
 }
 
@@ -856,13 +794,6 @@
     gap: 8px;
 }
 
-/* --- Cải tiến bố cục cho khung thời gian áp dụng --- */
-#active-schedule-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Layout lưới linh hoạt */
-    gap: 25px;
-}
-
 /* --- Styles for Active Season Status and Buttons --- */
 .active-season-status {
     display: flex;
@@ -954,21 +885,6 @@
         font-size: 1.5rem;
     }
 
-    /* --- School Year Selector --- */
-    .school-year-selector-header {
-        padding: 15px;
-        border-bottom: none; /* Bỏ border dưới trên mobile */
-    }
-    .selector-container {
-        flex-direction: column;
-        align-items: stretch;
-        max-width: 100%;
-    }
-    .selector-container #add-school-year-btn {
-        width: 100%;
-        justify-content: center;
-    }
-
     /* --- Tab Navigation --- */
     .tab-nav { gap: 5px; }
     .tab-nav {
@@ -1033,11 +949,6 @@
     }
 
     /* --- Data Repair Tab --- */
-    .repair-header, .repair-item {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-    }
     .repair-action {
         width: 100%;
     }
@@ -1069,46 +980,37 @@
 }
 
 /* Specific icons for each modal */
-#group-modal .modal-content h2::before {
+.modal-group h2::before {
     content: '\f0c0'; /* fa-users */
 }
-#method-modal .modal-content h2::before {
+.modal-method h2::before {
     content: '\f0eb'; /* fa-lightbulb */
 }
-#subject-modal .modal-content h2::before {
+.modal-subject h2::before {
     content: '\f02d'; /* fa-book */
 }
-#school-year-modal .modal-content h2::before {
+.modal-school-year h2::before {
     content: '\f271'; /* fa-calendar-plus */
 }
-#teacher-modal .modal-content h2::before {
+.modal-teacher h2::before {
     content: '\f234'; /* fa-user-plus */
 }
-#week-edit-modal .modal-content h2::before {
+.modal-week-edit h2::before {
     content: '\f044'; /* fa-edit */
 }
-#confirm-delete-modal .modal-content h2::before {
+.modal-confirm-delete h2::before {
     content: '\f182'; /* fa-exclamation-triangle */
     color: #dc3545; /* Màu đỏ cho cảnh báo xóa */
 }
 
-/* Thêm vào cuối file manager-setting.css */
-.assignment-card {
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* --- FIX: Cho phép dropdown của modal Tổ hiển thị ra ngoài --- */
+.modal-group .modal-content {
+    overflow: visible; /* Ghi đè thuộc tính overflow-y: auto từ shared-layout.css */
 }
 
-.assignment-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
 
 /* --- NEW: Custom Tag-based Multi-select --- */
-#custom-select-wrapper {
-    position: relative;
-}
-
-.custom-select-container {
+.custom-select-wrapper .custom-select-container {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -1119,37 +1021,12 @@
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.custom-select-container:focus-within {
+.custom-select-wrapper .custom-select-container:focus-within {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
 }
 
-.tag-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background-color: var(--primary-light);
-    color: var(--primary-dark);
-    padding: 5px 10px;
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 0.9rem;
-}
-
-.tag-remove-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--primary-dark);
-    opacity: 0.7;
-    font-size: 1rem;
-    padding: 0;
-}
-.tag-remove-btn:hover {
-    opacity: 1;
-}
-
-#subject-search-input {
+.subject-search-input {
     flex-grow: 1;
     border: none;
     outline: none;
@@ -1158,9 +1035,9 @@
     min-width: 150px; /* Đảm bảo input có độ rộng tối thiểu */
 }
 
-.subject-dropdown-list {
+.custom-select-wrapper .subject-dropdown-list {
     position: absolute;
-    bottom: 100%; /* THAY ĐỔI: Hiển thị dropdown phía trên */
+    top: 100%; /* Hiển thị ngay bên dưới ô input*/
     left: 0;
     right: 0;
     background-color: var(--surface-bg);
@@ -1173,77 +1050,33 @@
     margin-bottom: 5px; /* THAY ĐỔI: Tạo khoảng cách với input */
 }
 
-.subject-dropdown-list .dropdown-item {
-    padding: 10px 15px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.subject-dropdown-list .dropdown-item:hover {
+.custom-select-wrapper .subject-dropdown-list .subject-dropdown-item:hover {
     background-color: var(--surface-hover-bg);
 }
 
-.subject-dropdown-list .dropdown-item.disabled {
+.custom-select-wrapper .subject-dropdown-list .subject-dropdown-item.disabled {
     background-color: #f8f9fa;
     color: #adb5bd;
     cursor: not-allowed;
 }
 
-/* --- NEW: Inline Form Group for Assignment Modal --- */
-.form-group-inline {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.form-group-inline label {
-    flex-shrink: 0; /* Ngăn label bị co lại */
-    margin-bottom: 0; /* Bỏ margin-bottom mặc định */
-    min-width: 120px; /* Đặt độ rộng tối thiểu cho label để thẳng hàng */
-}
-
-/* --- NEW: Custom Tag-based Multi-select for Group Modal --- */
+/* --- NEW: Styles for Subject Dropdown List (Missing from shared-layout) --- */
+/* Đặt vị trí tương đối cho wrapper để dropdown có thể định vị theo nó */
 .custom-select-wrapper {
     position: relative;
 }
 
-.custom-select-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px;
-    border: 1px solid #ced4da;
+.subject-dropdown-list {
+    position: absolute;
+    top: 100%; /* Hiển thị ngay bên dưới ô input */
+    left: 0;
+    right: 0;
+    background-color: var(--surface-bg);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    cursor: text;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.custom-select-container:focus-within {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.25);
-}
-
-.subject-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background-color: #e9ecef;
-    color: #495057;
-    padding: 5px 10px;
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 0.9rem;
-}
-
-.subject-tag-remove-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #6c757d;
-    font-size: 1rem;
-    padding: 0;
-    line-height: 1;
-}
-.subject-tag-remove-btn:hover {
-    color: #212529;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    z-index: 1010; /* Đảm bảo dropdown nổi lên trên các thành phần khác */
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 5px; /* Tạo một khoảng cách nhỏ với ô input */
 }

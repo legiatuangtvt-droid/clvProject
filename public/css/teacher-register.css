@@ -249,14 +249,6 @@
     color: var(--text-light);
 }
 
-/* Style cho selector bị vô hiệu hóa */
-#register-modal .form-group select:disabled,
-#register-modal .form-group input:disabled,
-#register-modal .form-group textarea:disabled {
-    background-color: #e9ecef; /* Màu nền xám nhạt */
-    cursor: not-allowed;
-}
-
 /* Dấu sao cho trường bắt buộc */
 .required-star {
     color: #dc3545; /* Màu đỏ */
@@ -467,16 +459,6 @@
 
 .equipment-item-row:last-child {
     border-bottom: none;
-}
-
-.equipment-item-row.disabled {
-    background-color: #f8f9fa;
-    color: #adb5bd;
-    cursor: not-allowed;
-}
-
-.equipment-item-row.disabled .equipment-name {
-    text-decoration: line-through;
 }
 
 .equipment-name {

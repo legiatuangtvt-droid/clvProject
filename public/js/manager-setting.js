@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentEditingId = null; // Dùng để biết đang sửa tổ/giáo viên nào
     let currentEditingWeekId = null; // Dùng để biết đang sửa tuần nào
     let deleteFunction = null; // Hàm sẽ được gọi khi xác nhận xóa
+    let allSubjectsCache = []; // Cache danh sách môn học của năm học hiện tại
 
 
     // --- Hàm trợ giúp ---
@@ -76,53 +77,150 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${month}-${day}`;
     };
 
-    const syncSubjectsFromGroups = async () => {
-        if (!currentSchoolYear) {
-            showToast('Vui lòng chọn một năm học để đồng bộ.', 'error');
-            return;
-        }
+    // --- TEACHER STATUS MIGRATION FUNCTION ---
+    const runTeacherStatusMigration = async () => {
+        const runBtn = document.getElementById('run-teacher-status-migration-btn');
+        const logContainer = document.getElementById('teacher-status-migration-log');
 
-        const syncBtn = document.getElementById('sync-subjects-btn');
-        setButtonLoading(syncBtn, true);
+        setButtonLoading(runBtn, true, 'Đang xử lý...');
+        logContainer.style.display = 'block';
+        logContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Bắt đầu quá trình quét...</p>';
 
         try {
-            // 1. Lấy tất cả môn học hiện có trong collection 'subjects'
-            const subjectsQuery = query(collection(firestore, 'subjects'), where('schoolYear', '==', currentSchoolYear));
-            const subjectsSnapshot = await getDocs(subjectsQuery);
-            const existingSubjects = new Set(subjectsSnapshot.docs.map(doc => doc.data().name));
+            const teachersRef = collection(firestore, 'teachers');
+            const snapshot = await getDocs(teachersRef);
 
-            // 2. Lấy tất cả các tổ và trích xuất môn học từ tên tổ
-            const groupsQuery = query(collection(firestore, 'groups'), where('schoolYear', '==', currentSchoolYear));
-            const groupsSnapshot = await getDocs(groupsQuery);
-            const subjectsFromGroups = new Set();
-            groupsSnapshot.forEach(doc => {
-                const groupName = doc.data().group_name;
-                (doc.data().subjects || []).forEach(subject => subjectsFromGroups.add(subject));
-            });
-
-            // 3. Tìm các môn học cần thêm mới
-            const subjectsToAdd = [...subjectsFromGroups].filter(subject => !existingSubjects.has(subject));
-
-            if (subjectsToAdd.length === 0) {
-                showToast('Tất cả môn học từ các tổ đã được đồng bộ.', 'info');
+            if (snapshot.empty) {
+                logContainer.innerHTML += '<p>Không tìm thấy giáo viên nào.</p>';
+                showToast('Không có giáo viên nào trong cơ sở dữ liệu.', 'info');
                 return;
             }
 
-            // 4. Thêm các môn học mới vào batch
             const batch = writeBatch(firestore);
-            subjectsToAdd.forEach(subjectName => {
-                const newSubjectRef = doc(collection(firestore, 'subjects'));
-                batch.set(newSubjectRef, { name: subjectName, type: 'regular', schoolYear: currentSchoolYear });
+            let updatedCount = 0;
+            let alreadyUpdatedCount = 0;
+
+            snapshot.forEach(teacherDoc => {
+                const data = teacherDoc.data();
+                // Chỉ cập nhật nếu trường 'status' không tồn tại
+                if (data.status === undefined) {
+                    batch.update(teacherDoc.ref, { status: 'active' });
+                    updatedCount++;
+                    logContainer.innerHTML += `<p>Chuẩn bị cập nhật cho: ${data.teacher_name || 'Không có tên'} (ID: ${teacherDoc.id})</p>`;
+                } else {
+                    alreadyUpdatedCount++;
+                }
             });
 
-            await batch.commit();
-            showToast(`Đồng bộ thành công! Đã thêm ${subjectsToAdd.length} môn học mới.`, 'success');
-            await loadSubjects(currentSchoolYear); // Tải lại danh sách môn học
+            if (updatedCount > 0) {
+                logContainer.innerHTML += `<p style="font-weight: bold;">Đang ghi ${updatedCount} thay đổi vào cơ sở dữ liệu...</p>`;
+                await batch.commit();
+                logContainer.innerHTML += `<p class="success-message"><i class="fas fa-check-circle"></i> Cập nhật thành công ${updatedCount} giáo viên!</p>`;
+                showToast(`Đã cập nhật thành công ${updatedCount} giáo viên.`, 'success');
+            } else {
+                logContainer.innerHTML += `<p class="info-message"><i class="fas fa-info-circle"></i> Không có giáo viên nào cần cập nhật. Tất cả đã có trạng thái.</p>`;
+                showToast('Tất cả giáo viên đã có trạng thái.', 'info');
+            }
+            logContainer.innerHTML += `<p>Tổng số giáo viên đã quét: ${snapshot.size} (Trong đó ${alreadyUpdatedCount} đã có trạng thái từ trước).</p>`;
+
         } catch (error) {
-            console.error("Lỗi khi đồng bộ môn học:", error);
-            showToast('Đã có lỗi xảy ra trong quá trình đồng bộ.', 'error');
+            console.error("Lỗi khi di chuyển dữ liệu:", error);
+            logContainer.innerHTML += `<p class="error-message"><i class="fas fa-exclamation-triangle"></i> Đã xảy ra lỗi: ${error.message}</p>`;
+            showToast('Đã có lỗi xảy ra. Vui lòng kiểm tra Console (F12).', 'error');
         } finally {
-            setButtonLoading(syncBtn, false);
+            setButtonLoading(runBtn, false);
+        }
+    };
+
+    // --- GROUP STATUS MIGRATION FUNCTION ---
+    const runGroupStatusMigration = async () => {
+        const runBtn = document.getElementById('run-group-status-migration-btn');
+        const logContainer = document.getElementById('group-status-migration-log');
+
+        setButtonLoading(runBtn, true, 'Đang xử lý...');
+        logContainer.style.display = 'block';
+        logContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Bắt đầu quá trình quét...</p>';
+
+        try {
+            const groupsRef = collection(firestore, 'groups');
+            const snapshot = await getDocs(groupsRef);
+
+            if (snapshot.empty) {
+                logContainer.innerHTML += '<p>Không tìm thấy tổ chuyên môn nào.</p>';
+                return;
+            }
+
+            const batch = writeBatch(firestore);
+            let updatedCount = 0;
+
+            snapshot.forEach(groupDoc => {
+                if (groupDoc.data().status === undefined) {
+                    batch.update(groupDoc.ref, { status: 'active' });
+                    updatedCount++;
+                    logContainer.innerHTML += `<p>Chuẩn bị cập nhật cho: ${groupDoc.data().group_name}</p>`;
+                }
+            });
+
+            if (updatedCount > 0) {
+                await batch.commit();
+                logContainer.innerHTML += `<p class="success-message"><i class="fas fa-check-circle"></i> Cập nhật thành công ${updatedCount} tổ chuyên môn!</p>`;
+                showToast(`Đã cập nhật thành công ${updatedCount} tổ.`, 'success');
+            } else {
+                logContainer.innerHTML += `<p class="info-message"><i class="fas fa-info-circle"></i> Không có tổ nào cần cập nhật.</p>`;
+                showToast('Tất cả các tổ đã có trạng thái.', 'info');
+            }
+        } catch (error) {
+            console.error("Lỗi khi di chuyển dữ liệu tổ:", error);
+            logContainer.innerHTML += `<p class="error-message"><i class="fas fa-exclamation-triangle"></i> Đã xảy ra lỗi: ${error.message}</p>`;
+            showToast('Đã có lỗi xảy ra. Vui lòng kiểm tra Console (F12).', 'error');
+        } finally {
+            setButtonLoading(runBtn, false);
+        }
+    };
+
+    // --- SUBJECT STATUS MIGRATION FUNCTION ---
+    const runSubjectStatusMigration = async () => {
+        const runBtn = document.getElementById('run-subject-status-migration-btn');
+        const logContainer = document.getElementById('subject-status-migration-log');
+
+        setButtonLoading(runBtn, true, 'Đang xử lý...');
+        logContainer.style.display = 'block';
+        logContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Bắt đầu quá trình quét...</p>';
+
+        try {
+            const subjectsRef = collection(firestore, 'subjects');
+            const snapshot = await getDocs(subjectsRef);
+
+            if (snapshot.empty) {
+                logContainer.innerHTML += '<p>Không tìm thấy môn học nào.</p>';
+                return;
+            }
+
+            const batch = writeBatch(firestore);
+            let updatedCount = 0;
+
+            snapshot.forEach(subjectDoc => {
+                if (subjectDoc.data().status === undefined) {
+                    batch.update(subjectDoc.ref, { status: 'active' });
+                    updatedCount++;
+                    logContainer.innerHTML += `<p>Chuẩn bị cập nhật cho: ${subjectDoc.data().name}</p>`;
+                }
+            });
+
+            if (updatedCount > 0) {
+                await batch.commit();
+                logContainer.innerHTML += `<p class="success-message"><i class="fas fa-check-circle"></i> Cập nhật thành công ${updatedCount} môn học!</p>`;
+                showToast(`Đã cập nhật thành công ${updatedCount} môn học.`, 'success');
+            } else {
+                logContainer.innerHTML += `<p class="info-message"><i class="fas fa-info-circle"></i> Không có môn học nào cần cập nhật.</p>`;
+                showToast('Tất cả các môn học đã có trạng thái.', 'info');
+            }
+        } catch (error) {
+            console.error("Lỗi khi di chuyển dữ liệu môn học:", error);
+            logContainer.innerHTML += `<p class="error-message"><i class="fas fa-exclamation-triangle"></i> Đã có lỗi xảy ra: ${error.message}</p>`;
+            showToast('Đã có lỗi xảy ra. Vui lòng kiểm tra Console (F12).', 'error');
+        } finally {
+            setButtonLoading(runBtn, false);
         }
     };
 
@@ -163,7 +261,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
         try {
             // 1. Lấy tất cả giáo viên và tạo map/set cần thiết
-            const teachersQuery = query(collection(firestore, 'teachers'));
+            const teachersQuery = query(
+                collection(firestore, 'teachers'),
+                where('status', '==', 'active') // CHỈ LẤY GV ĐANG HOẠT ĐỘNG
+            );
             const teachersSnapshot = await getDocs(teachersQuery);
             const allCurrentTeachers = teachersSnapshot.docs.map(doc => ({ uid: doc.data().uid, name: doc.data().teacher_name, ...doc.data() }));
             const validTeacherUids = new Set(allCurrentTeachers.map(t => t.uid).filter(Boolean));
@@ -764,7 +865,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="teacher-subject">${subjectPart}</span>
                 </div>
                 <div class="item-actions teacher-actions">
-                    <button class="edit-teacher-btn" title="Sửa"><i class="fas fa-pencil-alt"></i></button>
                     <button class="delete-teacher-btn" title="Xóa"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </li>
@@ -772,15 +872,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderGroup = (group, index) => `
-        <div class="group-card collapsed" data-group-id="${group.id}">
-            <div class="group-header">
+        <div class="group-card collapsed" data-group-id="${group.id}" data-group-id-text="${group.group_id}">
+            <div class="group-header" title="Nhấn để mở/đóng danh sách giáo viên">
                 <div class="group-title-container">
                     <h3 class="group-name"><span class="group-stt">${index + 1}.</span> Tổ ${group.group_name}</h3>
                 </div>
-                <i class="fas fa-chevron-down collapse-icon"></i>
                 <div class="item-actions">
                     <button class="edit-group-btn" title="Sửa tên tổ"><i class="fas fa-pencil-alt"></i></button>
-                    <button class="delete-group-btn" title="Xóa tổ"><i class="fas fa-trash-alt"></i></button>
+                    <button class="delete-group-btn" title="Vô hiệu hóa tổ"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </div>
             <ul class="teacher-list">
@@ -790,6 +889,22 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     `;
 
+    const renderUnassignedGroup = (teachers) => `
+        <div class="group-card unassigned-card">
+            <div class="group-header">
+                <div class="group-title-container">
+                    <h3 class="group-name"><i class="fas fa-user-tag"></i> Giáo viên chưa có tổ</h3>
+                </div>
+                <i class="fas fa-chevron-down collapse-icon"></i>
+            </div>
+            <ul class="teacher-list">
+                ${teachers.map((teacher, index) => renderTeacher(teacher, index)).join('')}
+            </ul>
+            <p class="form-note" style="padding: 0 20px 15px;">Để phân công, hãy nhấn nút sửa <i class="fas fa-pencil-alt"></i> trên mỗi giáo viên.</p>
+        </div>
+    `;
+
+
     const renderMethod = (method, index) => `
         <div class="item-card" data-method-id="${method.id}">
             <div class="item-info">
@@ -798,7 +913,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="item-name">${method.method}</span>
             </div>
             <div class="item-actions">
-                <button class="edit-method-btn" title="Sửa"><i class="fas fa-pencil-alt"></i></button>
                 <button class="delete-method-btn" title="Xóa"><i class="fas fa-trash-alt"></i></button>
             </div>
         </div>
@@ -812,7 +926,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="item-name">${subject.name} (${subject.type === 'special' ? 'Đặc biệt' : 'Thông thường'})</span>
             </div>
             <div class="item-actions">
-                <button class="edit-subject-btn" title="Sửa"><i class="fas fa-pencil-alt"></i></button>
                 <button class="delete-subject-btn" title="Xóa"><i class="fas fa-trash-alt"></i></button>
             </div>
         </div>
@@ -926,10 +1039,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Hàm tải dữ liệu ---
     const loadGroupsAndTeachers = async (schoolYear) => {
         groupsContainer.innerHTML = '<p>Đang tải danh sách...</p>';
+        const unassignedContainer = document.getElementById('unassigned-teachers-container');
         try {
-            // 1. Tải tất cả các tổ và tạo một map để dễ tra cứu, sắp xếp theo 'order'
-            // Bỏ orderBy ở đây để tải tất cả các tổ, kể cả những tổ cũ không có trường 'order'
-            const groupsQuery = query(collection(firestore, 'groups'), where("schoolYear", "==", schoolYear));
+            // 1. Tải tất cả các tổ đang hoạt động và tạo một map để dễ tra cứu
+            const groupsQuery = query(
+                collection(firestore, 'groups'), 
+                where("schoolYear", "==", schoolYear),
+                where("status", "==", "active") // CHỈ LẤY TỔ ĐANG HOẠT ĐỘNG
+            );
             const groupsSnapshot = await getDocs(groupsQuery);
             
             // Tạo một mảng các tổ và một map để tra cứu nhanh
@@ -949,29 +1066,46 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // 2. Tải tất cả giáo viên, sắp xếp theo thứ tự của họ
-            // Cần phải lấy tất cả giáo viên vì họ không có schoolYearId trực tiếp.
-            const teachersQuery = query(collection(firestore, 'teachers'), orderBy('order')); 
+            // Cần phải lấy tất cả giáo viên đang hoạt động.
+            const teachersQuery = query(
+                collection(firestore, 'teachers'), 
+                where('status', '==', 'active'), // CHỈ LẤY GV ĐANG HOẠT ĐỘNG
+                orderBy('order')); 
             const teachersSnapshot = await getDocs(teachersQuery);
 
             // 3. Phân loại giáo viên vào các tổ tương ứng
+            const unassignedTeachers = [];
             teachersSnapshot.forEach(doc => {
                 const teacher = { id: doc.id, ...doc.data() };
                 if (teacher.group_id && groupMap.has(teacher.group_id)) {
                      groupMap.get(teacher.group_id).teachers.push(teacher);
+                } else if (!teacher.group_id) {
+                    // Nếu không có group_id, thêm vào danh sách chưa phân công
+                    unassignedTeachers.push(teacher);
                 } else {
                      console.warn(` -> Cảnh báo: Không tìm thấy tổ "${teacher.group_id}" cho giáo viên "${teacher.teacher_name}".`);
                 }
             });
 
-
+            // 4. Render các tổ và giáo viên đã được phân công
             if (groups.length === 0 && teachersSnapshot.empty) {
                 groupsContainer.innerHTML = '<p>Chưa có tổ chuyên môn nào. Hãy thêm một tổ mới!</p>';
             } else {
                 groupsContainer.innerHTML = groups.map((group, index) => renderGroup(group, index)).join('');
-                
-                // 5. Khởi tạo chức năng kéo-thả sau khi đã render xong
-                initSortable();
             }
+
+            // 5. Render card cho giáo viên chưa được phân công (nếu có)
+            if (unassignedTeachers.length > 0) {
+                unassignedContainer.innerHTML = renderUnassignedGroup(unassignedTeachers);
+                unassignedContainer.style.display = 'block';
+            } else {
+                unassignedContainer.innerHTML = '';
+                unassignedContainer.style.display = 'none';
+            }
+
+            // 6. Khởi tạo chức năng kéo-thả sau khi đã render xong
+            initSortable();
+
         } catch (error) {
             console.error("Lỗi khi tải dữ liệu:", error);
             let errorMessage = '<p class="error-message">Không thể tải dữ liệu. Vui lòng thử lại.</p>';
@@ -985,6 +1119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
             groupsContainer.innerHTML = errorMessage;
+            unassignedContainer.style.display = 'none';
         }
     };
 
@@ -1105,6 +1240,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await loadMethods(currentSchoolYear); // Tải PPDH khi chọn năm học
                 await loadSubjects(currentSchoolYear); // Tải Môn học khi chọn năm học
                 await loadTimePlan(currentSchoolYear);
+                await loadAllSubjectsForYear(currentSchoolYear); // Tải cache môn học cho select
                 await loadAndRenderRules(); // Tải quy tắc khi chọn năm học
             }
 
@@ -1114,6 +1250,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     // Tải dữ liệu lần đầu sau khi loadSchoolYears hoàn tất
+    const loadAllSubjectsForYear = async (schoolYear) => {
+        try {
+            const subjectsQuery = query(
+                collection(firestore, 'subjects'),
+                where("schoolYear", "==", schoolYear),
+                where("status", "==", "active")
+            );
+            const snapshot = await getDocs(subjectsQuery);
+            allSubjectsCache = snapshot.docs.map(doc => doc.data());            
+        } catch (error) {
+            console.error("Lỗi khi tải cache môn học:", error);
+        }
+    };
     loadSchoolYears().then(() => {
         if (currentSchoolYear) loadAndRenderTimings();
     });
@@ -1126,6 +1275,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadMethods(currentSchoolYear); // Tải lại PPDH khi đổi năm học
             await loadSubjects(currentSchoolYear); // Tải lại Môn học khi đổi năm học
             await loadTimePlan(currentSchoolYear);
+            await loadAllSubjectsForYear(currentSchoolYear); // Tải lại cache môn học
             await loadAndRenderRules();
             await loadAndRenderTimings();
         }
@@ -1157,6 +1307,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('add-group-btn').addEventListener('click', () => {
         currentEditingId = null;
         document.getElementById('group-modal-title').textContent = 'Thêm Tổ chuyên môn';
+        setupGroupSubjectSelect(); // Khởi tạo bộ chọn môn học
         document.getElementById('group-name-input').value = '';
         openModal(groupModal);
     });
@@ -1183,9 +1334,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('subject-type-select').value = 'regular';
         openModal(subjectModal);
     });
-
-    // Đồng bộ môn học từ Tổ
-    document.getElementById('sync-subjects-btn').addEventListener('click', syncSubjectsFromGroups);
 
     // Lưu Năm học mới
     document.getElementById('save-school-year-btn').addEventListener('click', async () => {
@@ -1220,12 +1368,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const selectedSubjects = getSelectedGroupSubjects();
+
         setButtonLoading(saveBtn, true);
 
         try {
             if (currentEditingId) { // Cập nhật
                 const groupRef = doc(firestore, 'groups', currentEditingId);
-                await updateDoc(groupRef, { group_name });
+                await updateDoc(groupRef, { group_name, subjects: selectedSubjects });
             } else { // Thêm mới
                 // Tự động tạo group_id từ tên tổ
                 // Ví dụ: "Tổ Toán - Tin" -> "TO-TOAN-TIN"
@@ -1249,8 +1399,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 await addDoc(collection(firestore, 'groups'), { 
                     group_name: group_name,
                     group_id: groupId,
+                    status: 'active', // THÊM MỚI: Gán trạng thái hoạt động
                     order: newOrder,
-                    schoolYear: currentSchoolYear // Thêm chuỗi năm học
+                    schoolYear: currentSchoolYear, // Thêm chuỗi năm học
+                    subjects: selectedSubjects // Thêm danh sách môn học
                 });
             }
             closeModal(groupModal);
@@ -1321,6 +1473,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = {
                 name: subjectName,
                 type: subjectType,
+                status: 'active', // THÊM MỚI: Gán trạng thái hoạt động
                 schoolYear: currentSchoolYear
             };
 
@@ -1375,6 +1528,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     batch.set(newTeacherRef, {
                         teacher_name: name,
                         email: '',
+                        status: 'active', // THÊM MỚI: Gán trạng thái hoạt động mặc định
                         phone: '',
                         group_id: currentGroupId,
                         uid: null,
@@ -1499,6 +1653,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Chạy tất cả sửa lỗi ---
     runAllRepairsBtn.addEventListener('click', runAllRepairs);
 
+    // --- Chạy migration cho Tổ ---
+    document.getElementById('run-group-status-migration-btn').addEventListener('click', runGroupStatusMigration);
+
+    // --- Chạy migration cho Môn học ---
+    document.getElementById('run-subject-status-migration-btn').addEventListener('click', runSubjectStatusMigration);
+
+    // --- Chạy migration ---
+    document.getElementById('run-teacher-status-migration-btn').addEventListener('click', runTeacherStatusMigration);
+
     // --- Áp dụng mùa ---
     applySummerBtn.addEventListener('click', () => applySeason('summer'));
     applyWinterBtn.addEventListener('click', () => applySeason('winter'));
@@ -1509,7 +1672,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const target = e.target;
 
         // Lấy group card và group id
-        const groupCard = target.closest('.group-card');
+        const groupCard = target.closest('.group-card:not(.unassigned-card)'); // Bỏ qua card "chưa có tổ"
         const groupId = groupCard?.dataset.groupId;
 
         // Xử lý thu gọn/mở rộng tổ
@@ -1558,83 +1721,29 @@ document.addEventListener('DOMContentLoaded', () => {
             openModal(teacherModal);
         }
 
-        // Mở modal sửa Tổ
-        if (target.closest('.edit-group-btn')) {
-            try {
-                const groupRef = doc(firestore, 'groups', groupId);
-                const groupSnap = await getDoc(groupRef);
-                if (groupSnap.exists()) {
-                    currentEditingId = groupId;
-                    document.getElementById('group-modal-title').textContent = 'Sửa tên Tổ';
-                    document.getElementById('group-name-input').value = groupSnap.data().group_name;
-                    openModal(groupModal);
-                }
-            } catch (error) {
-                showToast('Không thể lấy thông tin tổ. Vui lòng thử lại.', 'error');
-            }
-        }
-
-        // Mở modal sửa Giáo viên
-        if (target.closest('.edit-teacher-btn')) {
-            const teacherItem = target.closest('.teacher-item');
-            const teacherId = teacherItem.dataset.teacherId;
-            currentEditingId = teacherId;
-
-            // Lấy thông tin giáo viên trực tiếp từ DB
-            try {
-                const teacherRef = doc(firestore, 'teachers', teacherId);
-                const teacherSnap = await getDoc(teacherRef);
-                if (teacherSnap.exists()) {
-                    const teacherData = teacherSnap.data();
-                    document.getElementById('teacher-modal-title').textContent = 'Sửa thông tin Giáo viên';
-                    document.getElementById('teacher-names-input').value = teacherData.teacher_name || '';
-                    document.getElementById('teacher-names-input').rows = 1; // Chỉ sửa 1 tên
-
-                    // Populate và set giá trị cho subject dropdown
-                    const groupRef = doc(firestore, 'groups', groupId);
-                    const groupSnap = await getDoc(groupRef);
-                    const groupName = groupSnap.exists() ? groupSnap.data().group_name : '';
-                    const subjects = groupSnap.exists() ? (groupSnap.data().subjects || []) : [];
-                    const subjectSelect = document.getElementById('teacher-subject-input');
-                    subjectSelect.innerHTML = '<option value="">-- Chọn môn chính --</option>';
-                    subjects.forEach(sub => {
-                        subjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
-                    });
-                    subjectSelect.value = teacherData.subject || '';
-
-                    if (subjects.length > 1) {
-                        teacherSubjectGroup.style.display = 'block';
-                    } else {
-                        teacherSubjectGroup.style.display = 'none';
-                    }
-
-                    openModal(teacherModal);
-                }
-            } catch (error) {
-                console.error("Lỗi khi lấy thông tin giáo viên để sửa:", error);
-                showToast("Không thể lấy thông tin giáo viên. Vui lòng thử lại.", 'error');
-            }
-        }
-
         // Mở modal xác nhận xóa Tổ
         if (target.closest('.delete-group-btn')) {
-            document.getElementById('confirm-delete-message').textContent = `Bạn có chắc chắn muốn xóa tổ này và TOÀN BỘ giáo viên trong tổ? Hành động này không thể hoàn tác.`;
+            const groupName = groupCard.querySelector('.group-name').textContent;
+            const confirmBtn = document.getElementById('confirm-delete-btn'); 
+            document.getElementById('confirm-delete-message').textContent = `Bạn có chắc chắn muốn vô hiệu hóa "${groupName}"? Tổ sẽ bị ẩn và các giáo viên trong tổ sẽ được chuyển vào danh sách "Chưa có tổ".`;
+            confirmBtn.textContent = 'Vô hiệu hóa';
+
             deleteFunction = async () => {
                 try {
                     const batch = writeBatch(firestore);
                     const groupDocRef = doc(firestore, 'groups', groupId);
-                    const groupDocSnap = await getDoc(groupDocRef);
-                    const groupData = groupDocSnap.data();
-
-                    // Tìm và xóa tất cả giáo viên thuộc tổ này trong collection `teachers`
-                    const teachersQuery = query(collection(firestore, "teachers"), where("group_id", "==", groupData.group_id));
-                    const teachersSnapshot = await getDocs(teachersQuery);
-                    teachersSnapshot.forEach(doc => batch.delete(doc.ref));
-                    // Xóa chính tổ đó
-                    batch.delete(groupDocRef);
-                    await batch.commit();
                     
+                    // Vô hiệu hóa tổ
+                    batch.update(groupDocRef, { status: 'inactive' });
+
+                    // Tìm và cập nhật group_id của tất cả giáo viên thuộc tổ này thành null
+                    const teachersQuery = query(collection(firestore, "teachers"), where("group_id", "==", groupCard.dataset.groupIdText)); // Lấy group_id từ data attribute
+                    const teachersSnapshot = await getDocs(teachersQuery);
+                    teachersSnapshot.forEach(teacherDoc => batch.update(teacherDoc.ref, { group_id: null }));
+                    
+                    await batch.commit();
                     closeModal(confirmDeleteModal);
+                    showToast(`Đã vô hiệu hóa ${groupName}. Các giáo viên đã được chuyển sang danh sách chưa phân công.`, 'success');
                     await loadGroupsAndTeachers(currentSchoolYear);
                 } catch (error) {
                     console.error("Lỗi khi xóa tổ:", error);
@@ -1642,7 +1751,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             openModal(confirmDeleteModal);
-
         }
 
         // Mở modal xác nhận xóa Giáo viên
@@ -1650,21 +1758,241 @@ document.addEventListener('DOMContentLoaded', () => {
             const teacherItem = target.closest('.teacher-item');
             const teacherId = teacherItem.dataset.teacherId;
             const teacherName = teacherItem.querySelector('.teacher-name').textContent;
+            const confirmBtn = document.getElementById('confirm-delete-btn');
 
-            document.getElementById('confirm-delete-message').textContent = `Bạn có chắc chắn muốn xóa giáo viên "${teacherName}"?`;
+            document.getElementById('confirm-delete-message').textContent = `Bạn có chắc chắn muốn vô hiệu hóa giáo viên "${teacherName}"? Họ sẽ không thể đăng nhập và sẽ không xuất hiện trong các danh sách chọn, nhưng dữ liệu cũ vẫn được bảo toàn.`;
+            confirmBtn.textContent = 'Vô hiệu hóa'; // Thay đổi text nút
+
             deleteFunction = async () => {
                 try {
-                    await deleteDoc(doc(firestore, 'teachers', teacherId));
+                    // Soft delete: update status to 'inactive'
+                    await updateDoc(doc(firestore, 'teachers', teacherId), {
+                        status: 'inactive'
+                    });
                     closeModal(confirmDeleteModal);
+                    showToast(`Đã vô hiệu hóa giáo viên ${teacherName}.`, 'success');
                     await loadGroupsAndTeachers(currentSchoolYear);
                 } catch (error) {
-                    console.error("Lỗi khi xóa giáo viên:", error);
-                    showToast('Đã có lỗi xảy ra khi xóa giáo viên.', 'error');
+                    console.error("Lỗi khi vô hiệu hóa giáo viên:", error);
+                    showToast('Đã có lỗi xảy ra khi vô hiệu hóa giáo viên.', 'error');
+                } finally {
+                    confirmBtn.textContent = 'Xóa'; // Reset lại text nút
                 }
             };
             openModal(confirmDeleteModal);
         }
+
+        // --- NEW: Xử lý click vào thẻ hoặc nút sửa ---
+        const teacherItem = target.closest('.teacher-item');
+        if (teacherItem && !target.closest('.item-actions') && !target.closest('.teacher-drag-handle')) { // Click vào thẻ giáo viên
+            const teacherId = teacherItem.dataset.teacherId;
+            const parentGroupCard = teacherItem.closest('.group-card');
+            openTeacherEditModal(teacherId, parentGroupCard, groupId);
+        }
+
+        // Xử lý click vào header của group để sửa
+        if (target.closest('.edit-group-btn')) { // Click vào nút sửa của tổ
+            openGroupEditModal(groupId);
+        }
     });
+
+    const openGroupEditModal = async (groupId) => {
+        try {
+            const groupRef = doc(firestore, 'groups', groupId);
+            const groupSnap = await getDoc(groupRef);
+            if (groupSnap.exists()) {
+                currentEditingId = groupId;
+                const groupData = groupSnap.data();                
+                document.getElementById('group-modal-title').textContent = 'Sửa tên Tổ';
+                document.getElementById('group-name-input').value = groupData.group_name;
+                setupGroupSubjectSelect(groupData.subjects || []); // Khởi tạo với các môn đã chọn
+                openModal(groupModal);
+            }
+        } catch (error) {
+            showToast('Không thể lấy thông tin tổ. Vui lòng thử lại.', 'error');
+        }
+    };
+
+    // --- GROUP SUBJECT MULTI-SELECT LOGIC ---
+    const setupGroupSubjectSelect = (selectedSubjects = []) => {        
+        const wrapper = document.getElementById('group-subjects-select-wrapper');
+        const container = document.getElementById('group-selected-subjects'); // Sửa lại container là vùng chứa thẻ
+        const searchInput = document.getElementById('group-subject-search-input');
+        const dropdown = document.getElementById('group-subject-dropdown');
+
+        // Xóa các tag cũ và reset input
+        container.innerHTML = ''; // Xóa các thẻ cũ
+        searchInput.value = '';
+
+        // Thêm các tag đã được chọn từ trước (khi sửa)
+        selectedSubjects.forEach(subjectName => addGroupSubjectTag(subjectName, container));
+
+        const filterSubjects = () => {
+            const filterText = searchInput.value.toLowerCase();
+            const currentSelected = getSelectedGroupSubjects();            
+
+            const filtered = allSubjectsCache.filter(subject => 
+                !currentSelected.includes(subject.name) && subject.name.toLowerCase().includes(filterText)
+            );    
+
+            dropdown.innerHTML = filtered.map(subject => `<div class="subject-dropdown-item">${subject.name}</div>`).join('');
+            dropdown.style.display = filtered.length > 0 ? 'block' : 'none';           
+        };
+
+        searchInput.onkeyup = () => {
+            filterSubjects();
+        };
+        searchInput.onfocus = () => {
+            filterSubjects();
+        };
+
+        dropdown.onclick = (e) => {
+            if (e.target.classList.contains('subject-dropdown-item')) {
+                addGroupSubjectTag(e.target.textContent, container);
+                searchInput.value = '';
+                filterSubjects();
+                searchInput.focus();
+            }
+        };
+
+        // SỬA LỖI: Ngăn dropdown đóng lại khi click vào input hoặc các thẻ đã chọn
+        container.parentElement.addEventListener('click', (e) => {
+            e.stopPropagation(); // Dừng sự kiện click lan ra ngoài
+            searchInput.focus(); // Focus lại vào input để người dùng có thể gõ tiếp
+        });
+
+        // Đóng dropdown khi click ra ngoài
+        document.addEventListener('click', (e) => {            
+            if (!wrapper.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    };
+
+    const addGroupSubjectTag = (subjectName, container) => {
+        // Không cần searchInput ở đây nữa
+        const tag = document.createElement('span');
+        tag.className = 'subject-tag';
+        tag.textContent = subjectName;
+
+        const removeBtn = document.createElement('span');
+        removeBtn.className = 'remove-tag';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.onclick = () => tag.remove();
+
+        tag.appendChild(removeBtn);
+        container.appendChild(tag); // Chỉ cần thêm vào cuối container thẻ
+    };
+
+    const getSelectedGroupSubjects = () => {
+        return Array.from(document.querySelectorAll('#group-selected-subjects .subject-tag'))
+            .map(tag => tag.firstChild.textContent.trim());
+    };
+
+    const openTeacherEditModal = async (teacherId, parentGroupCard, groupId) => {
+        currentEditingId = teacherId;
+        try {
+            const teacherRef = doc(firestore, 'teachers', teacherId);
+            const teacherSnap = await getDoc(teacherRef);
+            if (teacherSnap.exists()) {
+                const teacherData = teacherSnap.data();
+                document.getElementById('teacher-modal-title').textContent = 'Sửa thông tin Giáo viên';
+                document.getElementById('teacher-names-input').value = teacherData.teacher_name || '';
+                document.getElementById('teacher-names-input').rows = 1;
+
+                const subjectSelect = document.getElementById('teacher-subject-input');
+                const groupSelectGroup = document.getElementById('teacher-group-select-group');
+                const groupSelect = document.getElementById('teacher-group-select');
+
+                if (parentGroupCard && parentGroupCard.classList.contains('unassigned-card')) {
+                    groupSelectGroup.style.display = 'block';
+                    teacherSubjectGroup.style.display = 'none';
+                    groupSelect.innerHTML = '<option value="">-- Chọn tổ mới --</option>';
+                    const activeGroupsQuery = query(collection(firestore, 'groups'), where('status', '==', 'active'), where('schoolYear', '==', currentSchoolYear));
+                    const activeGroupsSnapshot = await getDocs(activeGroupsQuery);
+                    activeGroupsSnapshot.forEach(gDoc => {
+                        const gData = gDoc.data();
+                        groupSelect.innerHTML += `<option value="${gData.group_id}">${gData.group_name}</option>`;
+                    });
+                } else {
+                    groupSelectGroup.style.display = 'none';
+                    const groupRef = doc(firestore, 'groups', groupId);
+                    const groupSnap = await getDoc(groupRef);
+                    const subjects = groupSnap.exists() ? (groupSnap.data().subjects || []) : [];
+
+                    subjectSelect.innerHTML = '<option value="">-- Chọn môn chính --</option>';
+                    subjects.forEach(sub => {
+                        subjectSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+                    });
+                    subjectSelect.value = teacherData.subject || '';
+
+                    teacherSubjectGroup.style.display = subjects.length > 1 ? 'block' : 'none';
+                }
+                openModal(teacherModal);
+            }
+        } catch (error) {
+            console.error("Lỗi khi lấy thông tin giáo viên để sửa:", error);
+            showToast("Không thể lấy thông tin giáo viên. Vui lòng thử lại.", 'error');
+        }
+    };
+
+    // --- NEW: Xử lý click vào thẻ để sửa cho các container khác ---
+    const setupItemCardEditListener = (container) => {
+        container.addEventListener('click', (e) => {
+            const itemCard = e.target.closest('.item-card');
+            if (itemCard && !e.target.closest('.item-actions')) {
+                const methodId = itemCard.dataset.methodId;
+                const subjectId = itemCard.dataset.subjectId;
+                if (methodId) openMethodEditModal(methodId);
+                if (subjectId) openSubjectEditModal(subjectId);
+            }
+        });
+    };
+    setupItemCardEditListener(methodsContainer);
+    setupItemCardEditListener(subjectsContainer);
+
+    const openMethodEditModal = async (methodId) => {
+        try {
+            const methodRef = doc(firestore, 'teachingMethods', methodId);
+            const methodSnap = await getDoc(methodRef);
+            if (methodSnap.exists()) {
+                currentEditingId = methodId;
+                document.getElementById('method-modal-title').textContent = 'Sửa Phương pháp dạy học';
+                document.getElementById('method-name-input').value = methodSnap.data().method;
+                openModal(methodModal);
+            }
+        } catch (error) {
+            showToast('Không thể lấy thông tin. Vui lòng thử lại.', 'error');
+        }
+    };
+
+    const openSubjectEditModal = async (subjectId) => {
+        try {
+            const subjectRef = doc(firestore, 'subjects', subjectId);
+            const subjectSnap = await getDoc(subjectRef);
+            if (subjectSnap.exists()) {
+                currentEditingId = subjectId;
+                const subjectData = subjectSnap.data();
+
+                document.getElementById('subject-modal-title').textContent = 'Sửa Môn học';
+                document.getElementById('subject-name-input').value = subjectData.name || '';
+                document.getElementById('subject-type-select').value = subjectData.type || 'regular';
+
+                // Xử lý hiển thị subTypes
+                const subTypesInput = document.getElementById('subject-subtypes-input');
+                if (subjectData.subTypes && Array.isArray(subjectData.subTypes)) {
+                    subTypesInput.value = subjectData.subTypes.join(', ');
+                } else {
+                    subTypesInput.value = '';
+                }
+
+                openModal(subjectModal);
+            }
+        } catch (error) {
+            console.error("Lỗi khi lấy thông tin môn học:", error);
+            showToast('Không thể lấy thông tin môn học. Vui lòng thử lại.', 'error');
+        }
+    };
 
     // Global listener for Escape key to close modals
     document.addEventListener('keydown', (e) => {
@@ -1688,22 +2016,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!itemCard) return;
 
         const methodId = itemCard.dataset.methodId;
-
-        // Mở modal sửa Phương pháp
-        if (target.closest('.edit-method-btn')) {
-            try {
-                const methodRef = doc(firestore, 'teachingMethods', methodId);
-                const methodSnap = await getDoc(methodRef);
-                if (methodSnap.exists()) {
-                    currentEditingId = methodId;
-                    document.getElementById('method-modal-title').textContent = 'Sửa Phương pháp dạy học';
-                    document.getElementById('method-name-input').value = methodSnap.data().method;
-                    openModal(methodModal);
-                }
-            } catch (error) {
-                showToast('Không thể lấy thông tin. Vui lòng thử lại.', 'error');
-            }
-        }
 
         // Mở modal xác nhận xóa Phương pháp
         if (target.closest('.delete-method-btn')) {
@@ -1732,32 +2044,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const subjectId = itemCard.dataset.subjectId;
 
-        // Mở modal sửa Môn học
-        if (target.closest('.edit-subject-btn')) {
-            try {
-                const subjectRef = doc(firestore, 'subjects', subjectId);
-                const subjectSnap = await getDoc(subjectRef);
-                if (subjectSnap.exists()) {
-                    currentEditingId = subjectId;
-                    const data = subjectSnap.data();
-                    document.getElementById('subject-modal-title').textContent = 'Sửa Môn học';
-                    document.getElementById('subject-name-input').value = data.name;
-                    document.getElementById('subject-type-select').value = data.type;
-                    openModal(subjectModal);
-                }
-            } catch (error) {
-                showToast('Không thể lấy thông tin. Vui lòng thử lại.', 'error');
-            }
-        }
-
         // Mở modal xác nhận xóa Môn học
         if (target.closest('.delete-subject-btn')) {
+            const confirmBtn = document.getElementById('confirm-delete-btn');
             const subjectName = itemCard.querySelector('.item-name').textContent;
-            document.getElementById('confirm-delete-message').textContent = `Bạn có chắc chắn muốn xóa môn học "${subjectName}"?`;
+            document.getElementById('confirm-delete-message').textContent = `Bạn có chắc chắn muốn vô hiệu hóa môn học "${subjectName}"? Môn học sẽ bị ẩn khỏi các danh sách chọn.`;
+            confirmBtn.textContent = 'Vô hiệu hóa';
+
             deleteFunction = async () => {
-                await deleteDoc(doc(firestore, 'subjects', subjectId));
-                closeModal(confirmDeleteModal);
-                await loadSubjects(currentSchoolYear);
+                try {
+                    await updateDoc(doc(firestore, 'subjects', subjectId), { status: 'inactive' });
+                    closeModal(confirmDeleteModal);
+                    showToast(`Đã vô hiệu hóa môn học "${subjectName}".`, 'success');
+                    await loadSubjects(currentSchoolYear);
+                } catch (error) {
+                    showToast('Lỗi khi vô hiệu hóa môn học.', 'error');
+                } finally {
+                    confirmBtn.textContent = 'Xóa'; // Reset lại text nút
+                }
             };
             openModal(confirmDeleteModal);
         }

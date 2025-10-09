@@ -137,20 +137,20 @@
 }
 
 /* Ghi đè style cho các input/select trong modal để đồng bộ */
-#register-modal .form-group input:not([type="checkbox"]),
-#register-modal .form-group select {
+.modal-register .form-group input:not([type="checkbox"]),
+.modal-register .form-group select {
     width: 100%; /* Chiếm toàn bộ chiều rộng của .form-group */
     box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
 }
 
-#register-modal .form-group textarea {
+.modal-register .form-group textarea {
     width: 100%;
     box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
     min-height: 139px;      /* Đặt chiều cao tối thiểu, có thể điều chỉnh */
     resize: vertical;       /* Chỉ cho phép người dùng thay đổi chiều cao */
 }
 
-#register-modal .modal-content h2 i {
+.modal-register .modal-content h2 i {
     color: var(--primary-color);
     font-size: 1.5rem;
     margin-right: 5px;
@@ -162,15 +162,6 @@
     }
     .form-group-span-2 { grid-column: span 1; }
 }
-
-/* Style cho selector bị vô hiệu hóa */
-#register-modal .form-group select:disabled,
-#register-modal .form-group input:disabled,
-#register-modal .form-group textarea:disabled {
-    background-color: #e9ecef; /* Màu nền xám nhạt */
-    cursor: not-allowed;
-}
-
 /* --- NEW: Slot Detail Modal --- */
 .slot-detail-body {
     max-height: 60vh;
@@ -362,7 +353,7 @@
     border-bottom: 1px solid var(--border-color);
 }
 
-#equipment-search-input {
+.equipment-search-input {
     flex-grow: 1;
     padding: 10px;
     border: 1px solid var(--border-color);
@@ -370,12 +361,12 @@
     font-size: 1rem;
 }
 
-#equipment-search-info {
+.equipment-search-info {
     font-style: italic;
     color: var(--text-secondary-color);
 }
 
-.equipment-search-list-container {
+.modal-equipment-search .equipment-search-list-container {
     max-height: 50vh; /* Giới hạn chiều cao và cho phép cuộn */
     overflow-y: auto;
     padding: 5px;
@@ -384,18 +375,18 @@
     background-color: var(--background-color-light);
 }
 
-.equipment-category-group {
+.modal-equipment-search .equipment-category-group {
     margin-bottom: 10px;
     border: 1px solid transparent; /* Tránh nhảy layout khi thêm border lúc open */
 }
 
-.equipment-category-group[open] {
+.modal-equipment-search .equipment-category-group[open] {
     border-color: var(--border-color-light);
     border-radius: 4px;
     padding: 10px;
 }
 
-.equipment-category-group summary {
+.modal-equipment-search .equipment-category-group summary {
     font-weight: bold;
     cursor: pointer;
     padding: 8px;
@@ -404,7 +395,7 @@
     margin-bottom: 5px;
 }
 
-.equipment-item-row {
+.modal-equipment-search .equipment-item-row {
     display: grid;
     grid-template-columns: 1fr auto auto;
     gap: 10px;
@@ -413,33 +404,23 @@
     border-bottom: 1px solid var(--border-color-light);
 }
 
-.equipment-item-row:last-child {
+.modal-equipment-search .equipment-item-row:last-child {
     border-bottom: none;
 }
 
-.equipment-item-row.disabled {
-    background-color: #f8f9fa;
-    color: #adb5bd;
-    cursor: not-allowed;
-}
-
-.equipment-item-row.disabled .equipment-name {
-    text-decoration: line-through;
-}
-
-.equipment-name {
+.modal-equipment-search .equipment-name {
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.equipment-available {
+.modal-equipment-search .equipment-available {
     font-size: 0.85em;
     color: var(--text-secondary-color);
 }
 
-.equipment-quantity-input {
+.modal-equipment-search .equipment-quantity-input {
     width: 70px;
     text-align: center;
     padding: 5px;
