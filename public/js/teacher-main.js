@@ -488,10 +488,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // Render giao diện mobile
         const mobileHTML = renderMobileSchedule(week, filteredRegistrations, daysOfWeek, weekDates, teacherNameMap);
 
+        // --- NEW: Lấy danh sách đăng ký cho chú thích ---
+        // Chú thích cần hiển thị tất cả giáo viên/môn/ppdh có trong tuần,
+        // không bị ảnh hưởng bởi bộ lọc giáo viên.
+        const regsForLegend = currentRegistrations.filter(reg => {
+            const subjectMatch = filterSubjectSelect.value === 'all' || reg.subject === filterSubjectSelect.value;
+            const methodMatch = filterMethodSelect.value === 'all' || (Array.isArray(reg.teachingMethod) && reg.teachingMethod.includes(filterMethodSelect.value));
+            return subjectMatch && methodMatch;
+        });
+
+
         weeklyScheduleContainer.innerHTML = desktopHTML + mobileHTML;
 
         // Render legend after rendering schedule
-        renderFullLegend(filteredRegistrations);
+        // Sử dụng danh sách đăng ký riêng cho chú thích
+        renderFullLegend(regsForLegend);
     };
 
     const renderFullLegend = (filteredRegs) => {
@@ -515,7 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const value = valueAccessor(item);
                 const displayName = displayAccessor(item);
 
-                if (!displayName || displayName === 'N/A') return;
+                if (!value || !displayName || displayName === 'N/A') return;
 
                 const colors = generateColor(displayName); // Màu được tạo dựa trên tên hiển thị
                 const legendItem = document.createElement('div');
@@ -542,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         createLegendSection('PPDH (Màu nền)', usedMethods, 'bg', 'method');
         createLegendSection('Môn học (Viền)', usedSubjects, 'border', 'subject');
-        createLegendSection('Giáo viên (Icon)', usedTeachers, 'border', 'teacher', uid => uid, uid => teacherNameMap.get(uid) || 'N/A');
+        createLegendSection('Giáo viên (Icon)', usedTeachers, 'border', 'teacher-id', uid => uid, uid => teacherNameMap.get(uid) || 'N/A');
     };
 
     const renderMobileSchedule = (week, allRegistrations, daysOfWeek, weekDates, teacherNameMap) => {
