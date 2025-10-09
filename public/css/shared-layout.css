@@ -850,7 +850,6 @@ body {
 .weekly-schedule-table td {
     border: 1px solid var(--border-color-strong);
     padding: 6px;
-    vertical-align: top;
     min-height: 60px;
 }
 

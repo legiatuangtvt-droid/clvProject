@@ -103,14 +103,6 @@
 .weekly-schedule-table th, .weekly-schedule-table td {
     border: 1px solid var(--border-color);
     padding: 8px;
-    vertical-align: top; /* Giữ nguyên */
-}
-
-.weekly-schedule-table thead th {
-    background-color: #f8f9fa;
-    font-weight: 600;
-    text-align: center;
-    padding: 12px 8px; /* Giữ nguyên */
 }
 
 .weekly-schedule-table tbody td {
