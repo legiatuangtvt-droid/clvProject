@@ -30,8 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const subjectRepairContainer = document.getElementById('subject-repair-results-container');
     const findMissingGroupIdBtn = document.getElementById('find-missing-groupid-btn');
     const groupIdRepairContainer = document.getElementById('groupid-repair-results-container');
-    const runAllRepairsBtn = document.getElementById('run-all-repairs-btn');
-    const allRepairsStatusContainer = document.getElementById('all-repairs-status-container');
     const rulesContainer = document.getElementById('rules-container');
     const saveRulesBtn = document.getElementById('save-rules-btn');
     const activeScheduleTitle = document.getElementById('active-schedule-title');
@@ -77,183 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${month}-${day}`;
     };
 
-    // --- TEACHER STATUS MIGRATION FUNCTION ---
-    const runTeacherStatusMigration = async () => {
-        const runBtn = document.getElementById('run-teacher-status-migration-btn');
-        const logContainer = document.getElementById('teacher-status-migration-log');
-
-        setButtonLoading(runBtn, true, 'Đang xử lý...');
-        logContainer.style.display = 'block';
-        logContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Bắt đầu quá trình quét...</p>';
-
-        try {
-            const teachersRef = collection(firestore, 'teachers');
-            const snapshot = await getDocs(teachersRef);
-
-            if (snapshot.empty) {
-                logContainer.innerHTML += '<p>Không tìm thấy giáo viên nào.</p>';
-                showToast('Không có giáo viên nào trong cơ sở dữ liệu.', 'info');
-                return;
-            }
-
-            const batch = writeBatch(firestore);
-            let updatedCount = 0;
-            let alreadyUpdatedCount = 0;
-
-            snapshot.forEach(teacherDoc => {
-                const data = teacherDoc.data();
-                // Chỉ cập nhật nếu trường 'status' không tồn tại
-                if (data.status === undefined) {
-                    batch.update(teacherDoc.ref, { status: 'active' });
-                    updatedCount++;
-                    logContainer.innerHTML += `<p>Chuẩn bị cập nhật cho: ${data.teacher_name || 'Không có tên'} (ID: ${teacherDoc.id})</p>`;
-                } else {
-                    alreadyUpdatedCount++;
-                }
-            });
-
-            if (updatedCount > 0) {
-                logContainer.innerHTML += `<p style="font-weight: bold;">Đang ghi ${updatedCount} thay đổi vào cơ sở dữ liệu...</p>`;
-                await batch.commit();
-                logContainer.innerHTML += `<p class="success-message"><i class="fas fa-check-circle"></i> Cập nhật thành công ${updatedCount} giáo viên!</p>`;
-                showToast(`Đã cập nhật thành công ${updatedCount} giáo viên.`, 'success');
-            } else {
-                logContainer.innerHTML += `<p class="info-message"><i class="fas fa-info-circle"></i> Không có giáo viên nào cần cập nhật. Tất cả đã có trạng thái.</p>`;
-                showToast('Tất cả giáo viên đã có trạng thái.', 'info');
-            }
-            logContainer.innerHTML += `<p>Tổng số giáo viên đã quét: ${snapshot.size} (Trong đó ${alreadyUpdatedCount} đã có trạng thái từ trước).</p>`;
-
-        } catch (error) {
-            console.error("Lỗi khi di chuyển dữ liệu:", error);
-            logContainer.innerHTML += `<p class="error-message"><i class="fas fa-exclamation-triangle"></i> Đã xảy ra lỗi: ${error.message}</p>`;
-            showToast('Đã có lỗi xảy ra. Vui lòng kiểm tra Console (F12).', 'error');
-        } finally {
-            setButtonLoading(runBtn, false);
-        }
-    };
-
-    // --- GROUP STATUS MIGRATION FUNCTION ---
-    const runGroupStatusMigration = async () => {
-        const runBtn = document.getElementById('run-group-status-migration-btn');
-        const logContainer = document.getElementById('group-status-migration-log');
-
-        setButtonLoading(runBtn, true, 'Đang xử lý...');
-        logContainer.style.display = 'block';
-        logContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Bắt đầu quá trình quét...</p>';
-
-        try {
-            const groupsRef = collection(firestore, 'groups');
-            const snapshot = await getDocs(groupsRef);
-
-            if (snapshot.empty) {
-                logContainer.innerHTML += '<p>Không tìm thấy tổ chuyên môn nào.</p>';
-                return;
-            }
-
-            const batch = writeBatch(firestore);
-            let updatedCount = 0;
-
-            snapshot.forEach(groupDoc => {
-                if (groupDoc.data().status === undefined) {
-                    batch.update(groupDoc.ref, { status: 'active' });
-                    updatedCount++;
-                    logContainer.innerHTML += `<p>Chuẩn bị cập nhật cho: ${groupDoc.data().group_name}</p>`;
-                }
-            });
-
-            if (updatedCount > 0) {
-                await batch.commit();
-                logContainer.innerHTML += `<p class="success-message"><i class="fas fa-check-circle"></i> Cập nhật thành công ${updatedCount} tổ chuyên môn!</p>`;
-                showToast(`Đã cập nhật thành công ${updatedCount} tổ.`, 'success');
-            } else {
-                logContainer.innerHTML += `<p class="info-message"><i class="fas fa-info-circle"></i> Không có tổ nào cần cập nhật.</p>`;
-                showToast('Tất cả các tổ đã có trạng thái.', 'info');
-            }
-        } catch (error) {
-            console.error("Lỗi khi di chuyển dữ liệu tổ:", error);
-            logContainer.innerHTML += `<p class="error-message"><i class="fas fa-exclamation-triangle"></i> Đã xảy ra lỗi: ${error.message}</p>`;
-            showToast('Đã có lỗi xảy ra. Vui lòng kiểm tra Console (F12).', 'error');
-        } finally {
-            setButtonLoading(runBtn, false);
-        }
-    };
-
-    // --- SUBJECT STATUS MIGRATION FUNCTION ---
-    const runSubjectStatusMigration = async () => {
-        const runBtn = document.getElementById('run-subject-status-migration-btn');
-        const logContainer = document.getElementById('subject-status-migration-log');
-
-        setButtonLoading(runBtn, true, 'Đang xử lý...');
-        logContainer.style.display = 'block';
-        logContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Bắt đầu quá trình quét...</p>';
-
-        try {
-            const subjectsRef = collection(firestore, 'subjects');
-            const snapshot = await getDocs(subjectsRef);
-
-            if (snapshot.empty) {
-                logContainer.innerHTML += '<p>Không tìm thấy môn học nào.</p>';
-                return;
-            }
-
-            const batch = writeBatch(firestore);
-            let updatedCount = 0;
-
-            snapshot.forEach(subjectDoc => {
-                if (subjectDoc.data().status === undefined) {
-                    batch.update(subjectDoc.ref, { status: 'active' });
-                    updatedCount++;
-                    logContainer.innerHTML += `<p>Chuẩn bị cập nhật cho: ${subjectDoc.data().name}</p>`;
-                }
-            });
-
-            if (updatedCount > 0) {
-                await batch.commit();
-                logContainer.innerHTML += `<p class="success-message"><i class="fas fa-check-circle"></i> Cập nhật thành công ${updatedCount} môn học!</p>`;
-                showToast(`Đã cập nhật thành công ${updatedCount} môn học.`, 'success');
-            } else {
-                logContainer.innerHTML += `<p class="info-message"><i class="fas fa-info-circle"></i> Không có môn học nào cần cập nhật.</p>`;
-                showToast('Tất cả các môn học đã có trạng thái.', 'info');
-            }
-        } catch (error) {
-            console.error("Lỗi khi di chuyển dữ liệu môn học:", error);
-            logContainer.innerHTML += `<p class="error-message"><i class="fas fa-exclamation-triangle"></i> Đã có lỗi xảy ra: ${error.message}</p>`;
-            showToast('Đã có lỗi xảy ra. Vui lòng kiểm tra Console (F12).', 'error');
-        } finally {
-            setButtonLoading(runBtn, false);
-        }
-    };
-
-    // --- ALL REPAIRS FUNCTION ---
-    const runAllRepairs = async () => {
-        runAllRepairsBtn.disabled = true;
-        runAllRepairsBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Đang xử lý...`;
-        allRepairsStatusContainer.innerHTML = `<p>Bắt đầu quá trình sửa lỗi toàn bộ...</p>`;
-
-        try {
-            // Step 1: Orphaned Teacher IDs
-            allRepairsStatusContainer.innerHTML += `<p><i class="fas fa-spinner fa-spin"></i> 1/3: Đang quét lỗi Teacher ID mồ côi...</p>`;
-            await findAndRepairOrphanedRegs();
-            allRepairsStatusContainer.innerHTML += `<p class="success-message"><i class="fas fa-check-circle"></i> Hoàn thành quét lỗi Teacher ID.</p>`;
-
-            // Step 2: Subject Mismatches
-            allRepairsStatusContainer.innerHTML += `<p><i class="fas fa-spinner fa-spin"></i> 2/3: Đang quét lỗi sai môn học...</p>`;
-            await findAndRepairSubjectMismatches();
-            allRepairsStatusContainer.innerHTML += `<p class="success-message"><i class="fas fa-check-circle"></i> Hoàn thành quét lỗi sai môn học.</p>`;
-
-            // Step 3: Missing Group IDs
-            allRepairsStatusContainer.innerHTML += `<p><i class="fas fa-spinner fa-spin"></i> 3/3: Đang quét lỗi thiếu Group ID...</p>`;
-            await findAndRepairMissingGroupId();
-            allRepairsStatusContainer.innerHTML += `<p class="success-message"><i class="fas fa-check-circle"></i> Hoàn thành quét lỗi thiếu Group ID.</p>`;
-
-            allRepairsStatusContainer.innerHTML += `<h4 class="final-success-message"><i class="fas fa-flag-checkered"></i> Đã hoàn tất quá trình sửa lỗi. Vui lòng xem kết quả chi tiết ở từng mục bên dưới.</h4>`;
-        } catch (error) {
-            allRepairsStatusContainer.innerHTML += `<p class="error-message"><i class="fas fa-exclamation-triangle"></i> Quá trình đã bị dừng do có lỗi. Vui lòng kiểm tra console và thử lại.</p>`;
-        } finally {
-            runAllRepairsBtn.disabled = false;
-            runAllRepairsBtn.innerHTML = `<i class="fas fa-magic"></i> Chạy tất cả chức năng sửa lỗi`;
-        }
-    };
     // --- DATA REPAIR FUNCTIONS ---
     const findAndRepairOrphanedRegs = async () => {
         const container = dataRepairContainer;
@@ -1647,20 +1468,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Sửa lỗi môn học ---
     findSubjectMismatchBtn.addEventListener('click', findAndRepairSubjectMismatches);
 
-    // --- Sửa lỗi thiếu groupId ---
     findMissingGroupIdBtn.addEventListener('click', findAndRepairMissingGroupId);
-
-    // --- Chạy tất cả sửa lỗi ---
-    runAllRepairsBtn.addEventListener('click', runAllRepairs);
-
-    // --- Chạy migration cho Tổ ---
-    document.getElementById('run-group-status-migration-btn').addEventListener('click', runGroupStatusMigration);
-
-    // --- Chạy migration cho Môn học ---
-    document.getElementById('run-subject-status-migration-btn').addEventListener('click', runSubjectStatusMigration);
-
-    // --- Chạy migration ---
-    document.getElementById('run-teacher-status-migration-btn').addEventListener('click', runTeacherStatusMigration);
 
     // --- Áp dụng mùa ---
     applySummerBtn.addEventListener('click', () => applySeason('summer'));

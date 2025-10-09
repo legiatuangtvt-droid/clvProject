@@ -150,63 +150,6 @@
                         <!-- Tab Sửa lỗi dữ liệu -->
                         <div id="data-repair" class="tab-content">
                             <div class="data-repair-layout">
-                                <!-- Card cho chức năng di chuyển dữ liệu (Migration) -->
-                                <div class="repair-section-card">
-                                    <div class="content-header">
-                                        <h2>Di chuyển dữ liệu (Migration)</h2>
-                                        <button id="run-teacher-status-migration-btn" class="btn-warning"><i class="fas fa-database"></i> Cập nhật 'status' cho Giáo viên</button>
-                                    </div>
-                                    <div class="instruction-text">
-                                        <p><i class="fas fa-info-circle"></i> <strong>Mục đích:</strong> Chức năng này sẽ quét toàn bộ danh sách giáo viên. Với mỗi giáo viên chưa có trường <strong>`status`</strong>, script sẽ tự động thêm trường <strong>`status: 'active'`</strong>.</p>
-                                        <p><strong>Quan trọng:</strong> Bạn chỉ cần chạy chức năng này <strong>MỘT LẦN DUY NHẤT</strong> sau khi triển khai tính năng "xóa mềm".</p>
-                                    </div>
-                                    <div id="teacher-status-migration-log" class="data-repair-results-container" style="display: none;">
-                                        <!-- Log sẽ hiển thị ở đây -->
-                                    </div>
-                                </div>
-
-                                <!-- Card cho chức năng di chuyển dữ liệu (Migration) cho Tổ -->
-                                <div class="repair-section-card">
-                                    <div class="content-header">
-                                        <h2>Di chuyển dữ liệu (Migration)</h2>
-                                        <button id="run-group-status-migration-btn" class="btn-warning"><i class="fas fa-database"></i> Cập nhật 'status' cho Tổ</button>
-                                    </div>
-                                    <div class="instruction-text">
-                                        <p><i class="fas fa-info-circle"></i> <strong>Mục đích:</strong> Chức năng này sẽ quét toàn bộ danh sách tổ chuyên môn. Với mỗi tổ chưa có trường <strong>`status`</strong>, script sẽ tự động thêm trường <strong>`status: 'active'`</strong>.</p>
-                                    </div>
-                                    <div id="group-status-migration-log" class="data-repair-results-container" style="display: none;">
-                                        <!-- Log sẽ hiển thị ở đây -->
-                                    </div>
-                                </div>
-
-                                <!-- Card cho chức năng di chuyển dữ liệu (Migration) cho Môn học -->
-                                <div class="repair-section-card">
-                                    <div class="content-header">
-                                        <h2>Di chuyển dữ liệu (Migration)</h2>
-                                        <button id="run-subject-status-migration-btn" class="btn-warning"><i class="fas fa-database"></i> Cập nhật 'status' cho Môn học</button>
-                                    </div>
-                                    <div class="instruction-text">
-                                        <p><i class="fas fa-info-circle"></i> <strong>Mục đích:</strong> Chức năng này sẽ quét toàn bộ danh sách môn học. Với mỗi môn học chưa có trường <strong>`status`</strong>, script sẽ tự động thêm trường <strong>`status: 'active'`</strong>.</p>
-                                    </div>
-                                    <div id="subject-status-migration-log" class="data-repair-results-container" style="display: none;">
-                                        <!-- Log sẽ hiển thị ở đây -->
-                                    </div>
-                                </div>
-
-                                <!-- Card cho chức năng chạy tất cả -->
-                                <div class="repair-section-card all-repairs-card">
-                                    <div class="content-header">
-                                        <h2>Tự động sửa lỗi hàng loạt</h2>
-                                        <button id="run-all-repairs-btn" class="btn-danger"><i class="fas fa-magic"></i> Chạy tất cả chức năng sửa lỗi</button>
-                                    </div>
-                                    <div class="instruction-text">
-                                        <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tự động chạy tuần tự cả 3 công cụ sửa lỗi bên dưới. Tiến trình sẽ được hiển thị ở đây.</p>
-                                    </div>
-                                    <div id="all-repairs-status-container">
-                                        <!-- Trạng thái chạy tất cả sẽ hiển thị ở đây -->
-                                    </div>
-                                </div>
-
                                 <!-- Card cho chức năng sửa Teacher ID -->
                                 <div class="repair-section-card">
                                     <div class="content-header">
