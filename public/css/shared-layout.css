@@ -1418,3 +1418,9 @@ textarea.form-control {
 .btn-link:hover {
     color: var(--primary-hover);
 }
+
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px
+}
