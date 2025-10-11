@@ -161,6 +161,13 @@
                                         <ul style="margin: 0; padding-left: 30px;"><li>Giáo viên được cấp tài khoản đăng nhập mới (thay đổi UID).</li><li>Tài khoản giáo viên cũ bị xóa khỏi hệ thống Authentication.</li></ul>
                                         <p>Sau khi quét, bạn có thể chọn giáo viên mới để gán lại cho các lượt đăng ký bị "mồ côi" này.</p>
                                     </div>
+                                    <!-- NEW: Progress Bar Container -->
+                                    <div class="repair-progress-container" style="display: none;">
+                                        <div class="progress-bar-wrapper">
+                                            <div class="progress-bar"></div>
+                                        </div>
+                                        <span class="progress-status-text"></span>
+                                    </div>
                                     <div id="data-repair-results-container" class="data-repair-results-container">
                                         <!-- Kết quả quét sẽ được hiển thị ở đây -->
                                     </div>
@@ -176,6 +183,13 @@
                                         <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tìm các lượt đăng ký có môn học không khớp với môn học chính của giáo viên. Bạn có thể tự động sửa tất cả các lỗi này về đúng môn học đã được phân công.</p>
                                         <p><strong>Ngoại lệ:</strong> GV môn <strong>Sinh học</strong> được phép dạy <strong>Công nghệ nông nghiệp</strong>. GV môn <strong>Vật lí</strong> được phép dạy <strong>Công nghệ công nghiệp</strong>.</p>
                                     </div>
+                                    <!-- NEW: Progress Bar Container -->
+                                    <div class="repair-progress-container" style="display: none;">
+                                        <div class="progress-bar-wrapper">
+                                            <div class="progress-bar"></div>
+                                        </div>
+                                        <span class="progress-status-text"></span>
+                                    </div>
                                     <div id="subject-repair-results-container" class="data-repair-results-container">
                                         <!-- Kết quả quét lỗi môn học sẽ hiển thị ở đây -->
                                     </div>
@@ -190,6 +204,13 @@
                                     <div class="instruction-text">
                                         <p><i class="fas fa-info-circle"></i> Chức năng này sẽ tìm các lượt đăng ký không được lưu `groupId` (thường là dữ liệu cũ). Việc thiếu `groupId` có thể khiến báo cáo hiển thị sai tổ chuyên môn nếu giáo viên đã chuyển tổ.</p>
                                         <p>Sau khi quét, bạn có thể tự động cập nhật `groupId` chính xác cho các lượt đăng ký này dựa trên thông tin tổ của giáo viên tại thời điểm quét.</p>
+                                    </div>
+                                    <!-- NEW: Progress Bar Container -->
+                                    <div class="repair-progress-container" style="display: none;">
+                                        <div class="progress-bar-wrapper">
+                                            <div class="progress-bar"></div>
+                                        </div>
+                                        <span class="progress-status-text"></span>
                                     </div>
                                     <div id="groupid-repair-results-container" class="data-repair-results-container">
                                         <!-- Kết quả quét lỗi groupId sẽ hiển thị ở đây -->

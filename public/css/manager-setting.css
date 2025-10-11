@@ -1141,3 +1141,59 @@
     align-items: center;
     gap: 15px;
 }
+
+/* --- NEW: Progress Bar for Data Repair --- */
+.repair-progress-container {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.progress-bar-wrapper {
+    flex-grow: 1;
+    height: 12px;
+    background-color: #e9ecef;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0;
+    background-color: var(--primary-color);
+    border-radius: 6px;
+    transition: width 0.4s ease;
+}
+
+.progress-bar.animated {
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+    background-size: 1rem 1rem;
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+.progress-bar.success {
+    background-color: #28a745; /* Màu xanh lá cây thành công */
+}
+
+.progress-bar.error {
+    background-color: #dc3545; /* Màu đỏ lỗi */
+}
+
+.progress-status-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-light);
+    min-width: 150px; /* Đảm bảo text không bị nhảy dòng */
+    text-align: left;
+}
+
+@keyframes progress-bar-stripes {
+    from {
+        background-position: 1rem 0;
+    }
+    to {
+        background-position: 0 0;
+    }
+}

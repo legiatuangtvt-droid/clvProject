@@ -81,6 +81,34 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${year}-${month}-${day}`;
     };
 
+    // --- NEW: Progress Bar Helper ---
+    const updateRepairProgress = (cardElement, status, message = '', progress = 0) => {
+        const progressContainer = cardElement.querySelector('.repair-progress-container');
+        const progressBar = progressContainer.querySelector('.progress-bar');
+        const progressText = progressContainer.querySelector('.progress-status-text');
+
+        if (status === 'idle') {
+            progressContainer.style.display = 'none';
+            return;
+        }
+
+        progressContainer.style.display = 'flex';
+        progressText.textContent = message;
+        progressBar.style.width = `${progress}%`;
+
+        // Reset classes
+        progressBar.classList.remove('animated', 'success', 'error');
+
+        if (status === 'scanning') {
+            progressBar.classList.add('animated');
+        } else if (status === 'success') {
+            progressBar.classList.add('success');
+        } else if (status === 'error') {
+            progressBar.classList.add('error');
+        }
+    };
+
+
     // --- DATA REPAIR FUNCTIONS ---
     const findAndRepairOrphanedRegs = async () => {
         const container = dataRepairContainer;
@@ -97,7 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const validTeacherUids = new Set(allCurrentTeachers.map(t => t.uid).filter(Boolean));
     
             // 2. Tối ưu hóa: Đếm tổng số đăng ký và số đăng ký hợp lệ
-            const totalRegsSnapshot = await getDocs(collection(firestore, 'registrations'));
+            updateRepairProgress(container.parentElement, 'scanning', 'Đang đếm số lượt đăng ký...', 30);
+             const totalRegsSnapshot = await getDocs(collection(firestore, 'registrations'));
             const totalRegsCount = totalRegsSnapshot.size;
     
             const validUidsArray = Array.from(validTeacherUids);
@@ -107,6 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 chunks.push(validUidsArray.slice(i, i + CHUNK_SIZE));
             }
     
+            updateRepairProgress(container.parentElement, 'scanning', 'Đang xác thực đăng ký...', 50);
             const queryPromises = chunks.map(chunk => 
                 getDocs(query(collection(firestore, 'registrations'), where('teacherId', 'in', chunk)))
             );
@@ -115,12 +145,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
             // 3. Nếu số lượng khớp, không cần quét sâu hơn
             if (totalRegsCount === validRegsCount) {
+                updateRepairProgress(container.parentElement, 'success', 'Quét hoàn tất!', 100);
                 container.innerHTML = `<p class="success-message"><i class="fas fa-check-circle"></i> Không tìm thấy lượt đăng ký nào bị lỗi Teacher ID. Dữ liệu của bạn đã nhất quán!</p>`;
                 return;
             }
     
             // 4. Nếu có sự chênh lệch, thực hiện quét sâu để tìm ra các đăng ký mồ côi
-            container.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Phát hiện sự không nhất quán. Đang phân tích chi tiết...</p>`;
+            updateRepairProgress(container.parentElement, 'scanning', 'Phân tích chi tiết các lỗi...', 80);
             const orphanedRegs = new Map(); // Map: oldTeacherId -> { name, regs: [regDoc] }
     
             totalRegsSnapshot.forEach(doc => {
@@ -138,10 +169,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
     
+            updateRepairProgress(container.parentElement, 'success', 'Quét hoàn tất!', 100);
             renderRepairUI(orphanedRegs, allCurrentTeachers);
     
         } catch (error) {
             console.error("Lỗi khi quét dữ liệu mồ côi:", error);
+            updateRepairProgress(container.parentElement, 'error', 'Quét thất bại!', 100);
             container.innerHTML = `<p class="error-message">Đã có lỗi xảy ra trong quá trình quét. Vui lòng thử lại.</p>`;
             showToast('Quét dữ liệu thất bại!', 'error');
         }
@@ -150,6 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderRepairUI = (orphanedMap, allCurrentTeachers) => {
         const container = dataRepairContainer;
         if (orphanedMap.size === 0) {
+            updateRepairProgress(container.parentElement, 'success', 'Quét hoàn tất!', 100);
             container.innerHTML = `<p class="success-message"><i class="fas fa-check-circle"></i> Không tìm thấy lượt đăng ký nào bị lỗi Teacher ID. Dữ liệu của bạn đã nhất quán!</p>`;
             return;
         }
@@ -228,11 +262,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- SUBJECT MISMATCH REPAIR FUNCTIONS ---
     const findAndRepairSubjectMismatches = async () => {
-        subjectRepairContainer.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Đang quét dữ liệu môn học, vui lòng chờ...</p>`;
+        const container = subjectRepairContainer;
+        updateRepairProgress(container.parentElement, 'scanning', 'Đang quét dữ liệu...', 10);
     
         try {
             // 1. Lấy tất cả giáo viên có môn học chính được gán
-            const teachersQuery = query(collection(firestore, 'teachers'));
+            updateRepairProgress(container.parentElement, 'scanning', 'Đang tải danh sách giáo viên...', 20);
+             const teachersQuery = query(collection(firestore, 'teachers'));
             const teachersSnapshot = await getDocs(teachersQuery);
             const teachersWithSubject = teachersSnapshot.docs
                 .map(doc => doc.data())
@@ -245,6 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
             // 2. Tối ưu hóa: Tạo các truy vấn song song cho mỗi giáo viên
             // Tìm các đăng ký có môn học KHÁC với môn chính của họ
+            updateRepairProgress(container.parentElement, 'scanning', 'Đang so khớp môn học...', 50);
             const queryPromises = teachersWithSubject.map(teacher => {
                 const regsQuery = query(
                     collection(firestore, 'registrations'),
@@ -271,10 +308,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
     
+            updateRepairProgress(container.parentElement, 'success', 'Quét hoàn tất!', 100);
             renderSubjectMismatchUI(mismatches);
 
         } catch (error) {
             console.error("Lỗi khi quét lỗi môn học:", error);
+            updateRepairProgress(subjectRepairContainer.parentElement, 'error', 'Quét thất bại!', 100);
             subjectRepairContainer.innerHTML = `<p class="error-message">Đã có lỗi xảy ra trong quá trình quét. Vui lòng thử lại.</p>`;
             showToast('Quét dữ liệu thất bại!', 'error');
         }
@@ -282,6 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderSubjectMismatchUI = (mismatches) => {
         if (mismatches.length === 0) {
+            updateRepairProgress(subjectRepairContainer.parentElement, 'success', 'Quét hoàn tất!', 100);
             subjectRepairContainer.innerHTML = `<p class="success-message"><i class="fas fa-check-circle"></i> Không tìm thấy lượt đăng ký nào có môn học không khớp. Dữ liệu của bạn đã nhất quán!</p>`;
             return;
         }
@@ -291,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${m.teacherName}</td>
                 <td>${formatDate(m.date)}</td>
                 <td style="text-align: center;">${m.period}</td>
-                <td style="text-align: center;">${m.className}</td>
+                <td style="text-align: center;">${m.className || 'N/A'}</td>
                 <td style="color: red;">${m.wrongSubject}</td>
                 <td style="color: green;">${m.correctSubject}</td>
             </tr>
@@ -326,10 +366,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MISSING GROUPID REPAIR FUNCTIONS ---
     const findAndRepairMissingGroupId = async () => {
-        groupIdRepairContainer.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Đang quét dữ liệu, vui lòng chờ...</p>`;
+        const container = groupIdRepairContainer;
+        updateRepairProgress(container.parentElement, 'scanning', 'Đang quét dữ liệu...', 10);
     
         try {
             // 1. Lấy tất cả giáo viên và tạo map UID -> group_id để tra cứu
+            updateRepairProgress(container.parentElement, 'scanning', 'Đang tải thông tin tổ...', 20);
             const teachersQuery = query(collection(firestore, 'teachers'));
             const teachersSnapshot = await getDocs(teachersQuery);
             const teacherToGroupMap = new Map();
@@ -341,6 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     
             // 2. Tối ưu hóa: Chỉ truy vấn các đăng ký thiếu groupId trong năm học hiện tại
+            updateRepairProgress(container.parentElement, 'scanning', 'Đang tìm đăng ký thiếu ID Tổ...', 50);
             const regsQuery = query(
                 collection(firestore, 'registrations'),
                 where('schoolYear', '==', currentSchoolYear),
@@ -353,23 +396,26 @@ document.addEventListener('DOMContentLoaded', () => {
             regsSnapshot.forEach(doc => {
                 const regData = doc.data();
                 const correctGroupId = teacherToGroupMap.get(regData.teacherId);
+                const teacher = allCurrentTeachers.find(t => t.uid === regData.teacherId);
                 if (correctGroupId) { // Chỉ thêm vào danh sách nếu tìm thấy groupId đúng
                         missingGroupIdRegs.push({
                             regId: doc.id,
-                            teacherName: teacher.teacher_name,
+                            teacherName: teacher ? teacher.name : (regData.teacherName || 'N/A'),
                             date: regData.date,
                             period: regData.period,
                             className: regData.className,
                             subject: regData.subject,
-                        correctGroupId: correctGroupId
+                            correctGroupId: correctGroupId
                         });
                     }
             });
     
+            updateRepairProgress(container.parentElement, 'success', 'Quét hoàn tất!', 100);
             renderMissingGroupIdUI(missingGroupIdRegs);
     
         } catch (error) {
             console.error("Lỗi khi quét lỗi thiếu groupId:", error);
+            updateRepairProgress(groupIdRepairContainer.parentElement, 'error', 'Quét thất bại!', 100);
             groupIdRepairContainer.innerHTML = `<p class="error-message">Đã có lỗi xảy ra trong quá trình quét. Vui lòng thử lại.</p>`;
             showToast('Quét dữ liệu thất bại!', 'error');
         }
@@ -377,6 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderMissingGroupIdUI = (missingRegs) => {
         if (missingRegs.length === 0) {
+            updateRepairProgress(groupIdRepairContainer.parentElement, 'success', 'Quét hoàn tất!', 100);
             groupIdRepairContainer.innerHTML = `<p class="success-message"><i class="fas fa-check-circle"></i> Không tìm thấy lượt đăng ký nào thiếu ID Tổ. Dữ liệu của bạn đã nhất quán!</p>`;
             return;
         }
