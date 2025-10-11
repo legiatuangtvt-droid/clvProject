@@ -432,15 +432,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Thiết bị dạy học': '<i class="fas fa-microscope method-icon-summary icon-tbdh" title="TBDH"></i>',
                 'Thực hành': {
                     default: '<i class="fas fa-flask method-icon-summary icon-th" title="Thực hành"></i>',
-                    'Giáo dục thể chất - QP': '<i class="fas fa-futbol method-icon-summary icon-th" title="Thực hành GDTC-QP"></i>'
+                    'Giáo dục thể chất': '<i class="fas fa-futbol method-icon-summary icon-th" title="Thực hành GDTC-QP"></i>'
                 }
             };
         
             const iconsHTML = topMethods.map(method => {
                 if (method === 'Thực hành') {
                     // Kiểm tra xem có đăng ký nào là môn GDTC-QP trong slot này không
-                    const hasQpReg = regs.some(r => r.subject === 'Giáo dục thể chất - QP' && r.teachingMethod?.includes('Thực hành'));
-                    return hasQpReg ? methodIcons['Thực hành']['Giáo dục thể chất - QP'] : methodIcons['Thực hành'].default;
+                    const hasQpReg = regs.some(r => r.subject === 'Giáo dục thể chất' && r.teachingMethod?.includes('Thực hành'));
+                    return hasQpReg ? methodIcons['Thực hành']['Giáo dục thể chất'] : methodIcons['Thực hành'].default;
                 }
                 return methodIcons[method] || '';
             }).join('');
@@ -497,13 +497,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Thiết bị dạy học': '<i class="fas fa-microscope method-icon-summary icon-tbdh" title="TBDH"></i>',
                 'Thực hành': {
                     default: '<i class="fas fa-flask method-icon-summary icon-th" title="Thực hành"></i>',
-                    'Giáo dục thể chất - QP': '<i class="fas fa-futbol method-icon-summary icon-th" title="Thực hành GDTC-QP"></i>'
+                    'Giáo dục thể chất': '<i class="fas fa-futbol method-icon-summary icon-th" title="Thực hành GDTC-QP"></i>'
                 }
             };
             const iconsHTML = topMethods.map(method => {
                 if (method === 'Thực hành') {
-                    const hasQpReg = regs.some(r => r.subject === 'Giáo dục thể chất - QP' && r.teachingMethod?.includes('Thực hành'));
-                    return hasQpReg ? methodIcons['Thực hành']['Giáo dục thể chất - QP'] : methodIcons['Thực hành'].default;
+                    const hasQpReg = regs.some(r => r.subject === 'Giáo dục thể chất' && r.teachingMethod?.includes('Thực hành'));
+                    return hasQpReg ? methodIcons['Thực hành']['Giáo dục thể chất'] : methodIcons['Thực hành'].default;
                 }
                 return methodIcons[method] || '';
             }).join('');
