@@ -421,17 +421,6 @@ body {
     gap: 10px;
 }
 
-/* --- NEW: Dùng cho các nhóm nút cần chiều rộng bằng nhau --- */
-.slot-modal-actions {
-    display: flex;
-    justify-content: space-between; /* Căn các nút về bên phải */
-    gap: 10px;
-}
-
-.slot-modal-actions button {
-    width: 50%
-}
-
 .btn-save, .btn-cancel, .btn-danger, .btn-secondary, .btn-primary, .btn-warning {
     padding: 10px 20px;
     font-size: 0.9rem;

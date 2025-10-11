@@ -425,3 +425,15 @@
     height: auto; /* Để chiều cao tự động theo padding */
     flex-shrink: 0; /* Không co lại */
 }
+
+
+/* --- NEW: Dùng cho các nhóm nút cần chiều rộng bằng nhau --- */
+.slot-modal-actions {
+    display: flex;
+    justify-content: space-between; /* Căn các nút về bên phải */
+    gap: 10px;
+}
+
+.slot-modal-actions button {
+    width: 50%
+}
