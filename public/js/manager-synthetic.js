@@ -756,7 +756,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Logic cũ đã bị loại bỏ. Logic mới chỉ cần lấy giá trị từ textarea.
         // Việc định dạng giá trị này đã được xử lý bởi modal chọn thiết bị.
         const finalEquipmentList = document.getElementById('reg-equipment-input').value.trim()
-            .split(',')
+            .split(';')
             .map(item => item.trim())
             .filter(Boolean);
 
@@ -809,7 +809,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // The rest of the logic that uses labsSnapshot
             // ... (rest of the code in this block is correct)
             const allLabsForSubject = labsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const userIntendedLabName = equipmentValue.split(',').map(s => s.trim()).find(s => s.startsWith('Thực hành tại'))?.replace('Thực hành tại ', '');
+            const userIntendedLabName = finalEquipmentList.find(s => s.startsWith('Thực hành tại'))?.replace('Thực hành tại ', '');
             const intendedLab = allLabsForSubject.find(lab => lab.name === userIntendedLabName);
 
             if (intendedLab) {
@@ -846,8 +846,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- KIỂM TRA GIẢ MẠO TRẠNG THÁI THỰC HÀNH TRƯỚC KHI LƯU ---
         if (selectedMethods.includes('Thực hành')) {
             const equipmentInput = document.getElementById('reg-equipment-input');
-            const currentEquipmentValue = equipmentInput.value;
-            const userPracticeText = currentEquipmentValue.split(',').map(s => s.trim()).find(s => s.startsWith('Thực hành'));
+            const currentEquipmentList = equipmentInput.value.split(';').map(s => s.trim());
+            const userPracticeText = currentEquipmentList.find(s => s.startsWith('Thực hành'));
 
             // Chỉ kiểm tra nếu người dùng có nhập thông tin thực hành
             if (userPracticeText) {
@@ -883,10 +883,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         conflictWarningModal.style.display = 'flex';
 
                         // Sửa lại textarea và dừng quá trình lưu
-                        const equipmentList = currentEquipmentValue.split(',').map(s => s.trim()).filter(Boolean);
-                        const filteredList = equipmentList.filter(item => !item.startsWith('Thực hành'));
+                        const filteredList = currentEquipmentList.filter(item => !item.startsWith('Thực hành'));
                         filteredList.unshift(correctPracticeText); // Thêm lại text đúng vào đầu
-                        equipmentInput.value = filteredList.join(', ');
+                        equipmentInput.value = filteredList.join('; ');
 
                         return; // Dừng hàm saveRegistration
                     }
@@ -1682,14 +1681,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (e.target.checked) {
                     // Nếu được check và 'Tivi' chưa có, thêm vào
-                    if (!tiviExists) {
+                    if (!tiviExists && equipmentList.length > 0) { // Chỉ thêm nếu đã có thiết bị khác
                         equipmentList.push('Tivi');
                     }
                 } else {
                     // Nếu bỏ check, xóa 'Tivi'
                     equipmentList = equipmentList.filter(item => item.toLowerCase() !== 'tivi');
                 }
-                equipmentInput.value = equipmentList.join(', ');
+                equipmentInput.value = equipmentList.join('; ');
             }
 
             // NEW: Show/hide equipment search button and clear input
@@ -1703,13 +1702,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     equipmentSearchBtn.style.display = 'none';
 
                     // Remove only items that were added from the search modal (they have "(SL: ...)")
-                    let currentEquipment = equipmentInput.value.split(',').map(item => item.trim()).filter(Boolean);
+                    let currentEquipment = equipmentInput.value.split(';').map(item => item.trim()).filter(Boolean);
                     const itemsToKeep = currentEquipment.filter(item => !/\(SL:\s*\d+\)/.test(item));
                     
                     if (itemsToKeep.length < currentEquipment.length) {
                         showToast('Đã xóa các thiết bị đã chọn.', 'info');
                     }
-                    equipmentInput.value = itemsToKeep.join(', ');
+                    equipmentInput.value = itemsToKeep.join('; ');
                 }
             }
         });
@@ -1752,7 +1751,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tempEquipmentSelection.clear();
         const currentEquipment = document.getElementById('reg-equipment-input').value.trim();
         if (currentEquipment) {
-            currentEquipment.split(',').forEach(item => {
+            currentEquipment.split(';').forEach(item => {
                 const match = item.match(/(.+)\s\(SL:\s*(\d+)\)/);
                 if (match) {
                     const [, name, quantity] = match;
@@ -1872,7 +1871,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        document.getElementById('reg-equipment-input').value = equipmentList.join(', ');
+        document.getElementById('reg-equipment-input').value = equipmentList.join('; ');
         equipmentSearchModal.style.display = 'none';
     };
 

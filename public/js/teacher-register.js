@@ -621,7 +621,7 @@ const initializeTeacherRegisterPage = (user) => {
 
     const saveRegistration = async (user) => {
         const equipmentValue = document.getElementById('reg-equipment-input').value.trim();
-        const selectedEquipment = equipmentValue ? equipmentValue.split(',').map(item => item.trim()).filter(item => item) : [];
+        const selectedEquipment = equipmentValue ? equipmentValue.split(';').map(item => item.trim()).filter(item => item) : [];
         const selectedMethods = Array.from(document.querySelectorAll('#reg-method-container input[type="checkbox"]:checked')).map(cb => cb.value);
 
         const date = document.getElementById('reg-day').value;
@@ -1071,17 +1071,23 @@ const initializeTeacherRegisterPage = (user) => {
     };
 
     const confirmEquipmentSelection = () => {
-        const equipmentList = [];
+        const equipmentInput = document.getElementById('reg-equipment-input');
+        const selectedFromModal = [];
         document.querySelectorAll('#equipment-search-list-container .equipment-item-row').forEach(row => {
             const quantityInput = row.querySelector('.equipment-quantity-input');
-            const quantity = parseInt(quantityInput.value);
+            const quantity = parseInt(quantityInput.value) || 0;
             if (quantity > 0) {
                 const deviceName = row.dataset.deviceName;
-                equipmentList.push(`${deviceName} (SL: ${quantity})`);
+                selectedFromModal.push(`${deviceName} (SL: ${quantity})`);
             }
         });
-
-        document.getElementById('reg-equipment-input').value = equipmentList.join(', ');
+    
+        // Lấy các thiết bị đã nhập thủ công (không có "(SL: ...)")
+        const manuallyAdded = equipmentInput.value.split(';').map(item => item.trim()).filter(item => item && !/\(SL:\s*\d+\)/.test(item));
+    
+        // Kết hợp cả hai danh sách và cập nhật lại textarea
+        const finalEquipmentList = [...manuallyAdded, ...selectedFromModal];
+        equipmentInput.value = finalEquipmentList.join('; ');
         equipmentSearchModal.style.display = 'none';
     };
 
@@ -1150,18 +1156,16 @@ const initializeTeacherRegisterPage = (user) => {
                 equipmentSearchBtn.style.display = 'inline-block';
             } else {
                 equipmentSearchBtn.style.display = 'none';
-            if (!e.target.checked) {
                 const equipmentInput = document.getElementById('reg-equipment-input');
                 // Remove only items that look like they were added from a search modal (they have "(SL: ...)")
-                let currentEquipment = equipmentInput.value.split(',').map(item => item.trim()).filter(Boolean);
+                let currentEquipment = equipmentInput.value.split(';').map(item => item.trim()).filter(Boolean);
                 const itemsToKeep = currentEquipment.filter(item => !/\(SL:\s*\d+\)/.test(item));
                 
                 // Only show toast if something was actually removed
                 if (itemsToKeep.length < currentEquipment.length) {
                     showToast('Đã xóa các thiết bị dạy học đã chọn.', 'info');
                 }
-                equipmentInput.value = itemsToKeep.join(', ');
-            }
+                equipmentInput.value = itemsToKeep.join('; ');
             }
         }
     });
