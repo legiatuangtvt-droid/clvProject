@@ -223,14 +223,32 @@ const initializeTeacherRegisterPage = (user) => {
         const subjectSelect = document.getElementById('reg-subject');
         subjectSelect.innerHTML = '<option value="">-- Chọn môn học --</option>';
     
-        if (!currentUserInfo) return;
+        if (!currentUserInfo || !currentUserInfo.subject) {
+            showToast('Tài khoản của bạn chưa được gán môn học chính.', 'error');
+            return;
+        }
     
         const allowedSubjects = new Set();
     
-        // 1. Lấy các môn học từ tổ chuyên môn của giáo viên
-        (currentUserInfo.group_subjects || []).forEach(sub => allowedSubjects.add(sub));
+        // 1. Thêm môn học chính của giáo viên
+        allowedSubjects.add(currentUserInfo.subject);
     
-        // 2. Lấy các môn học đặc biệt từ collection 'subjects'
+        // 2. Lấy các môn học phụ đã được phân công cho môn chính
+        const mainSubjectQuery = query(
+            collection(firestore, 'subjects'),
+            where('schoolYear', '==', currentSchoolYear),
+            where('name', '==', currentUserInfo.subject),
+            limit(1)
+        );
+        const mainSubjectSnapshot = await getDocs(mainSubjectQuery);
+        if (!mainSubjectSnapshot.empty) {
+            const mainSubjectData = mainSubjectSnapshot.docs[0].data();
+            if (mainSubjectData.allowedSubSubjects && Array.isArray(mainSubjectData.allowedSubSubjects)) {
+                mainSubjectData.allowedSubSubjects.forEach(sub => allowedSubjects.add(sub));
+            }
+        }
+    
+        // 3. Lấy các môn học đặc biệt (ví dụ: HĐTN, GDĐP)
         const specialSubjectsQuery = query(
             collection(firestore, 'subjects'),
             where('schoolYear', '==', currentSchoolYear),
@@ -240,7 +258,7 @@ const initializeTeacherRegisterPage = (user) => {
         const specialSubjectsSnapshot = await getDocs(specialSubjectsQuery);
         specialSubjectsSnapshot.forEach(doc => allowedSubjects.add(doc.data().name));
     
-        // 3. Populate danh sách môn học vào select
+        // 4. Populate danh sách môn học vào select
         [...allowedSubjects].sort().forEach(subject => {
             subjectSelect.innerHTML += `<option value="${subject}">${subject}</option>`;
         });
@@ -265,7 +283,7 @@ const initializeTeacherRegisterPage = (user) => {
             });
         }
     
-        // 4. Tự động chọn môn học chính của giáo viên nếu có, hoặc môn học đã dùng lần cuối
+        // 5. Tự động chọn môn học chính của giáo viên nếu có, hoặc môn học đã dùng lần cuối
         const subjectToSelect = currentUserInfo.subject || lastUsedSubject;
         if (subjectToSelect && allowedSubjects.has(subjectToSelect)) {
             subjectSelect.value = subjectToSelect;
