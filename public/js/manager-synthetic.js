@@ -713,9 +713,9 @@ document.addEventListener('DOMContentLoaded', () => {
             populateDayAndPeriodSelectors(selectedWeekNumber); // Populate ngày cho tuần hiện tại
             if (date) daySelect.value = date;
             if (period) periodSelect.value = period;
-            // Khóa các trường thời gian khi tạo mới từ bảng
-            daySelect.disabled = true;
-            periodSelect.disabled = true;
+            // Mở khóa các trường thời gian khi tạo mới từ bảng
+            daySelect.disabled = false;
+            periodSelect.disabled = false;
         }
         registerModal.style.display = 'flex';
     };

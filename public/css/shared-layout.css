@@ -249,7 +249,8 @@ body {
     border-radius: 12px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     width: 100%;
-    max-width: 550px; /* Chiều rộng mặc định */
+    min-width: 500px;
+    max-width: 650px; /* Chiều rộng mặc định */
     max-height: 90vh;
     overflow-y: auto;
     border-top: 5px solid var(--primary-color); /* Giữ lại để tương thích */
@@ -262,22 +263,91 @@ body {
 
 .modal-content h2 {
     margin-top: 0;
-    margin-bottom: 25px;
     font-size: 1.6rem;
     color: var(--text-dark);
     font-weight: 600;
+    text-align: center;
+}
+
+.modal-content h2 i {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin-right: 5px;
+}
+
+/* --- Modal Form --- */
+.register-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 cột bằng nhau */
+    gap: 15px 20px; /* 15px khoảng cách dọc, 20px khoảng cách ngang */
+}
+
+/* Class để một form-group chiếm trọn 2 cột */
+.form-group-span-2 {
+    grid-column: span 2;
 }
 
 .form-group {
     margin-bottom: 20px;
 }
 
-.form-group label {
+#register-modal .form-group label {
     display: block;
-    margin-bottom: 8px;
     font-weight: 600;
     font-size: 0.9rem;
     color: var(--text-light);
+    text-align: center;
+}
+
+/* Ghi đè style cho các input/select trong modal để đồng bộ */
+#register-modal .form-group input:not([type="checkbox"]),
+#register-modal .form-group select {
+    width: 100%; /* Chiếm toàn bộ chiều rộng của .form-group */
+    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
+}
+
+#register-modal .form-group textarea {
+    width: 100%;
+    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
+    min-height: 80px;      /* Đặt chiều cao tối thiểu, có thể điều chỉnh */
+    resize: vertical;       /* Chỉ cho phép người dùng thay đổi chiều cao */
+}
+
+#register-modal .form-group p {
+    font-size: 0.8rem;
+    text-align: justify;
+    font-style: italic;
+    margin-bottom: 0px;
+    
+}
+/* --- NEW: Fieldset Group Styling --- */
+.fieldset-group {
+    position: relative; /* Làm mốc định vị cho label */
+    padding: 25px 15px 15px 15px; /* Tăng padding-top để có chỗ cho label */
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.fieldset-group > label {
+    position: absolute;
+    top: -12px; /* Dịch chuyển label lên trên, nằm trên đường viền */
+    left: 10px; /* Khoảng cách từ lề trái */
+    background-color: var(--surface-bg); /* Màu nền của label phải giống màu nền của modal */
+    padding: 0 5px; /* Tạo khoảng trống hai bên chữ để che đường viền */
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+/* --- Checkbox Group for Methods --- */
+.checkbox-group-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Tăng khoảng cách cho thoáng hơn */
+    max-height: 120px; /* Giảm chiều cao để gọn hơn */
+    overflow-y: auto;
+    /* Các thuộc tính border, padding, background đã được .fieldset-group xử lý */
+    padding-right: 10px; /* Thêm padding nhỏ để thanh cuộn không quá sát */
 }
 
 .input-group {
@@ -338,16 +408,16 @@ body {
 }
 
 /* --- Modal & Action Buttons --- */
-.modal-actions {
+.modal-actions-group {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 10px;
-    margin-top: 30px;
 }
 
 .modal-actions-right {
     display: flex;
+    justify-content: space-between;
     gap: 10px;
 }
 
@@ -364,6 +434,7 @@ body {
     justify-content: center;
     gap: 8px;
     text-decoration: none; /* Cho các thẻ <a> */
+    flex-grow: 1;
 }
 
 .btn-primary:hover, .btn-secondary:hover, .btn-save:hover, .btn-danger:hover, .btn-cancel:hover, .btn-warning:hover {
@@ -557,7 +628,6 @@ body {
     font-size: 0.9rem;
     color: var(--text-light);
     background-color: var(--surface-subtle-bg);
-    align-self: stretch;
     display: flex;
     align-items: center;
     border-right: 1px solid var(--border-color);
@@ -1329,4 +1399,23 @@ textarea.form-control {
     cursor: pointer;
     font-weight: bold;
     font-size: 1rem;
+}
+
+/* --- Modal Subtitle Actions --- */
+.modal-subtitle-actions {
+    margin-top: -15px;
+    margin-bottom: 20px;
+    text-align: right;
+}
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0;
+    text-decoration: underline;
+}
+.btn-link:hover {
+    color: var(--primary-hover);
 }

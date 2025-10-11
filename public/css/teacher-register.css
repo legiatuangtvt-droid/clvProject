@@ -150,44 +150,8 @@
     opacity: 0.6;
 }
 
-/* --- Modal Form --- */
-.register-form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 2 cột bằng nhau */
-    gap: 15px 20px; /* 15px khoảng cách dọc, 20px khoảng cách ngang */
-}
-
-/* Class để một form-group chiếm trọn 2 cột */
-.form-group-span-2 {
-    grid-column: span 2;
-}
-
-/* Ghi đè style cho các input/select trong modal để đồng bộ */
-#register-modal .form-group input:not([type="checkbox"]),
-#register-modal .form-group select {
-    width: 100%; /* Chiếm toàn bộ chiều rộng của .form-group */
-    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
-}
-
-#register-modal .form-group textarea {
-    width: 100%;
-    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
-    min-height: 139px;      /* Đặt chiều cao tối thiểu, có thể điều chỉnh */
-    resize: vertical;       /* Chỉ cho phép người dùng thay đổi chiều cao */
-}
 
 
-#register-modal .modal-content {
-    min-width: 500px;
-    max-width: 650px; /* Giới hạn chiều rộng tối đa */
-    border-top: 5px solid var(--primary-color);
-}
-
-#register-modal .modal-content h2 i {
-    color: var(--primary-color);
-    font-size: 1.5rem;
-    margin-right: 5px;
-}
 
 @media (max-width: 768px) {
     #register-modal .modal-content { min-width: 90vw; max-width: 90vw; }
@@ -195,17 +159,6 @@
         grid-template-columns: 1fr; /* Chuyển về 1 cột trên mobile */
     }
     .form-group-span-2 { grid-column: span 1; }
-}
-
-/* --- Checkbox Group for Methods --- */
-.checkbox-group-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* Tăng khoảng cách cho thoáng hơn */
-    max-height: 120px; /* Giảm chiều cao để gọn hơn */
-    overflow-y: auto;
-    /* Các thuộc tính border, padding, background đã được .fieldset-group xử lý */
-    padding-right: 10px; /* Thêm padding nhỏ để thanh cuộn không quá sát */
 }
 
 .checkbox-item {
@@ -221,49 +174,9 @@
     cursor: pointer;
 }
 
-/* --- NEW: Fieldset Group Styling --- */
-.fieldset-group {
-    position: relative; /* Làm mốc định vị cho label */
-    padding: 25px 15px 15px 15px; /* Tăng padding-top để có chỗ cho label */
-    margin-top: 15px; /* Thêm khoảng cách trên */
-    border: 1px solid #ccc;
-    border-radius: 8px;
-}
-
-.fieldset-group > label {
-    position: absolute;
-    top: -12px; /* Dịch chuyển label lên trên, nằm trên đường viền */
-    left: 10px; /* Khoảng cách từ lề trái */
-    background-color: var(--surface-bg); /* Màu nền của label phải giống màu nền của modal */
-    padding: 0 5px; /* Tạo khoảng trống hai bên chữ để che đường viền */
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-light);
-}
-
 /* Dấu sao cho trường bắt buộc */
 .required-star {
     color: #dc3545; /* Màu đỏ */
-}
-
-/* --- Modal Subtitle Actions --- */
-.modal-subtitle-actions {
-    margin-top: -15px;
-    margin-bottom: 20px;
-    text-align: right;
-}
-
-.btn-link {
-    background: none;
-    border: none;
-    color: var(--primary-color);
-    cursor: pointer;
-    font-size: 0.9rem;
-    padding: 0;
-    text-decoration: underline;
-}
-.btn-link:hover {
-    color: var(--primary-hover);
 }
 
 /* --- Conflict Warning Modal --- */
@@ -399,10 +312,6 @@
 /* Ghi đè CSS để loại bỏ khoảng trống không mong muốn trong câu cảnh báo */
 .conflict-info-container p .conflict-highlight {
     margin-right: 0;
-}
-
-.form-group label {
-    margin-bottom: 0px;
 }
 
 /* =============================================================== */

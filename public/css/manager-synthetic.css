@@ -136,26 +136,6 @@
     color: var(--danger-color);
 }
 
-/* Ghi đè style cho các input/select trong modal để đồng bộ */
-.modal-register .form-group input:not([type="checkbox"]),
-.modal-register .form-group select {
-    width: 100%; /* Chiếm toàn bộ chiều rộng của .form-group */
-    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
-}
-
-.modal-register .form-group textarea {
-    width: 100%;
-    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
-    min-height: 139px;      /* Đặt chiều cao tối thiểu, có thể điều chỉnh */
-    resize: vertical;       /* Chỉ cho phép người dùng thay đổi chiều cao */
-}
-
-.modal-register .modal-content h2 i {
-    color: var(--primary-color);
-    font-size: 1.5rem;
-    margin-right: 5px;
-}
-
 @media (max-width: 768px) {
     .register-form-grid {
         grid-template-columns: 1fr; /* Chuyển về 1 cột trên mobile */
