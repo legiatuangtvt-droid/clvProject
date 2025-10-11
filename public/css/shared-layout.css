@@ -434,7 +434,6 @@ body {
     justify-content: center;
     gap: 8px;
     text-decoration: none; /* Cho các thẻ <a> */
-    flex-grow: 1;
 }
 
 .btn-primary:hover, .btn-secondary:hover, .btn-save:hover, .btn-danger:hover, .btn-cancel:hover, .btn-warning:hover {
