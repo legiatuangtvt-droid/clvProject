@@ -19,6 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const subjectModal = document.getElementById('subject-modal');
     const subjectsContainer = document.getElementById('subjects-container');
 
+    // NEW: Elements for Subject Assignments
+    const subjectAssignmentsContainer = document.getElementById('subject-assignments-container');
+    const assignmentModal = document.getElementById('assignment-modal');
+    const cancelAssignmentModalBtn = document.getElementById('cancel-assignment-modal');
+
     const weekEditModal = document.getElementById('week-edit-modal');
     const schoolYearSelect = document.getElementById('school-year-select');
     const weeklyPlanContainer = document.getElementById('weekly-plan-container');
@@ -54,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentEditingId = null; // Dùng để biết đang sửa tổ/giáo viên nào
     let currentEditingWeekId = null; // Dùng để biết đang sửa tuần nào
     let deleteFunction = null; // Hàm sẽ được gọi khi xác nhận xóa
+    let currentEditingSubjectForAssignment = null; // NEW: Dùng cho modal phân công môn học
     let allSubjectsCache = []; // Cache danh sách môn học của năm học hiện tại
 
 
@@ -671,6 +677,104 @@ document.addEventListener('DOMContentLoaded', () => {
         applySummerBtn.style.borderColor = activeSeason === 'summer' ? 'var(--primary-color)' : 'transparent';
         applyWinterBtn.style.borderColor = activeSeason === 'winter' ? 'var(--primary-color)' : 'transparent';
     };
+
+    // --- SUBJECT ASSIGNMENT FUNCTIONS ---
+    const loadSubjectAssignments = async (schoolYear) => {
+        subjectAssignmentsContainer.innerHTML = '<p>Đang tải dữ liệu phân công...</p>';
+        try {
+            // Chỉ lấy các môn học thông thường, vì môn đặc biệt không cần phân công
+            const subjectsQuery = query(
+                collection(firestore, 'subjects'),
+                where("schoolYear", "==", schoolYear),
+                where("type", "==", "regular"),
+                orderBy('name')
+            );
+            const snapshot = await getDocs(subjectsQuery);
+
+            if (snapshot.empty) {
+                subjectAssignmentsContainer.innerHTML = '<p>Chưa có môn học nào (loại thông thường) được cấu hình cho năm học này.</p>';
+                return;
+            }
+
+            const subjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderSubjectAssignments(subjects);
+
+        } catch (error) {
+            console.error("Lỗi khi tải dữ liệu phân công môn học:", error);
+            subjectAssignmentsContainer.innerHTML = '<p class="error-message">Không thể tải dữ liệu phân công.</p>';
+        }
+    };
+
+    const renderSubjectAssignments = (subjects) => {
+        let tableHTML = `
+            <table class="subject-assignment-table">
+                <thead>
+                    <tr>
+                        <th>Môn học chính</th>
+                        <th>Các môn học phụ được phép đăng ký</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        subjects.forEach(subject => {
+            const allowedSubjects = subject.allowedSubSubjects || [];
+            tableHTML += `
+                <tr data-subject-id="${subject.id}" data-subject-name="${subject.name}">
+                    <td class="primary-subject-cell">${subject.name}</td>
+                    <td>
+                        ${allowedSubjects.length > 0 
+                            ? allowedSubjects.map(sub => `<span class="subject-tag-display">${sub}</span>`).join('') 
+                            : '<span class="no-assignment">Chưa phân công</span>'
+                        }
+                    </td>
+                    <td class="item-actions">
+                        <button class="edit-assignment-btn icon-button" title="Sửa phân công"><i class="fas fa-pencil-alt"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tableHTML += `</tbody></table>`;
+        subjectAssignmentsContainer.innerHTML = tableHTML;
+    };
+
+    const openAssignmentModal = (subjectId, subjectName) => {
+        currentEditingSubjectForAssignment = { id: subjectId, name: subjectName };
+        document.getElementById('primary-subject-display').value = subjectName;
+
+        // Lấy danh sách môn phụ đã phân công
+        const subjectData = allSubjectsCache.find(s => s.id === subjectId);
+        const selectedSubjects = subjectData?.allowedSubSubjects || [];
+
+        // Khởi tạo bộ chọn môn học (tương tự như của Tổ)
+        setupAssignmentSubjectSelect(selectedSubjects);
+
+        openModal(assignmentModal);
+    };
+
+    const saveSubjectAssignment = async () => {
+        if (!currentEditingSubjectForAssignment) return;
+
+        const saveBtn = document.getElementById('save-assignment-btn');
+        setButtonLoading(saveBtn, true);
+
+        const selectedSubSubjects = getSelectedAssignmentSubjects(); // Cần hàm này
+
+        try {
+            const subjectRef = doc(firestore, 'subjects', currentEditingSubjectForAssignment.id);
+            await updateDoc(subjectRef, { allowedSubSubjects: selectedSubSubjects });
+            showToast('Đã cập nhật phân công thành công!', 'success');
+            closeModal(assignmentModal);
+            await loadSubjectAssignments(currentSchoolYear); // Tải lại để hiển thị thay đổi
+        } catch (error) {
+            showToast('Lỗi khi lưu phân công.', 'error');
+        } finally {
+            setButtonLoading(saveBtn, false);
+        }
+    };
+
     // --- Hàm render ---
     const renderTeacher = (teacher, index) => {
         const name = teacher.teacher_name || 'Chưa có tên';
@@ -1063,6 +1167,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await loadTimePlan(currentSchoolYear);
                 await loadAllSubjectsForYear(currentSchoolYear); // Tải cache môn học cho select
                 await loadAndRenderRules(); // Tải quy tắc khi chọn năm học
+                await loadSubjectAssignments(currentSchoolYear); 
             }
 
         } catch (error) {
@@ -1098,6 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadTimePlan(currentSchoolYear);
             await loadAllSubjectsForYear(currentSchoolYear); // Tải lại cache môn học
             await loadAndRenderRules();
+            await loadSubjectAssignments(currentSchoolYear); 
             await loadAndRenderTimings();
         }
     });
@@ -1107,7 +1213,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModal = (modal) => modal.style.display = 'none';
 
     // Đóng modal khi click ra ngoài
-    [groupModal, teacherModal, confirmDeleteModal, schoolYearModal, methodModal, subjectModal, weekEditModal].forEach(modal => {
+    [groupModal, teacherModal, confirmDeleteModal, schoolYearModal, methodModal, subjectModal, weekEditModal, assignmentModal].forEach(modal => {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeModal(modal);
         });
@@ -1121,6 +1227,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cancel-method-modal').addEventListener('click', () => closeModal(methodModal));
     document.getElementById('cancel-subject-modal').addEventListener('click', () => closeModal(subjectModal));
     document.getElementById('cancel-week-edit-modal').addEventListener('click', () => closeModal(weekEditModal));
+    cancelAssignmentModalBtn.addEventListener('click', () => closeModal(assignmentModal));
 
     // --- Xử lý sự kiện ---
 
@@ -1468,6 +1575,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Sửa lỗi môn học ---
     findSubjectMismatchBtn.addEventListener('click', findAndRepairSubjectMismatches);
 
+    // --- NEW: Event listener for subject assignments ---
+    subjectAssignmentsContainer.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.edit-assignment-btn');
+        if (editBtn) {
+            const row = editBtn.closest('tr');
+            openAssignmentModal(row.dataset.subjectId, row.dataset.subjectName);
+        }
+    });
     findMissingGroupIdBtn.addEventListener('click', findAndRepairMissingGroupId);
 
     // --- Áp dụng mùa ---
@@ -1697,6 +1812,74 @@ document.addEventListener('DOMContentLoaded', () => {
             .map(tag => tag.firstChild.textContent.trim());
     };
 
+    // --- ASSIGNMENT SUBJECT MULTI-SELECT LOGIC (Tương tự của Group) ---
+    const setupAssignmentSubjectSelect = (selectedSubjects = []) => {
+        const wrapper = document.querySelector('.modal-assignment .custom-select-wrapper');
+        const container = wrapper.querySelector('.custom-select-container');
+        const searchInput = wrapper.querySelector('#subject-search-input');
+        const dropdown = wrapper.querySelector('#subject-dropdown-list');
+
+        // Xóa các tag cũ và reset input
+        container.querySelectorAll('.subject-tag').forEach(tag => tag.remove());
+        searchInput.value = '';
+
+        // Thêm các tag đã được chọn từ trước
+        selectedSubjects.forEach(subjectName => addAssignmentSubjectTag(subjectName, container));
+
+        const filterSubjects = () => {
+            const filterText = searchInput.value.toLowerCase();
+            const currentSelected = getSelectedAssignmentSubjects();
+            const primarySubject = currentEditingSubjectForAssignment.name;
+
+            // Lọc ra các môn không phải là môn chính và chưa được chọn
+            const filtered = allSubjectsCache.filter(subject =>
+                subject.name !== primarySubject &&
+                !currentSelected.includes(subject.name) &&
+                subject.name.toLowerCase().includes(filterText)
+            );
+
+            dropdown.innerHTML = filtered.map(subject => `<div class="subject-dropdown-item">${subject.name}</div>`).join('');
+            dropdown.style.display = filtered.length > 0 ? 'block' : 'none';
+        };
+
+        searchInput.onkeyup = filterSubjects;
+        searchInput.onfocus = filterSubjects;
+
+        dropdown.onclick = (e) => {
+            if (e.target.classList.contains('subject-dropdown-item')) {
+                addAssignmentSubjectTag(e.target.textContent, container);
+                searchInput.value = '';
+                filterSubjects();
+                searchInput.focus();
+            }
+        };
+
+        document.addEventListener('click', (e) => {
+            if (!wrapper.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    };
+
+    const addAssignmentSubjectTag = (subjectName, container) => {
+        const searchInput = container.querySelector('#subject-search-input');
+        const tag = document.createElement('span');
+        tag.className = 'subject-tag';
+        tag.textContent = subjectName;
+        const removeBtn = document.createElement('span');
+        removeBtn.className = 'remove-tag';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.onclick = () => tag.remove();
+        tag.appendChild(removeBtn);
+        container.insertBefore(tag, searchInput);
+    };
+
+    const getSelectedAssignmentSubjects = () => {
+        const container = document.querySelector('.modal-assignment .custom-select-container');
+        return Array.from(container.querySelectorAll('.subject-tag'))
+            .map(tag => tag.firstChild.textContent.trim());
+    };
+
     const openTeacherEditModal = async (teacherId, parentGroupCard, groupId) => {
         currentEditingId = teacherId;
         try {
@@ -1815,6 +1998,9 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (weekEditModal.style.display === 'flex') closeModal(weekEditModal);
         }
     });
+
+    // Lưu phân công môn học
+    document.getElementById('save-assignment-btn').addEventListener('click', saveSubjectAssignment);
 
 
     // Xử lý click trong container của các phương pháp (delegation)
@@ -1979,6 +2165,9 @@ document.addEventListener('DOMContentLoaded', () => {
             setButtonLoading(saveBtn, false);
         }
     });
+
+    // Lưu phân công môn học
+    document.getElementById('save-assignment-btn').addEventListener('click', saveSubjectAssignment);
 
     // Xác nhận xóa
     document.getElementById('confirm-delete-btn').addEventListener('click', () => {

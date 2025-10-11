@@ -1080,3 +1080,64 @@
     overflow-y: auto;
     margin-top: 5px; /* Tạo một khoảng cách nhỏ với ô input */
 }
+
+/* --- NEW: Subject Assignment Tab Styles --- */
+.subject-assignment-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.subject-assignment-table th,
+.subject-assignment-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.subject-assignment-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.subject-assignment-table tbody tr:hover {
+    background-color: #f1f5f9;
+}
+
+.subject-assignment-table .primary-subject-cell {
+    font-weight: 600;
+    color: var(--text-dark);
+    width: 25%;
+}
+
+.subject-assignment-table .item-actions {
+    text-align: center;
+    width: 100px;
+}
+
+.subject-tag-display {
+    display: inline-block;
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    margin: 2px;
+    font-weight: 500;
+}
+
+.no-assignment {
+    font-style: italic;
+    color: var(--text-light);
+}
+
+.modal-assignment .form-group-inline {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    align-items: center;
+    gap: 15px;
+}
