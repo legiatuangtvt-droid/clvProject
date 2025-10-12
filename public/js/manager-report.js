@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const reportValueSelect = document.getElementById('report-value-select');
     const viewReportBtn = document.getElementById('view-report-btn');
     const exportWordBtn = document.getElementById('export-word-btn');
+    const printReportBtn = document.getElementById('print-report-btn'); // NEW
     const exportPdfBtn = document.getElementById('export-pdf-btn');
     const reportPage = document.getElementById('report-page');
 
@@ -514,6 +515,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
     reportTypeSelect.addEventListener('change', updateFilterValueOptions);
     viewReportBtn.addEventListener('click', generateReport);
+
+    // NEW: Print Report Listener (with null check)
+    if (printReportBtn) {
+        printReportBtn.addEventListener('click', () => {
+            showToast('Đang mở hộp thoại in...', 'info');
+            window.print();
+        });
+    }
 
     const formatDate = (dateString) => {
         if (!dateString) return '';

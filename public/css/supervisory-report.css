@@ -116,35 +116,48 @@
 
 /* --- Print Styles --- */
 @media print {
-    /* Ẩn tất cả các thành phần không cần thiết */
-    body > *:not(.report-content-area) {
+    /* --- NEW: Page Numbering and Margins --- */
+    @page {
+        size: A4 portrait; /* Định dạng giấy A4 dọc */
+        margin: 2cm; /* Đặt lề cho trang in */
+ 
+        /* Căn giữa số trang ở phía trên */
+        @top-center {
+            content: counter(page);
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+        }
+    }
+    /* Ẩn số trang ở trang đầu tiên */
+    @page :first {
+        @top-center {
+            content: "";
+        }
+    }
+
+    /* 1. Ẩn các thành phần không cần thiết khi in */
+    .sidebar, .top-bar, .report-controls {
         display: none;
     }
-    .report-content-area, .report-page {
-        visibility: visible;
+
+    /* 2. Reset layout của các thẻ cha để trang báo cáo chiếm toàn bộ không gian */
+    .app-layout, .content-wrapper, .main-content, .content-card, .report-content-area {
         display: block;
-    }
-    .report-content-area {
         padding: 0;
         margin: 0;
-        background-color: transparent;
+        box-shadow: none;
+        border: none;
+        background: none;
     }
 
-    body * {
-        visibility: hidden;
-    }
-    .report-page, .report-page * {
-        visibility: visible;
-    }
-
+    /* 3. Định dạng lại chính trang báo cáo để in */
     .report-page {
-        position: absolute;
-        left: 0;
-        top: 0;
         margin: 0;
         box-shadow: none;
+        border: none;
         width: 100%;
-        height: auto;
+        min-height: 0; /* Reset min-height khi in */
+        padding: 0; /* Bỏ padding của trang vì đã có margin từ @page */
     }
 }
 
