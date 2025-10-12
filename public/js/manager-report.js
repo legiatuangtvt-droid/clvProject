@@ -261,14 +261,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Khởi tạo dữ liệu báo cáo với tất cả giáo viên và tổ chuyên môn
             const groupData = new Map();
             allGroups.forEach(group => {
-                groupData.set(group.group_id, { name: group.group_name, count: 0 });
+                groupData.set(group.group_id, { name: group.group_name, count: 0, cnttCount: 0, tbdhCount: 0, thCount: 0 });
             });
-
+ 
             const teacherData = new Map();
             allTeachers.forEach(teacher => {
                 // Find group name for the teacher
                 const group = allGroups.find(g => g.group_id === teacher.group_id);
-                teacherData.set(teacher.uid, { name: teacher.teacher_name, groupName: group ? group.group_name : 'N/A', count: 0 });
+                teacherData.set(teacher.uid, { 
+                    name: teacher.teacher_name, groupName: group ? group.group_name : 'N/A', 
+                    count: 0, cnttCount: 0, tbdhCount: 0, thCount: 0 
+                });
             });
 
             // 2. Lấy các lượt đăng ký trong khoảng thời gian đã chọn để cập nhật số đếm
@@ -301,12 +304,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Count for group
                 if (groupIdToCount && groupData.has(groupIdToCount)) {
-                    groupData.get(groupIdToCount).count++;
+                    const currentGroup = groupData.get(groupIdToCount);
+                    currentGroup.count++;
+
+                    // Đếm PPDH cho tổ
+                    if (reg.teachingMethod && Array.isArray(reg.teachingMethod)) {
+                        if (reg.teachingMethod.includes('Công nghệ thông tin')) {
+                            currentGroup.cnttCount++;
+                        }
+                        if (reg.teachingMethod.includes('Thiết bị dạy học')) {
+                            currentGroup.tbdhCount++;
+                        }
+                        if (reg.teachingMethod.includes('Thực hành')) {
+                            currentGroup.thCount++;
+                        }
+                    }
                 }
 
                 // Count for teacher
                 if (teacherData.has(reg.teacherId)) {
-                    teacherData.get(reg.teacherId).count++;
+                    const currentTeacher = teacherData.get(reg.teacherId);
+                    currentTeacher.count++;
+
+                    // Đếm số lần sử dụng từng PPDH
+                    if (reg.teachingMethod && Array.isArray(reg.teachingMethod)) {
+                        if (reg.teachingMethod.includes('Công nghệ thông tin')) {
+                            currentTeacher.cnttCount++;
+                        }
+                        if (reg.teachingMethod.includes('Thiết bị dạy học')) {
+                            currentTeacher.tbdhCount++;
+                        }
+                        if (reg.teachingMethod.includes('Thực hành')) {
+                            currentTeacher.thCount++;
+                        }
+                    }
                 }
             });
 
@@ -325,15 +356,25 @@ document.addEventListener('DOMContentLoaded', () => {
         let teacherTableRows = '';
         let teacherTotalCount = 0;
         let teacherIndex = 1;
+        // Khởi tạo biến tổng cho các cột PPDH
+        let totalCntt = 0, totalTbdh = 0, totalTh = 0;
         const sortedTeachers = [...teacherData.values()].sort((a, b) => b.count - a.count);
 
         sortedTeachers.forEach(teacher => {
+            // Cộng dồn vào tổng PPDH
+            totalCntt += teacher.cnttCount;
+            totalTbdh += teacher.tbdhCount;
+            totalTh += teacher.thCount;
+
             teacherTableRows += `
                 <tr>
                     <td style="text-align: center;">${teacherIndex++}</td>
                     <td>${teacher.name}</td>
                     <td>${teacher.groupName}</td>
-                    <td style="text-align: center;">${teacher.count}</td>
+                    <td style="text-align: center;">${teacher.cnttCount}</td>
+                    <td style="text-align: center;">${teacher.tbdhCount}</td>
+                    <td style="text-align: center;">${teacher.thCount}</td>
+                    <td style="text-align: center; font-weight: bold;">${teacher.count}</td>
                     <td></td>
                 </tr>
             `;
@@ -344,13 +385,26 @@ document.addEventListener('DOMContentLoaded', () => {
         let groupTableRows = '';
         let groupTotalCount = 0;
         let groupIndex = 1;
+        // NEW: Khởi tạo tổng cho các cột PPDH của tổ
+        let groupTotalCntt = 0, groupTotalTbdh = 0, groupTotalTh = 0;
 
-        groupData.forEach(group => {
+        // Sắp xếp các tổ theo tổng số lượt đăng ký giảm dần
+        const sortedGroupsData = [...groupData.values()].sort((a, b) => b.count - a.count);
+
+        sortedGroupsData.forEach(group => {
+            // Cộng dồn vào tổng PPDH của tổ
+            groupTotalCntt += group.cnttCount;
+            groupTotalTbdh += group.tbdhCount;
+            groupTotalTh += group.thCount;
+
             groupTableRows += `
                 <tr>
                     <td style="text-align: center;">${groupIndex++}</td>
                     <td>${group.name}</td>
-                    <td style="text-align: center;">${group.count}</td>
+                    <td style="text-align: center;">${group.cnttCount}</td>
+                    <td style="text-align: center;">${group.tbdhCount}</td>
+                    <td style="text-align: center;">${group.thCount}</td>
+                    <td style="text-align: center; font-weight: bold;">${group.count}</td>
                     <td></td>
                 </tr>
             `;
@@ -390,17 +444,26 @@ document.addEventListener('DOMContentLoaded', () => {
             <table class="report-table" id="teacher-report-table">
                 <thead>
                     <tr>
-                        <th style="width: 10%;">STT</th>
-                        <th style="width: 30%;">Giáo viên</th>
-                        <th style="width: 30%;">Tổ chuyên môn</th>
-                        <th style="width: 20%;">Số lượt đăng ký</th>
-                        <th style="width: 20%;">Ghi chú</th>
+                        <th rowspan="2" style="width: 5%;">STT</th>
+                        <th rowspan="2" style="width: 25%;">Giáo viên</th>
+                        <th rowspan="2" style="width: 25%;">Tổ chuyên môn</th>
+                        <th colspan="3">PPDH</th>
+                        <th rowspan="2" style="width: 10%;">Tổng</th>
+                        <th rowspan="2" style="width: 15%;">Ghi chú</th>
+                    </tr>
+                    <tr>
+                        <th style="width: 5%;">CNTT</th>
+                        <th style="width: 5%;">TBDH</th>
+                        <th style="width: 5%;">TH</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${teacherTableRows}
                     <tr class="total-row">
                         <td colspan="3" style="text-align: center; font-weight: bold;">Tổng cộng</td>
+                        <td style="text-align: center; font-weight: bold;">${totalCntt}</td>
+                        <td style="text-align: center; font-weight: bold;">${totalTbdh}</td>
+                        <td style="text-align: center; font-weight: bold;">${totalTh}</td>
                         <td style="text-align: center; font-weight: bold;">${teacherTotalCount}</td>
                         <td></td>
                     </tr>
@@ -411,16 +474,25 @@ document.addEventListener('DOMContentLoaded', () => {
             <table class="report-table" id="group-report-table">
                 <thead>
                     <tr>
-                        <th style="width: 10%;">STT</th>
-                        <th style="width: 60%;">Tổ chuyên môn</th>
-                        <th style="width: 20%;">Số lượt đăng ký</th>
-                        <th style="width: 20%;">Ghi chú</th>
+                        <th rowspan="2" style="width: 5%;">STT</th>
+                        <th rowspan="2" style="width: 45%;">Tổ chuyên môn</th>
+                        <th colspan="3">PPDH</th>
+                        <th rowspan="2" style="width: 10%;">Tổng</th>
+                        <th rowspan="2" style="width: 15%;">Ghi chú</th>
+                    </tr>
+                    <tr>
+                        <th style="width: 5%;">CNTT</th>
+                        <th style="width: 5%;">TBDH</th>
+                        <th style="width: 5%;">TH</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${groupTableRows}
                     <tr class="total-row">
                         <td colspan="2" style="text-align: center; font-weight: bold;">Tổng cộng</td>
+                        <td style="text-align: center; font-weight: bold;">${groupTotalCntt}</td>
+                        <td style="text-align: center; font-weight: bold;">${groupTotalTbdh}</td>
+                        <td style="text-align: center; font-weight: bold;">${groupTotalTh}</td>
                         <td style="text-align: center; font-weight: bold;">${groupTotalCount}</td>
                         <td></td>
                     </tr>
