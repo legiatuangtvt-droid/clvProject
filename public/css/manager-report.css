@@ -61,14 +61,14 @@
 .report-page {
     background-color: white;
     width: 21cm; /* Chiều rộng của trang A4 */
-    min-height: 29.7cm; /* Chiều cao của trang A4 */
-    padding: 3cm 2cm; /* Lề chuẩn của Word */
+    min-height: 29.7cm; /* Chiều cao tối thiểu của trang A4 */
+    padding: 2.5cm 2cm; /* Tối ưu lại lề (trên/dưới 2.5cm, trái/phải 2cm) */
     box-shadow: 0 0 10px rgba(0,0,0,0.15);
     border: 1px solid #000; /* Thêm đường viền cho trang báo cáo */
     box-sizing: border-box;
     font-family: 'Times New Roman', Times, serif;
     color: #000;
-    line-height: 1;
+    line-height: 1.5; /* Tăng khoảng cách dòng cho dễ đọc */
 }
 
 .report-placeholder {
@@ -89,7 +89,7 @@
 .report-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14pt;
+    font-size: 13pt; /* Giảm cỡ chữ một chút để vừa vặn hơn */
     margin-top: 0.5cm; /* Giảm khoảng cách trên của bảng */
 }
 
@@ -111,18 +111,32 @@
 
 /* --- Print Styles --- */
 @media print {
+    /* Ẩn tất cả các thành phần không cần thiết */
+    body > *:not(.report-preview-area) {
+        display: none;
+    }
+    .report-preview-area, .report-page {
+        visibility: visible;
+        display: block;
+    }
+    .report-preview-area {
+        padding: 0;
+        margin: 0;
+        background-color: transparent;
+    }
+
     body * {
         visibility: hidden;
     }
     .report-page, .report-page * {
         visibility: visible;
     }
+
     .report-page {
         position: absolute;
         left: 0;
         top: 0;
         margin: 0;
-        padding: 1cm;
         box-shadow: none;
         width: 100%;
         height: auto;
@@ -136,8 +150,8 @@
     display: flex;
     justify-content: space-between;
     font-family: 'Times New Roman', Times, serif;
-    margin-bottom: 20px;
-    line-height: 1;
+    margin-bottom: 1.5cm; /* Tăng khoảng cách dưới header */
+    line-height: 1.3;
 }
 
 .header-left, .header-right {
@@ -191,7 +205,7 @@
 
 .report-title-container {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 1cm;
     font-family: 'Times New Roman', Times, serif;
 }
 
@@ -216,7 +230,7 @@
 
 .report-page h4 {
     font-family: 'Times New Roman', Times, serif;
-    font-size: 14pt;
+    font-size: 13pt;
     font-weight: bold;
     margin-top: 15px;  /* Giảm khoảng cách trên */
     margin-bottom: 5px; /* Giảm khoảng cách dưới */
@@ -226,7 +240,7 @@
 .report-signature {
     display: flex;
     justify-content: flex-end; /* Đẩy khối chữ ký sang phải */
-    margin-top: 2cm;
+    margin-top: 1.5cm;
     font-family: 'Times New Roman', Times, serif;
     font-size: 14pt;
 }
@@ -236,6 +250,17 @@
     width: 50%; /* Tăng độ rộng để không bị xuống dòng */
 }
 
+.report-table, .report-signature {
+    page-break-inside: avoid; /* Tránh ngắt trang giữa bảng hoặc khối chữ ký */
+}
+
+.report-table tbody tr {
+    page-break-inside: avoid; /* Tránh ngắt trang giữa một dòng của bảng */
+}
+
+.report-page h4 {
+    page-break-after: avoid; /* Tránh ngắt trang ngay sau tiêu đề của bảng */
+}
 .signature-block p {
     margin: 0;
 }
