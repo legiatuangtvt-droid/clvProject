@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let allSubjects = new Set();
     let allMethods = new Set();
     let allRegistrations = [];
+    let allHolidays = []; // NEW: State for holidays
     let selectedWeekNumber = null;
 
     // --- INITIALIZATION ---
@@ -56,6 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadAllGroups(),
                 loadAllMethods(),
                 loadTimePlan(),
+
+                // NEW: Load holidays
+                loadHolidays(),
             ]);
 
             await populateFilterSelectors();
@@ -122,6 +126,19 @@ document.addEventListener('DOMContentLoaded', () => {
             option.textContent = `Tuần ${week.weekNumber} (${formatDate(week.startDate)} - ${formatDate(week.endDate)})`;
             weekDropdown.appendChild(option);
        });
+    };
+
+    const loadHolidays = async () => {
+        const planQuery = query(collection(firestore, 'timePlans'), where("schoolYear", "==", currentSchoolYear));
+        const planSnapshot = await getDocs(planQuery);
+        if (planSnapshot.empty) {
+            allHolidays = [];
+            return;
+        }
+        const planDocId = planSnapshot.docs[0].id;
+        const holidaysQuery = query(collection(firestore, 'timePlans', planDocId, 'holidays'), orderBy('startDate'));
+        const holidaysSnapshot = await getDocs(holidaysQuery);
+        allHolidays = holidaysSnapshot.docs.map(doc => doc.data());
     };
 
     const populateFilterSelectors = async () => {
@@ -196,6 +213,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // NEW: Helper function to check if a date is a holiday
+    const isHoliday = (dateString) => {
+        if (!dateString || allHolidays.length === 0) return false;
+        for (const holiday of allHolidays) {
+            if (dateString >= holiday.startDate && dateString <= holiday.endDate) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     // --- SCHEDULE RENDERING ---
     const loadAndRenderSchedule = async () => {
         const selectedWeek = timePlan.find(w => w.weekNumber === selectedWeekNumber);
@@ -210,18 +238,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 collection(firestore, 'registrations'), where('schoolYear', '==', currentSchoolYear), where('weekNumber', '==', selectedWeekNumber)
             );
             const regsSnapshot = await getDocs(regsQuery);
-            allRegistrations = regsSnapshot.docs.map(doc => {
-                const data = doc.data();
+            // Sửa lỗi logic: Dùng forEach để push vào mảng, không dùng return.
+            allRegistrations = [];
+            let holidayRegsCount = 0;
+            regsSnapshot.forEach(doc => {
+                const regData = doc.data();
+                // NEW: Exclude registrations on holidays
+                if (isHoliday(regData.date)) { holidayRegsCount++; return; }
+                
                 // Ưu tiên groupId từ chính registration, nếu không có thì mới suy ra từ teacherMap
-                const groupId = data.groupId || teacherMap.get(data.teacherId)?.group_id || null;
-                return {
+                const groupId = regData.groupId || teacherMap.get(regData.teacherId)?.group_id || null;
+                const finalRegData = {
                     id: doc.id,
-                    ...data,
+                    ...regData,
                     groupId: groupId,
                     groupName: groupMap.get(groupId)?.group_name || 'Không xác định'
                 };
+                allRegistrations.push(finalRegData);
             });
-            // updateDependentFilters(); // Không cần gọi lại ở đây vì dữ liệu bộ lọc không đổi
+
+            // Sửa lỗi cú pháp: Thay `});` bằng `}`
+            if (holidayRegsCount > 0) {
+                showToast(`Đã ẩn ${holidayRegsCount} tiết dạy trong ngày nghỉ.`, 'info');
+            }
             renderWeeklySchedule(selectedWeek);
         } catch (error) {
             console.error("Lỗi tải lịch đăng ký:", error);

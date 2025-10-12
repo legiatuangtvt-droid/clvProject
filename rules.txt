@@ -99,6 +99,12 @@ service cloud.firestore {
         allow read: if isManager() || isTeacher() || isSupervisory();
         allow write: if isManager();
       }
+
+      // QUY TẮC MỚI: Cho sub-collection 'holidays'
+      match /holidays/{holidayId} {
+        allow read: if isManager() || isTeacher() || isSupervisory();
+        allow write: if isManager();
+      }
     }
     
     // Quy tắc cho danh mục thiết bị

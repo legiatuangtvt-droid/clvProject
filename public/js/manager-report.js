@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let timePlan = [];
     let timePlanConfig = { reportDay: 23, semester1EndWeek: 19 }; // Default config
     let allGroups = [];
+    let allHolidays = []; // NEW: State for holidays
     let allTeachers = [];
 
     const initializePage = async () => {
@@ -40,6 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 2. Load time plan (weeks)
             await loadTimePlan();
+
+            // NEW: 2.5. Load holidays
+            await loadHolidays();
 
             // 3. Load all groups
             await loadAllGroups();
@@ -82,6 +86,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const weeksQuery = query(collection(firestore, 'timePlans', planDocId, 'weeks'), orderBy('weekNumber'));
         const weeksSnapshot = await getDocs(weeksQuery);
         timePlan = weeksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    };
+
+    const loadHolidays = async () => {
+        const planQuery = query(collection(firestore, 'timePlans'), where("schoolYear", "==", currentSchoolYear));
+        const planSnapshot = await getDocs(planQuery);
+        if (planSnapshot.empty) {
+            allHolidays = [];
+            return;
+        }
+        const planDocId = planSnapshot.docs[0].id;
+        const holidaysQuery = query(collection(firestore, 'timePlans', planDocId, 'holidays'), orderBy('startDate'));
+        const holidaysSnapshot = await getDocs(holidaysQuery);
+        allHolidays = holidaysSnapshot.docs.map(doc => doc.data()); // { name, type, startDate, endDate }
     };
 
     const loadAllGroups = async () => {
@@ -144,12 +161,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // NEW: Helper function to check if a date is a holiday
+    const isHoliday = (dateString) => {
+        if (!dateString || allHolidays.length === 0) return false;
+        // The dateString is 'YYYY-MM-DD'. We can compare strings directly.
+        for (const holiday of allHolidays) {
+            if (dateString >= holiday.startDate && dateString <= holiday.endDate) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     const generateReport = async () => {
         const filterType = reportTypeSelect.value;
         const filterValue = reportValueSelect.value; // e.g., '9' for month, '1' for semester
         let startDate, endDate, reportTitle, reportSubtitle;
 
         if (timePlan.length === 0) {
+            // NEW: Also check for holidays
+            if (allHolidays.length === 0) showToast('Chưa có dữ liệu ngày nghỉ cho năm học này.', 'info');
             showToast('Chưa có kế hoạch thời gian cho năm học này.', 'error');
             return;
         }
@@ -251,8 +282,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 3. Cập nhật số đếm từ dữ liệu đăng ký
             const teacherGroupMap = new Map(allTeachers.map(t => [t.uid, t.group_id]));
+            let holidayRegsCount = 0; // NEW: Count registrations on holidays
             snapshot.forEach(doc => {
                 const reg = doc.data();
+
+                // NEW: Check if the registration date is a holiday and skip if it is
+                if (isHoliday(reg.date)) {
+                    holidayRegsCount++;
+                    return; // Skip this registration
+                }
+
                 let groupIdToCount = reg.group_id;
 
                 // Fallback: If groupId is missing on the registration, find it from the teacher's data
@@ -272,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // 4. Render báo cáo với dữ liệu đã được tổng hợp
-            renderReport(reportTitle, reportSubtitle, groupData, teacherData, endDate);
+            renderReport(reportTitle, reportSubtitle, groupData, teacherData, endDate, holidayRegsCount);
 
         } catch (error) {
             console.error("Lỗi khi tạo báo cáo:", error);
@@ -281,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const renderReport = (title, subtitle, groupData, teacherData, reportEndDate) => {
+    const renderReport = (title, subtitle, groupData, teacherData, reportEndDate, holidayRegsCount) => {
         // --- Teacher Table ---
         let teacherTableRows = '';
         let teacherTotalCount = 0;
@@ -339,6 +378,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h3 class="report-sub-title">Tình hình sử dụng thiết bị dạy học</h3>
                 <p class="report-time-range">${subtitle}</p>
             </div>
+
+            ${holidayRegsCount > 0 ? `
+                <div class="report-note">
+                    <p><i class="fas fa-info-circle"></i> <strong>Ghi chú:</strong> Đã loại trừ <strong>${holidayRegsCount}</strong> lượt đăng ký diễn ra trong các ngày nghỉ lễ, tết đã được cấu hình.</p>
+                </div>
+            ` : ''}
+
 
             <h4>1. Tình hình sử dụng thiết bị theo giáo viên</h4>
             <table class="report-table" id="teacher-report-table">

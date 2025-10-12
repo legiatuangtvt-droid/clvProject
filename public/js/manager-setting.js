@@ -24,6 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const assignmentModal = document.getElementById('assignment-modal');
     const cancelAssignmentModalBtn = document.getElementById('cancel-assignment-modal');
 
+    // NEW: Holiday management elements
+    const holidayModal = document.getElementById('holiday-modal');
+    const holidaysContainer = document.getElementById('holidays-container');
+    const addHolidayBtn = document.getElementById('add-holiday-btn');
+
     const weekEditModal = document.getElementById('week-edit-modal');
     const schoolYearSelect = document.getElementById('school-year-select');
     const weeklyPlanContainer = document.getElementById('weekly-plan-container');
@@ -1182,6 +1187,150 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // --- HOLIDAY MANAGEMENT FUNCTIONS ---
+
+    const getPlanDocRef = async (schoolYear) => {
+        const planQuery = query(collection(firestore, 'timePlans'), where("schoolYear", "==", schoolYear), limit(1));
+        const snapshot = await getDocs(planQuery);
+        if (snapshot.empty) {
+            return null;
+        }
+        return snapshot.docs[0].ref;
+    };
+
+    const loadHolidays = async (schoolYear) => {
+        holidaysContainer.innerHTML = '<p>Đang tải danh sách ngày nghỉ...</p>';
+        const planRef = await getPlanDocRef(schoolYear);
+        if (!planRef) {
+            holidaysContainer.innerHTML = '<p>Chưa có kế hoạch thời gian. Vui lòng tạo kế hoạch trước khi thêm ngày nghỉ.</p>';
+            if (addHolidayBtn) addHolidayBtn.disabled = true;
+            return;
+        }
+        if (addHolidayBtn) addHolidayBtn.disabled = false;
+
+        try {
+            const holidaysQuery = query(collection(planRef, 'holidays'), orderBy('startDate'));
+            const snapshot = await getDocs(holidaysQuery);
+
+            if (snapshot.empty) {
+                holidaysContainer.innerHTML = '<p>Chưa có ngày nghỉ nào được thêm cho năm học này.</p>';
+                return;
+            }
+
+            const holidays = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderHolidays(holidays);
+        } catch (error) {
+            console.error("Lỗi khi tải ngày nghỉ:", error);
+            holidaysContainer.innerHTML = '<p class="error-message">Không thể tải danh sách ngày nghỉ.</p>';
+        }
+    };
+
+    const renderHolidays = (holidays) => {
+        const holidayTypes = {
+            'Lễ': { icon: 'fa-calendar-star', color: '#e74c3c' },
+            'Tết': { icon: 'fa-landmark', color: '#e67e22' },
+            'Bão lụt': { icon: 'fa-cloud-showers-heavy', color: '#3498db' },
+            'Kế hoạch trường': { icon: 'fa-school', color: '#9b59b6' },
+            'Khác': { icon: 'fa-info-circle', color: '#7f8c8d' }
+        };
+
+        holidaysContainer.innerHTML = holidays.map(holiday => `
+            <div class="item-card" data-holiday-id="${holiday.id}">
+                <div class="item-info">
+                    <i class="fas ${holidayTypes[holiday.type]?.icon || 'fa-calendar-day'}" style="color: ${holidayTypes[holiday.type]?.color || '#333'}"></i>
+                    <div class="holiday-details">
+                        <span class="item-name">${holiday.name}</span>
+                        <span class="holiday-date-range">
+                            <i class="fas fa-calendar-alt"></i> 
+                            ${formatDate(holiday.startDate)} ${holiday.endDate !== holiday.startDate ? ` - ${formatDate(holiday.endDate)}` : ''}
+                        </span>
+                    </div>
+                </div>
+                <div class="item-actions">
+                    <button class="edit-holiday-btn icon-button" title="Sửa"><i class="fas fa-pencil-alt"></i></button>
+                    <button class="delete-holiday-btn icon-button" title="Xóa"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+        `).join('');
+    };
+
+    if (document.getElementById('save-holiday-btn')) {
+        document.getElementById('save-holiday-btn').addEventListener('click', async () => {
+            const saveBtn = document.getElementById('save-holiday-btn');
+            const name = document.getElementById('holiday-name-input').value.trim();
+            const type = document.getElementById('holiday-type-select').value;
+            const startDate = document.getElementById('holiday-start-date-input').value;
+            const endDate = document.getElementById('holiday-end-date-input').value;
+    
+            if (!name || !type || !startDate || !endDate) {
+                showToast('Vui lòng điền đầy đủ thông tin.', 'error');
+                return;
+            }
+            if (endDate < startDate) {
+                showToast('Ngày kết thúc không được nhỏ hơn ngày bắt đầu.', 'error');
+                return;
+            }
+    
+            const planRef = await getPlanDocRef(currentSchoolYear);
+            if (!planRef) {
+                showToast('Không tìm thấy kế hoạch thời gian để lưu ngày nghỉ.', 'error');
+                return;
+            }
+    
+            setButtonLoading(saveBtn, true);
+            try {
+                const holidayData = { name, type, startDate, endDate };
+                const holidaysCollection = collection(planRef, 'holidays');
+    
+                if (currentEditingId) {
+                    await updateDoc(doc(holidaysCollection, currentEditingId), holidayData);
+                    showToast('Cập nhật ngày nghỉ thành công!', 'success');
+                } else {
+                    await addDoc(holidaysCollection, holidayData);
+                    showToast('Thêm ngày nghỉ thành công!', 'success');
+                }
+                closeModal(holidayModal);
+                await loadHolidays(currentSchoolYear);
+            } catch (error) {
+                console.error("Lỗi khi lưu ngày nghỉ:", error);
+                showToast('Đã có lỗi xảy ra khi lưu.', 'error');
+            } finally {
+                setButtonLoading(saveBtn, false);
+            }
+        });
+    }
+
+    if (holidaysContainer) {
+        holidaysContainer.addEventListener('click', async (e) => {
+            const holidayCard = e.target.closest('.item-card');
+            if (!holidayCard) return;
+            const holidayId = holidayCard.dataset.holidayId;
+            const planRef = await getPlanDocRef(currentSchoolYear);
+    
+            if (e.target.closest('.edit-holiday-btn')) {
+                const holidayDoc = await getDoc(doc(planRef, 'holidays', holidayId));
+                if (holidayDoc.exists()) {
+                    currentEditingId = holidayId;
+                    const data = holidayDoc.data();
+                    document.getElementById('holiday-modal-title').textContent = 'Sửa Ngày nghỉ';
+                    document.getElementById('holiday-name-input').value = data.name;
+                    document.getElementById('holiday-type-select').value = data.type;
+                    document.getElementById('holiday-start-date-input').value = data.startDate;
+                    document.getElementById('holiday-end-date-input').value = data.endDate;
+                    openModal(holidayModal);
+                }
+            } else if (e.target.closest('.delete-holiday-btn')) {
+                document.getElementById('confirm-delete-message').textContent = `Bạn có chắc chắn muốn xóa ngày nghỉ này không?`;
+                deleteFunction = async () => {
+                    await deleteDoc(doc(planRef, 'holidays', holidayId));
+                    showToast('Đã xóa ngày nghỉ.', 'success');
+                    await loadHolidays(currentSchoolYear);
+                };
+                openModal(confirmDeleteModal);
+            }
+        });
+    }
+
     // --- Hàm tải và xử lý Năm học ---
     const loadSchoolYears = async () => {
         schoolYearSelect.innerHTML = '<option>Đang tải...</option>';
@@ -1215,6 +1364,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await loadAllSubjectsForYear(currentSchoolYear); // Tải cache môn học cho select
                 await loadAndRenderRules(); // Tải quy tắc khi chọn năm học
                 await loadSubjectAssignments(currentSchoolYear); 
+                await loadHolidays(currentSchoolYear); // NEW: Tải ngày nghỉ
             }
 
         } catch (error) {
@@ -1252,6 +1402,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadAndRenderRules();
             await loadSubjectAssignments(currentSchoolYear); 
             await loadAndRenderTimings();
+            await loadHolidays(currentSchoolYear); // NEW: Tải lại ngày nghỉ
         }
     });
 
@@ -1260,11 +1411,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModal = (modal) => modal.style.display = 'none';
 
     // Đóng modal khi click ra ngoài
-    [groupModal, teacherModal, confirmDeleteModal, schoolYearModal, methodModal, subjectModal, weekEditModal, assignmentModal].forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal(modal);
+    [groupModal, teacherModal, confirmDeleteModal, schoolYearModal, methodModal, subjectModal, weekEditModal, assignmentModal, holidayModal]
+        .filter(modal => modal) // Lọc ra các giá trị null để tránh lỗi
+        .forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal(modal);
+            });
         });
-    });
 
     // Nút hủy trên các modal
     document.getElementById('cancel-group-modal').addEventListener('click', () => closeModal(groupModal));
@@ -1275,6 +1428,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cancel-subject-modal').addEventListener('click', () => closeModal(subjectModal));
     document.getElementById('cancel-week-edit-modal').addEventListener('click', () => closeModal(weekEditModal));
     cancelAssignmentModalBtn.addEventListener('click', () => closeModal(assignmentModal));
+    document.getElementById('cancel-holiday-modal').addEventListener('click', () => closeModal(holidayModal));
 
     // --- Xử lý sự kiện ---
 
@@ -1309,6 +1463,21 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('subject-type-select').value = 'regular';
         openModal(subjectModal);
     });
+
+    // Mở modal thêm Ngày nghỉ
+    // SỬA LỖI: Di chuyển addEventListener vào trong khối if để đảm bảo addHolidayBtn không phải là null.
+    const addHolidayBtnElement = document.getElementById('add-holiday-btn');
+    if (addHolidayBtnElement) {
+        addHolidayBtnElement.addEventListener('click', () => {
+            currentEditingId = null;
+            document.getElementById('holiday-modal-title').textContent = 'Thêm Ngày nghỉ';
+            // Sửa lỗi: Gọi reset() trên phần tử form, không phải div.
+            const holidayForm = document.getElementById('holiday-form');
+            if (holidayForm) holidayForm.reset();
+
+            openModal(holidayModal);
+        });
+    }
 
     // Lưu Năm học mới
     document.getElementById('save-school-year-btn').addEventListener('click', async () => {
@@ -2043,6 +2212,7 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (methodModal.style.display === 'flex') closeModal(methodModal);
             else if (subjectModal.style.display === 'flex') closeModal(subjectModal);
             else if (weekEditModal.style.display === 'flex') closeModal(weekEditModal);
+            else if (holidayModal.style.display === 'flex') closeModal(holidayModal);
         }
     });
 
@@ -2213,8 +2383,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Lưu phân công môn học
-    document.getElementById('save-assignment-btn').addEventListener('click', saveSubjectAssignment);
+    // Lưu phân công môn học (với kiểm tra null)
+    const saveAssignmentBtn = document.getElementById('save-assignment-btn');
+    if (saveAssignmentBtn) {
+        saveAssignmentBtn.addEventListener('click', saveSubjectAssignment);
+    }
+
 
     // Xác nhận xóa
     document.getElementById('confirm-delete-btn').addEventListener('click', () => {

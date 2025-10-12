@@ -106,28 +106,49 @@
                         </div>
 
                         <div id="time-plan" class="tab-content">
-                            <div class="page-header">
-                                <h2>Kế hoạch thời gian năm học</h2>
-                            </div>
-                            <div id="time-plan-setup" class="time-plan-setup-card">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="school-year-start-date">Ngày bắt đầu năm học (Thứ 2)</label>
-                                        <input type="date" id="school-year-start-date">
+                            <!-- Card Kế hoạch thời gian theo tuần (có thể thu gọn) -->
+                            <details class="content-card-details">
+                                <summary class="content-card-summary">
+                                    <i class="fas fa-calendar-week"></i> Kế hoạch thời gian theo tuần
+                                </summary>
+                                <div class="content-card-details-body">
+                                    <div id="time-plan-setup" class="time-plan-setup-card">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="school-year-start-date">Ngày bắt đầu năm học (Thứ 2)</label>
+                                                <input type="date" id="school-year-start-date">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="report-day-input">Ngày chốt báo cáo tháng</label>
+                                                <input type="number" id="report-day-input" value="23" min="1" max="28">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="semester-end-week-input">Tuần kết thúc Học kỳ I</label>
+                                                <input type="number" id="semester-end-week-input" value="19" min="1" max="36">
+                                            </div>
+                                            <button id="generate-plan-btn" class="btn-primary"><i class="fas fa-cogs"></i> Tạo / Cập nhật Kế hoạch</button>
+                                        </div>                                
+                                        <p class="form-note">Chọn ngày bắt đầu là thứ Hai của tuần đầu tiên. Hệ thống sẽ tự động tạo kế hoạch cho 37 tuần học. Nếu kế hoạch đã tồn tại, nó sẽ được tải.</p>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="report-day-input">Ngày chốt báo cáo tháng</label>
-                                        <input type="number" id="report-day-input" value="23" min="1" max="28">
+                                    <div id="weekly-plan-container"></div>
+                                </div>
+                            </details>
+
+                            <!-- Card Quản lý Ngày nghỉ trong năm học (có thể thu gọn) -->
+                            <details class="content-card-details">
+                                <summary class="content-card-summary">
+                                    <i class="fas fa-calendar-day"></i> Quản lý Ngày nghỉ trong năm học
+                                </summary>
+                                <div class="content-card-details-body">
+                                    <div class="page-header" style="margin-bottom: 15px;">
+                                        <div class="instruction-text" style="margin: 0;">
+                                            <p><i class="fas fa-info-circle"></i> Các ngày nghỉ được thêm vào đây sẽ được hiển thị trong lịch và có thể được sử dụng để tính toán báo cáo sau này.</p>
+                                        </div>
+                                    <button id="add-holiday-btn" class="btn-primary"><i class="fas fa-plus"></i> Thêm Ngày nghỉ</button>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="semester-end-week-input">Tuần kết thúc Học kỳ I</label>
-                                        <input type="number" id="semester-end-week-input" value="19" min="1" max="36">
-                                    </div>
-                                    <button id="generate-plan-btn" class="btn-primary"><i class="fas fa-cogs"></i> Tạo / Cập nhật Kế hoạch</button>
-                                </div>                                
-                                <p class="form-note">Chọn ngày bắt đầu là thứ Hai của tuần đầu tiên. Hệ thống sẽ tự động tạo kế hoạch cho 37 tuần học. Nếu kế hoạch đã tồn tại, nó sẽ được tải.</p>
-                            </div>
-                            <div id="weekly-plan-container"></div>
+                                    <div id="holidays-container"></div>
+                                </div>
+                            </details>
                         </div>
 
                         <!-- Tab Quy tắc Đăng ký -->
@@ -490,6 +511,41 @@
                     <button id="cancel-delete-btn" class="btn-cancel">Hủy</button>
                     <button id="confirm-delete-btn" class="btn-danger">Xóa</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal cho Ngày nghỉ -->
+    <div id="holiday-modal" class="modal-overlay modal-holiday" style="display: none;">
+        <div class="modal-content">
+            <form id="holiday-form">
+                <h2 id="holiday-modal-title">Thêm Ngày nghỉ</h2>
+                <div class="form-group">
+                    <label for="holiday-name-input">Tên ngày nghỉ</label>
+                    <input type="text" id="holiday-name-input" placeholder="Ví dụ: Nghỉ lễ 30/4 - 1/5" required>
+                </div>
+                <div class="form-group">
+                    <label for="holiday-type-select">Loại ngày nghỉ</label>
+                    <select id="holiday-type-select" class="form-control" required>
+                        <option value="Lễ">Lễ</option>
+                        <option value="Tết">Tết</option>
+                        <option value="Bão lụt">Nghỉ do bão lụt</option>
+                        <option value="Kế hoạch trường">Theo kế hoạch của trường</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="holiday-start-date-input">Từ ngày</label>
+                    <input type="date" id="holiday-start-date-input" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="holiday-end-date-input">Đến ngày</label>
+                    <input type="date" id="holiday-end-date-input" class="form-control" required>
+                </div>
+            </form>
+            <div class="modal-actions">
+                <button id="cancel-holiday-modal" class="btn-cancel">Hủy</button>
+                <button id="save-holiday-btn" class="btn-save"><span class="btn-text">Lưu</span><span class="btn-spinner"></span></button>
             </div>
         </div>
     </div>

@@ -589,6 +589,8 @@
 .weekly-plan-table td:nth-child(1), /* Tuần */
 .weekly-plan-table td:nth-child(2), /* Học kỳ */
 .weekly-plan-table td:nth-child(3), /* Tháng báo cáo */
+.weekly-plan-table td:nth-child(4), /* Ngày báo cáo */
+.weekly-plan-table td:nth-child(5), /* Giáo viên */
 .weekly-plan-table td:nth-child(6) { /* Hành động */
     text-align: center;
 }
@@ -1196,4 +1198,61 @@
     to {
         background-position: 0 0;
     }
+}
+
+/* --- NEW: Styles for Collapsible Content Card (details/summary) --- */
+.content-card-details {
+    background-color: var(--background-light);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    transition: box-shadow 0.2s ease-in-out;
+    margin-bottom: 20px; /* Thêm khoảng cách với card bên dưới */
+}
+
+.content-card-details:hover {
+    box-shadow: var(--card-shadow-hover);
+}
+
+.content-card-summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    font-size: 1.3rem; /* Kích thước chữ to hơn, giống tiêu đề card */
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none; /* Bỏ dấu tam giác mặc định */
+    transition: background-color 0.2s;
+}
+
+.content-card-summary:hover {
+    background-color: #f1f5f9;
+}
+
+.content-card-details[open] > .content-card-summary {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.content-card-summary::-webkit-details-marker {
+    display: none; /* Bỏ dấu tam giác trên Chrome/Safari */
+}
+
+/* Icon chevron cho biết trạng thái thu gọn/mở rộng */
+.content-card-summary::after {
+    content: '\f078'; /* Icon chevron-down */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    margin-left: auto; /* Đẩy icon về phía cuối */
+    transition: transform 0.2s ease-in-out;
+    font-size: 1rem; /* Kích thước icon nhỏ hơn một chút */
+    color: var(--text-light);
+}
+
+.content-card-details[open] > .content-card-summary::after {
+    transform: rotate(-180deg);
+}
+
+.content-card-details-body {
+    padding: 20px;
 }

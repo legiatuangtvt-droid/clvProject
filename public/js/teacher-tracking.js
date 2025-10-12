@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTeacherInfo = null; // Lưu thông tin GV hiện tại (gồm order, group_id)
     let teachersInGroup = []; // Lưu các giáo viên trong cùng tổ
     let groupMap = new Map(); // Map: group_id -> group data
+    let allHolidays = []; // NEW: State for holidays
     let pieChartInstance = null; // Biến để lưu trữ biểu đồ, giúp hủy khi vẽ lại
     let currentView = 'personal'; // 'personal' hoặc 'group'
 
@@ -71,6 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 2. Tải kế hoạch thời gian (các tuần)
             await loadTimePlan();
+
+            // NEW: 2.5. Load holidays
+            await loadHolidays();
 
             // 3. Tìm tuần hiện tại
             const today = new Date().toISOString().split('T')[0];
@@ -143,6 +147,19 @@ document.addEventListener('DOMContentLoaded', () => {
         weeksSnapshot.forEach(doc => {
             timePlan.push({ id: doc.id, ...doc.data() });
         });
+    };
+
+    const loadHolidays = async () => {
+        const planQuery = query(collection(firestore, 'timePlans'), where("schoolYear", "==", currentSchoolYear));
+        const planSnapshot = await getDocs(planQuery);
+        if (planSnapshot.empty) {
+            allHolidays = [];
+            return;
+        }
+        const planDocId = planSnapshot.docs[0].id;
+        const holidaysQuery = query(collection(firestore, 'timePlans', planDocId, 'holidays'), orderBy('startDate'));
+        const holidaysSnapshot = await getDocs(holidaysQuery);
+        allHolidays = holidaysSnapshot.docs.map(doc => doc.data());
     };
 
     const updateFilterValueOptions = () => {
@@ -277,6 +294,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // NEW: Helper function to check if a date is a holiday
+    const isHoliday = (dateString) => {
+        if (!dateString || allHolidays.length === 0) return false;
+        for (const holiday of allHolidays) {
+            if (dateString >= holiday.startDate && dateString <= holiday.endDate) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     const generateReport = async (isTabSwitch = false) => {
         const user = auth.currentUser;
         if (!user) {
@@ -390,9 +418,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const snapshot = await getDocs(regsQuery);
 
+            let holidayRegsCount = 0;
+
             // 3. Nếu có đăng ký, cập nhật số đếm vào mẫu báo cáo đã tạo
             snapshot.forEach(doc => {
                 const data = doc.data();
+                if (isHoliday(data.date)) {
+                    holidayRegsCount++;
+                    return; // Bỏ qua đăng ký trong ngày nghỉ
+                }
                 if (!data.teachingMethod || !Array.isArray(data.teachingMethod)) return;
 
                 // Áp dụng bộ lọc môn học cho chế độ xem tổ
@@ -419,6 +453,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
             });
+
+            // Hiển thị thông báo nếu có đăng ký bị loại trừ
+            if (holidayRegsCount > 0) {
+                showToast(`Đã loại trừ ${holidayRegsCount} tiết dạy trong ngày nghỉ.`, 'info');
+            }
 
             // 4. Render báo cáo
             if (isGroupView) {
