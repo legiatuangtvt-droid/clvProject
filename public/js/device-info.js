@@ -15,31 +15,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         container.innerHTML = `
             <div class="info-row">
                 <span class="info-label"><i class="fas fa-desktop fa-fw"></i> Tên thiết bị:</span>
-                <span class="info-value">${data.name || 'N/A'}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label"><i class="fas fa-tag fa-fw"></i> Chủ đề:</span>
-                <span class="info-value">${data.topic || 'N/A'}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label"><i class="fas fa-bullseye fa-fw"></i> Mục đích:</span>
-                <span class="info-value">${data.purpose || 'N/A'}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label"><i class="fas fa-align-left fa-fw"></i> Mô tả:</span>
-                <span class="info-value">${data.description || 'N/A'}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label"><i class="fas fa-users fa-fw"></i> Đối tượng sử dụng:</span>
-                <span class="info-value">Giáo viên: ${usageGV} | Học sinh: ${usageHS}</span>
+                <span class="info-value">${data.name || ''}</span>
             </div>
             <div class="info-row">
                 <span class="info-label"><i class="fas fa-ruler-combined fa-fw"></i> Đơn vị tính:</span>
-                <span class="info-value">${data.unit || 'N/A'}</span>
+                <span class="info-value">${data.unit || ''}</span>
             </div>
              <div class="info-row">
                 <span class="info-label"><i class="fas fa-boxes fa-fw"></i> Tổng số lượng:</span>
                 <span class="info-value">${data.quantity || 0}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-tag fa-fw"></i> Chủ đề:</span>
+                <span class="info-value">${data.topic || ''}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-bullseye fa-fw"></i> Mục đích:</span>
+                <span class="info-value">${data.purpose || ''}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-align-left fa-fw"></i> Mô tả:</span>
+                <span class="info-value">${data.description || ''}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-users fa-fw"></i> Đối tượng sử dụng:</span>
+                <span class="info-value">Giáo viên: ${usageGV} | Học sinh: ${usageHS}</span>
             </div>
         `;
     };
@@ -47,6 +47,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         const deviceId = urlParams.get('id');
+
+        // --- XỬ LÝ URL "BẨN" TỪ ZALO HOẶC CÁC NGUỒN KHÁC ---
+        // Giữ lại chỉ tham số 'id' và loại bỏ các tham số thừa (utm_*, zarsrc, ...)
+        const cleanUrl = `${window.location.pathname}?id=${deviceId}`;
+        // Cập nhật URL trên thanh địa chỉ mà không tải lại trang.
+        // Điều này giúp URL trông gọn gàng và tránh lỗi khi người dùng sao chép/chia sẻ.
+        if (window.location.href !== window.location.origin + cleanUrl) {
+            window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+        }
 
         if (!deviceId) {
             renderError("Không tìm thấy ID thiết bị trong địa chỉ URL.");

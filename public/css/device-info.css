@@ -26,6 +26,10 @@ body {
     color: #fff;
     padding: 20px;
     text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
 }
 
 .card-header h1 {
@@ -35,7 +39,6 @@ body {
 
 .card-header i {
     font-size: 1.8rem;
-    margin-bottom: 10px;
 }
 
 .card-body {

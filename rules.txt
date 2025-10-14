@@ -109,8 +109,8 @@ service cloud.firestore {
     
     // Quy tắc cho danh mục thiết bị
     match /devices/{deviceId=**} {
-      // Manager, Teacher, Supervisory có thể đọc
-      allow read: if isManager() || isTeacher() || isSupervisory();
+      // CHO PHÉP BẤT KỲ AI ĐỌC (để trang tra cứu QR code công khai hoạt động)
+      allow read: if true;
       // Chỉ Manager có thể ghi
       allow write: if isManager();
     }
