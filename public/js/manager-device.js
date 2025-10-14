@@ -63,6 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const qrDeviceName = document.getElementById('qr-device-name');
     const qrDeviceId = document.getElementById('qr-device-id');
     const printQrBtn = document.getElementById('print-qr-btn');
+    const downloadQrBtn = document.getElementById('download-qr-btn');
+    const viewInfoQrBtn = document.getElementById('view-info-qr-btn');
 
     // --- STATE ---
     let allItemsCache = [];
@@ -315,6 +317,9 @@ document.addEventListener('DOMContentLoaded', () => {
         qrDeviceName.textContent = itemData.name;
         qrDeviceId.textContent = `ID: ${itemData.id}`;
 
+        // Lưu ID thiết bị vào data attribute của modal để các nút khác có thể sử dụng
+        qrCodeModal.dataset.deviceId = itemData.id;
+
         // 3. Generate QR Code
         // URL này sẽ trỏ đến một trang công khai có thể đọc ID thiết bị từ query string
         // và hiển thị thông tin của thiết bị đó.
@@ -339,13 +344,75 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const printQrCode = () => {
-        const printContent = document.getElementById('qr-code-content').innerHTML;
+        const canvas = qrCodeContainer.querySelector('canvas');
+        const deviceName = qrDeviceName.textContent;
+        const deviceId = qrDeviceId.textContent;
+
+        if (!canvas) {
+            showToast('Không tìm thấy mã QR để in.', 'error');
+            return;
+        }
+
+        // Chuyển đổi canvas thành ảnh PNG dạng data URL
+        const qrImageSrc = canvas.toDataURL('image/png');
+
         const printWindow = window.open('', '_blank');
-        printWindow.document.write(`<html><head><title>In Mã QR</title><style>body { text-align: center; font-family: sans-serif; }</style></head><body>${printContent}</body></html>`);
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>In Mã QR - ${deviceName}</title>
+                    <style>
+                        body { text-align: center; font-family: Arial, sans-serif; margin: 20px; }
+                        img { width: 256px; height: 256px; }
+                        h3 { margin-top: 15px; margin-bottom: 5px; }
+                        p { font-size: 0.9rem; color: #6c757d; margin-top: 0; }
+                    </style>
+                </head>
+                <body>
+                    <img src="${qrImageSrc}" alt="QR Code for ${deviceName}">
+                    <h3>${deviceName}</h3>
+                    <p>${deviceId}</p>
+                </body>
+            </html>
+        `);
         printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
-        printWindow.close();
+        printWindow.onload = function() { // Đợi cho ảnh được tải xong
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        };
+    };
+
+    const downloadQrCode = () => {
+        const canvas = qrCodeContainer.querySelector('canvas');
+        const deviceName = qrDeviceName.textContent;
+        if (!canvas || !deviceName) {
+            showToast('Không tìm thấy mã QR để tải.', 'error');
+            return;
+        }
+
+        // Tạo một thẻ <a> ẩn để kích hoạt việc tải xuống
+        const link = document.createElement('a');
+
+        // Tạo tên file thân thiện, loại bỏ các ký tự không hợp lệ
+        const safeFileName = deviceName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        link.download = `qr-code-${safeFileName}.png`;
+
+        // Chuyển đổi canvas thành data URL và gán vào link
+        link.href = canvas.toDataURL('image/png');
+
+        // Kích hoạt click để tải file và sau đó xóa link
+        link.click();
+    };
+
+    const viewDeviceInfo = () => {
+        const deviceId = qrCodeModal.dataset.deviceId;
+        if (!deviceId) {
+            showToast('Không tìm thấy ID thiết bị.', 'error');
+            return;
+        }
+        const url = `${window.location.origin}/device-info.html?id=${deviceId}`;
+        window.open(url, '_blank');
     };
 
     const addInlineDeviceRow = () => {
@@ -1202,6 +1269,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // QR Code Print Button
         printQrBtn?.addEventListener('click', printQrCode);
+        downloadQrBtn?.addEventListener('click', downloadQrCode);
+        viewInfoQrBtn?.addEventListener('click', viewDeviceInfo);
 
         // Global listener for Escape key to close modals
         document.addEventListener('keydown', (e) => {

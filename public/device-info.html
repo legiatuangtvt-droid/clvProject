@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông tin thiết bị</title>
+    <link rel="stylesheet" href="css/shared-layout.css">
+    <link rel="stylesheet" href="css/device-info.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="icon" href="images/magnetic.png" type="image/png">
+</head>
+<body>
+    <div class="container">
+        <div class="info-card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i>
+                <h1>Thông tin thiết bị</h1>
+            </div>
+            <div id="device-info-container" class="card-body">
+                <!-- Thông tin thiết bị sẽ được JS chèn vào đây -->
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Đang tải dữ liệu...</span>
+                </div>
+            </div>
+            <div class="card-footer">
+                <p>Hệ thống quản lý thiết bị - Trường THPT Chế Lan Viên</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nạp các script cần thiết -->
+    <script type="module" src="js/device-info.js"></script>
+</body>
+</html>
