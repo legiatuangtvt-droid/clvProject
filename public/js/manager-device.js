@@ -8,10 +8,14 @@ import {
     deleteDoc,
     doc,
     query,
-    orderBy
+    orderBy,
+    where
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { firestore } from "./firebase-config.js";
-import { showToast, setButtonLoading } from "./toast.js";import { getDevicesRecursive } from "./utils.js";
+import { showToast, setButtonLoading } from "./toast.js";
+import { getDevicesRecursive } from "./utils.js";
+// Tải thư viện QRCode như một module. Đối tượng QRCode sẽ được import trực tiếp.
+import QRCode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm';
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!document.getElementById('device-explorer-layout')) {
@@ -53,6 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelBulkImportPreviewBtn = document.getElementById('cancel-bulk-import-preview-btn');
     const confirmBulkImportBtn = document.getElementById('confirm-bulk-import-btn');
 
+    // NEW: QR Code Modal Elements
+    const qrCodeModal = document.getElementById('qr-code-modal');
+    const qrCodeContainer = document.getElementById('qr-code-container');
+    const qrDeviceName = document.getElementById('qr-device-name');
+    const qrDeviceId = document.getElementById('qr-device-id');
+    const printQrBtn = document.getElementById('print-qr-btn');
 
     // --- STATE ---
     let allItemsCache = [];
@@ -170,6 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td class="col-actions">
                             <div class="item-actions">
                                 <!-- Nút sửa đã được thay bằng sự kiện click trực tiếp vào ô -->
+                                <button class="icon-button qr-code-btn" title="Tạo mã QR"><i class="fas fa-qrcode"></i></button>
                                 <button class="icon-button delete-item-btn" title="Xóa"><i class="fas fa-trash-alt"></i></button>
                             </div>
                         </td>
@@ -291,6 +302,50 @@ document.addEventListener('DOMContentLoaded', () => {
             const height = firstHeaderRow.offsetHeight;
             document.documentElement.style.setProperty('--header-row1-height', `${height}px`);
         }
+    };
+
+    // --- NEW: QR CODE MODAL ---
+    const openQrCodeModal = (itemData) => {
+        if (!itemData) return;
+
+        // 1. Clear previous QR code
+        qrCodeContainer.innerHTML = '';
+
+        // 2. Update modal content
+        qrDeviceName.textContent = itemData.name;
+        qrDeviceId.textContent = `ID: ${itemData.id}`;
+
+        // 3. Generate QR Code
+        // URL này sẽ trỏ đến một trang công khai có thể đọc ID thiết bị từ query string
+        // và hiển thị thông tin của thiết bị đó.
+        const lookupUrl = `${window.location.origin}/device-info.html?id=${itemData.id}`;
+
+        // Sử dụng đối tượng QRCode đã được import trực tiếp, không cần `window.`
+        QRCode.toCanvas(lookupUrl, {
+            width: 256,
+            margin: 2,
+            errorCorrectionLevel: 'H'
+        }, (err, canvas) => {
+            if (err) {
+                console.error("Lỗi tạo mã QR:", err);
+                qrCodeContainer.innerHTML = '<p class="error-message">Không thể tạo mã QR.</p>';
+                return;
+            }
+            qrCodeContainer.appendChild(canvas);
+        });
+
+        // 4. Show the modal
+        qrCodeModal.style.display = 'flex';
+    };
+
+    const printQrCode = () => {
+        const printContent = document.getElementById('qr-code-content').innerHTML;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`<html><head><title>In Mã QR</title><style>body { text-align: center; font-family: sans-serif; }</style></head><body>${printContent}</body></html>`);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
     };
 
     const addInlineDeviceRow = () => {
@@ -1000,6 +1055,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof deleteFunction === 'function') deleteFunction();
             confirmDeleteModal.style.display = 'none';
         });
+        document.getElementById('cancel-qr-modal')?.addEventListener('click', () => {
+            qrCodeModal.style.display = 'none';
+        });
 
         // Bulk import modals
         cancelBulkImportBtn?.addEventListener('click', () => {
@@ -1096,7 +1154,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 openItemModal(type, true, itemData);
             } 
             // Xử lý click vào ô có thể sửa
-            else if (target.closest('td[data-field]')) {
+            else if (target.closest('.qr-code-btn')) {
+                openQrCodeModal(itemData);
+            }
+             else if (target.closest('td[data-field]')) {
                 const clickedCell = target.closest('td[data-field]');
                 const focusFieldId = clickedCell.dataset.field;
                 openItemModal(type, true, itemData, focusFieldId);
@@ -1139,6 +1200,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // QR Code Print Button
+        printQrBtn?.addEventListener('click', printQrCode);
+
         // Global listener for Escape key to close modals
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -1146,9 +1210,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (deviceModal.style.display === 'flex') cancelDeviceBtn.click();
                 else if (confirmDeleteModal.style.display === 'flex') cancelDeleteBtn.click();
                 else if (bulkImportModal.style.display === 'flex') cancelBulkImportBtn.click();
-                else if (bulkImportPreviewModal.style.display === 'flex') cancelBulkImportPreviewBtn.click();
+                else if (bulkImportPreviewModal.style.display === 'flex') cancelBulkImportPreviewBtn.click();                
+                else if (qrCodeModal.style.display === 'flex') qrCodeModal.style.display = 'none';
             }
         });
+
     };
 
     // --- Khởi chạy ---
