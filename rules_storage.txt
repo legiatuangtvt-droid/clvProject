@@ -1,0 +1,17 @@
+rules_version = '2';
+
+// Cấu hình cho dịch vụ Firebase Storage
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Áp dụng quy tắc cho thư mục 'manuals'
+    match /manuals/{allPaths=**} {
+      // Cho phép bất kỳ ai đọc (để trang device-info.html công khai có thể xem được)
+      allow read: if true;
+
+      // Chỉ cho phép người dùng đã đăng nhập (authenticated) được ghi (tải lên, cập nhật, xóa)
+      allow write: if request.auth != null;
+    }
+
+  }
+}

@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js";
 
 // Cấu hình Firebase của bạn
 const firebaseConfig = {
@@ -19,3 +20,4 @@ export const app = initializeApp(firebaseConfig);
 // Khởi tạo và export các dịch vụ Firebase để tái sử dụng
 export const auth = getAuth(app);
 export const firestore = getFirestore(app);
+export const storage = getStorage(app);

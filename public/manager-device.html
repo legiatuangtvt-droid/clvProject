@@ -155,6 +155,13 @@
                 <div class="form-group"><div class="filter-group"><label for="device-quantity">Tổng số</label><input type="number" id="device-quantity" class="form-control" value="0"></div></div>
                 <div class="form-group"><div class="filter-group"><label for="device-broken">Hỏng</label><input type="number" id="device-broken" class="form-control" value="0"></div></div>
             </form>
+            <!-- NEW: Thêm trường tải tệp và hiển thị liên kết -->
+            <div class="form-group form-group-span-2" style="margin-top: 10px;">
+                <label for="device-manual-file">Tài liệu hướng dẫn (PDF)</label>
+                <input type="file" id="device-manual-file" accept=".pdf" class="form-control">
+                <a href="#" id="device-manual-link" target="_blank" style="display: none; margin-top: 8px; font-style: italic;"></a>
+            </div>
+
             <div class="modal-actions">
                 <div class="modal-actions-right">
                     <button id="cancel-device-modal" class="btn-cancel">Hủy</button>

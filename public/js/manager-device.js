@@ -11,7 +11,15 @@ import {
     orderBy,
     where
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-import { firestore } from "./firebase-config.js";
+import {
+    getStorage,
+    ref,
+    uploadBytes,
+    getDownloadURL,
+    deleteObject
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js";
+
+import { firestore, storage } from "./firebase-config.js";
 import { showToast, setButtonLoading } from "./toast.js";
 import { getDevicesRecursive } from "./utils.js";
 // Tải thư viện QRCode như một module. Đối tượng QRCode sẽ được import trực tiếp.
@@ -65,6 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const printQrBtn = document.getElementById('print-qr-btn');
     const downloadQrBtn = document.getElementById('download-qr-btn');
     const viewInfoQrBtn = document.getElementById('view-info-qr-btn');
+
+    // NEW: Manual file elements
+    const manualFileInput = document.getElementById('device-manual-file');
+    const manualFileLink = document.getElementById('device-manual-link');
 
     // --- STATE ---
     let allItemsCache = [];
@@ -637,6 +649,10 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('device-quota').value = data.quota || '';
             document.getElementById('device-quantity').value = data.quantity || 0;
             document.getElementById('device-broken').value = data.broken || 0;
+
+            // NEW: Handle manual file link
+            manualFileLink.href = data.manualUrl || '#';
+            manualFileLink.textContent = data.manualUrl ? (data.manualFileName || 'Xem tài liệu') : 'Chưa có tài liệu';
         } else {
             // Khi thêm mới, tự động chọn danh mục cha là danh mục đang xem
             buildCategoryTreeForSelect(parentSelect, selectedNodeId);
@@ -644,6 +660,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         deviceModal.style.display = 'flex';
+        // NEW: Reset file input
+        manualFileInput.value = '';
+        manualFileLink.style.display = isEditing ? 'block' : 'none';
+
         // Focus vào trường được chỉ định hoặc trường tên mặc định
         const fieldToFocus = focusFieldId ? document.getElementById(focusFieldId) : document.getElementById('device-name');
         if (fieldToFocus) {
@@ -743,6 +763,32 @@ document.addEventListener('DOMContentLoaded', () => {
             broken: parseInt(document.getElementById('device-broken').value) || 0,
         };
 
+        // --- NEW: Handle file upload ---
+        const manualFile = manualFileInput.files[0];
+        if (manualFile) {
+            // Tạo một tham chiếu duy nhất cho tệp, ví dụ: manuals/{deviceId}/{fileName}
+            // Nếu là thiết bị mới, chúng ta sẽ cần ID trước.
+            const deviceIdForPath = currentEditingId || doc(collection(firestore, 'devices')).id;
+            const filePath = `manuals/${deviceIdForPath}/${manualFile.name}`;
+            const fileRef = ref(storage, filePath);
+
+            try {
+                const uploadResult = await uploadBytes(fileRef, manualFile);
+                const downloadURL = await getDownloadURL(uploadResult.ref);
+                data.manualUrl = downloadURL;
+                data.manualFileName = manualFile.name; // Lưu tên tệp
+            } catch (uploadError) {
+                console.error("Lỗi tải tệp lên:", uploadError);
+                showToast('Không thể tải tệp hướng dẫn lên. Vui lòng thử lại.', 'error');
+                setButtonLoading(saveDeviceBtn, false);
+                return;
+            }
+        } else if (currentEditingId) {
+            // Giữ lại URL cũ nếu không có tệp mới được chọn khi chỉnh sửa
+            data.manualUrl = allItemsCache.find(item => item.id === currentEditingId)?.manualUrl || null;
+            data.manualFileName = allItemsCache.find(item => item.id === currentEditingId)?.manualFileName || null;
+        }
+
         try {
             if (currentEditingId) {
                 const docRef = doc(firestore, 'devices', currentEditingId);
@@ -822,25 +868,46 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('confirm-delete-message').textContent = "Bạn có chắc chắn muốn xóa mục này? Nếu đây là danh mục cha, tất cả các mục con cũng sẽ bị xóa.";
         deleteFunction = async () => {
             try {
-                // Lấy tất cả thiết bị để tìm cây con cần xóa
-                const q = query(collection(firestore, 'devices'));
-                const snapshot = await getDocs(q);
-                const allItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const idsToDelete = getSubtreeIds(allItems, id);
+                // Sử dụng cache đã có sẵn thay vì truy vấn lại
+                const idsToDelete = getSubtreeIds(allItemsCache, id);
+                const itemsToDelete = allItemsCache.filter(item => idsToDelete.includes(item.id));
+
+                // --- NEW: Xóa các tệp liên quan khỏi Firebase Storage ---
+                const deleteFilePromises = [];
+                itemsToDelete.forEach(item => {
+                    // Chỉ xóa tệp nếu là thiết bị và có thông tin tệp
+                    if (item.type === 'device' && item.manualFileName) {
+                        const filePath = `manuals/${item.id}/${item.manualFileName}`;
+                        const fileRef = ref(storage, filePath);
+                        console.log(`Đang chuẩn bị xóa tệp: ${filePath}`);
+                        // Thêm promise xóa vào mảng
+                        deleteFilePromises.push(deleteObject(fileRef).catch(error => {
+                            // Ghi lại lỗi nếu không xóa được tệp nhưng không dừng toàn bộ quá trình
+                            if (error.code !== 'storage/object-not-found') {
+                                console.error(`Lỗi khi xóa tệp ${filePath}:`, error);
+                            }
+                        }));
+                    }
+                });
+
+                // Chờ tất cả các promise xóa tệp hoàn tất
+                await Promise.all(deleteFilePromises);
+
+                // --- Xóa các bản ghi trong Firestore bằng batch ---
                 const batch = writeBatch(firestore);
                 idsToDelete.forEach(deleteId => {
                     const docRef = doc(firestore, 'devices', deleteId);
                     batch.delete(docRef);
                 });
-
                 await batch.commit();
 
                 showToast('Đã xóa thành công!', 'success', 3000);
+                // Tải lại toàn bộ dữ liệu từ đầu để đảm bảo cache được làm mới hoàn toàn
                 await loadAllItems();
-                renderList(selectedNodeId); // Cập nhật lại list sau khi xóa
+                renderList(selectedNodeId);
             } catch (error) {
                 console.error("Lỗi khi xóa:", error);
-                showToast('Đã có lỗi xảy ra khi xóa.', 'error');
+                showToast('Đã có lỗi xảy ra khi xóa. Một số tệp có thể chưa được dọn dẹp.', 'error');
             }
         };
         confirmDeleteModal.style.display = 'flex';

@@ -12,6 +12,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         const usageGV = data.usageObject?.includes('GV') ? 'Có' : 'Không';
         const usageHS = data.usageObject?.includes('HS') ? 'Có' : 'Không';
 
+        // NEW: Tạo HTML cho liên kết tài liệu hướng dẫn
+        let manualHtml = '';
+        if (data.manualUrl) {
+            manualHtml = `
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-file-pdf fa-fw"></i> Tài liệu:</span>
+                    <span class="info-value">
+                        <a href="${data.manualUrl}" class="btn-link" target="_blank" rel="noopener noreferrer">${data.manualFileName || 'Xem/Tải về'}</a>
+                    </span>
+                </div>`;
+        }
+
         container.innerHTML = `
             <div class="info-row">
                 <span class="info-label"><i class="fas fa-desktop fa-fw"></i> Tên thiết bị:</span>
@@ -41,6 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <span class="info-label"><i class="fas fa-users fa-fw"></i> Đối tượng sử dụng:</span>
                 <span class="info-value">Giáo viên: ${usageGV} | Học sinh: ${usageHS}</span>
             </div>
+            ${manualHtml}
         `;
     };
 
