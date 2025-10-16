@@ -763,12 +763,19 @@ document.addEventListener('DOMContentLoaded', () => {
             broken: parseInt(document.getElementById('device-broken').value) || 0,
         };
 
+        // --- SỬA LỖI: Tạo ID trước để đảm bảo tính nhất quán ---
+        // Nếu là thêm mới, tạo một document reference mới để lấy ID.
+        // Nếu là sửa, sử dụng document reference hiện có.
+        const docRef = currentEditingId
+            ? doc(firestore, 'devices', currentEditingId)
+            : doc(collection(firestore, 'devices'));
+
+        // Gán ID vào data để sử dụng cho việc tải tệp lên.
+        const deviceIdForPath = docRef.id;
+
         // --- NEW: Handle file upload ---
         const manualFile = manualFileInput.files[0];
         if (manualFile) {
-            // Tạo một tham chiếu duy nhất cho tệp, ví dụ: manuals/{deviceId}/{fileName}
-            // Nếu là thiết bị mới, chúng ta sẽ cần ID trước.
-            const deviceIdForPath = currentEditingId || doc(collection(firestore, 'devices')).id;
             const filePath = `manuals/${deviceIdForPath}/${manualFile.name}`;
             const fileRef = ref(storage, filePath);
 
@@ -791,7 +798,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (currentEditingId) {
-                const docRef = doc(firestore, 'devices', currentEditingId);
                 await updateDoc(docRef, data);
                 // Cập nhật cache
                 const index = allItemsCache.findIndex(item => item.id === currentEditingId);
@@ -800,7 +806,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 showToast('Cập nhật thiết bị thành công!', 'success', 3000);
             } else {
-                const docRef = await addDoc(collection(firestore, 'devices'), data);
+                await setDoc(docRef, data); // Sử dụng setDoc thay vì addDoc vì đã có docRef
                 // Thêm vào cache
                 allItemsCache.push({ id: docRef.id, ...data });
                 showToast('Thêm thiết bị mới thành công!', 'success', 3000);
