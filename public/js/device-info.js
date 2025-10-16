@@ -9,20 +9,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const renderDeviceInfo = (data) => {
-        const usageGV = data.usageObject?.includes('GV') ? 'Có' : 'Không';
-        const usageHS = data.usageObject?.includes('HS') ? 'Có' : 'Không';
 
         // NEW: Tạo HTML cho liên kết tài liệu hướng dẫn
         let manualHtml = '';
         if (data.manualUrl) {
             manualHtml = `
                 <div class="info-row">
-                    <span class="info-label"><i class="fas fa-file-pdf fa-fw"></i> Tài liệu:</span>
+                    <span class="info-label"><i class="fas fa-file-pdf fa-fw"></i> Hướng dẫn sử dụng:</span>
                     <span class="info-value">
                         <a href="${data.manualUrl}" class="btn-link" target="_blank" rel="noopener noreferrer">${data.manualFileName || 'Xem/Tải về'}</a>
                     </span>
                 </div>`;
         }
+        console.log('data.manualUrl:', data.manualUrl);
 
         container.innerHTML = `
             <div class="info-row">
@@ -37,6 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <span class="info-label"><i class="fas fa-boxes fa-fw"></i> Tổng số lượng:</span>
                 <span class="info-value">${data.quantity || 0}</span>
             </div>
+            ${manualHtml}            
             <div class="info-row">
                 <span class="info-label"><i class="fas fa-tag fa-fw"></i> Chủ đề:</span>
                 <span class="info-value">${data.topic || ''}</span>
@@ -49,11 +49,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <span class="info-label"><i class="fas fa-align-left fa-fw"></i> Mô tả:</span>
                 <span class="info-value">${data.description || ''}</span>
             </div>
-            <div class="info-row">
-                <span class="info-label"><i class="fas fa-users fa-fw"></i> Đối tượng sử dụng:</span>
-                <span class="info-value">Giáo viên: ${usageGV} | Học sinh: ${usageHS}</span>
-            </div>
-            ${manualHtml}
         `;
     };
 
