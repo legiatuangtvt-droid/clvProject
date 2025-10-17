@@ -2112,17 +2112,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const groupSelect = document.getElementById('teacher-group-select');
 
                 if (parentGroupCard && parentGroupCard.classList.contains('unassigned-card')) {
-                    groupSelectGroup.style.display = 'block';
-                    teacherSubjectGroup.style.display = 'none';
-                    groupSelect.innerHTML = '<option value="">-- Chọn tổ mới --</option>';
+                    if (groupSelectGroup) groupSelectGroup.style.display = 'block';
+                    if (teacherSubjectGroup) teacherSubjectGroup.style.display = 'none';
+                    if (groupSelect) groupSelect.innerHTML = '<option value="">-- Chọn tổ mới --</option>';
                     const activeGroupsQuery = query(collection(firestore, 'groups'), where('status', '==', 'active'), where('schoolYear', '==', currentSchoolYear));
                     const activeGroupsSnapshot = await getDocs(activeGroupsQuery);
                     activeGroupsSnapshot.forEach(gDoc => {
                         const gData = gDoc.data();
-                        groupSelect.innerHTML += `<option value="${gData.group_id}">${gData.group_name}</option>`;
+                        if (groupSelect) groupSelect.innerHTML += `<option value="${gData.group_id}">${gData.group_name}</option>`;
                     });
                 } else {
-                    groupSelectGroup.style.display = 'none';
+                    if (groupSelectGroup) groupSelectGroup.style.display = 'none';
                     const groupRef = doc(firestore, 'groups', groupId);
                     const groupSnap = await getDoc(groupRef);
                     const subjects = groupSnap.exists() ? (groupSnap.data().subjects || []) : [];
@@ -2133,7 +2133,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     subjectSelect.value = teacherData.subject || '';
 
-                    teacherSubjectGroup.style.display = subjects.length > 1 ? 'block' : 'none';
+                    // Luôn hiển thị ô chọn môn học khi sửa giáo viên đã có tổ
+                    if (teacherSubjectGroup) teacherSubjectGroup.style.display = 'block';
                 }
                 openModal(teacherModal);
             }
