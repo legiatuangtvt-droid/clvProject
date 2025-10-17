@@ -1601,6 +1601,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const saveBtn = document.getElementById('save-subject-btn');
         const subjectName = document.getElementById('subject-name-input').value.trim();
         const subjectType = document.getElementById('subject-type-select').value;
+        // Lấy và xử lý các phân môn
+        const subTypesInput = document.getElementById('subject-subtypes-input').value.trim();
+        const subTypes = subTypesInput ? subTypesInput.split(',').map(s => s.trim()).filter(s => s) : [];
 
         if (!subjectName) {
             showToast('Vui lòng nhập tên môn học.', 'error');
@@ -1618,7 +1621,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: subjectName,
                 type: subjectType,
                 status: 'active', // THÊM MỚI: Gán trạng thái hoạt động
-                schoolYear: currentSchoolYear
+                schoolYear: currentSchoolYear,
+                subTypes: subTypes // Thêm trường subTypes vào dữ liệu lưu
             };
 
             if (currentEditingId) { // Cập nhật
