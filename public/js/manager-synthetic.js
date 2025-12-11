@@ -649,9 +649,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const daySelect = document.getElementById('reg-day');
         const periodSelect = document.getElementById('reg-period');
 
-        // NEW: Hide equipment search button by default
-        document.getElementById('open-equipment-search-modal-btn').style.display = 'none';
-
         if (regId) {
             const reg = allRegistrations.find(r => r.id === regId); // Use allRegistrations to find it
             modalTeacherSelect.value = reg.teacherId;
@@ -662,17 +659,16 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('reg-lesson-name').value = reg.lessonName;
             document.getElementById('reg-equipment-input').value = reg.equipment?.join(', ') || '';
 
-            // NEW: Reset and hide equipment selection UI
-            document.getElementById('equipment-selection-container').style.display = 'none';
-
-            // NEW: Show equipment search button if TBDH is checked
-            if (reg.teachingMethod?.includes('Thiết bị dạy học')) {
-                document.getElementById('open-equipment-search-modal-btn').style.display = 'inline-block';
-            }
-
+            // NEW: Reset and hide equipment search button by default
+            const equipmentSearchBtn = document.getElementById('open-equipment-search-modal-btn');
+            equipmentSearchBtn.style.display = 'none';
             reg.teachingMethod?.forEach(method => {
                 const checkbox = document.querySelector(`#reg-method-container input[value="${method}"]`);
                 if (checkbox) checkbox.checked = true;
+                // NEW: Show equipment search button if TBDH is checked
+                if (method === 'Thiết bị dạy học') {
+                    equipmentSearchBtn.style.display = 'inline-block';
+                }
             });
 
             // Hiển thị và thiết lập bộ chọn tuần khi chỉnh sửa
@@ -709,6 +705,9 @@ document.addEventListener('DOMContentLoaded', () => {
             daySelect.disabled = false;
             periodSelect.disabled = false;
         } else {
+            // NEW: Hide equipment search button when creating new
+            document.getElementById('open-equipment-search-modal-btn').style.display = 'none';
+
             weekContainer.style.display = 'none'; // Ẩn bộ chọn tuần khi tạo mới
             populateDayAndPeriodSelectors(selectedWeekNumber); // Populate ngày cho tuần hiện tại
             if (date) daySelect.value = date;

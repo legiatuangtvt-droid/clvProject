@@ -543,6 +543,10 @@ const initializeTeacherRegisterPage = (user) => {
         document.getElementById('register-modal-title').textContent = regId ? 'Chỉnh sửa đăng ký' : 'Đăng ký sử dụng TBDH';
         
         if (regId) {
+            // NEW: Reset and hide equipment search button by default
+            const equipmentSearchBtn = document.getElementById('open-equipment-search-modal-btn');
+            equipmentSearchBtn.style.display = 'none';
+
             deleteBtn.style.display = 'inline-block'; // Hiển thị nút Xóa
             const reg = allRegistrations.find(r => r.id === regId);
             document.getElementById('reg-day').value = reg.date;
@@ -559,6 +563,11 @@ const initializeTeacherRegisterPage = (user) => {
             const selectedMethods = reg.teachingMethod || [];
             document.querySelectorAll('#reg-method-container input[type="checkbox"]').forEach(checkbox => {
                 checkbox.checked = selectedMethods.includes(checkbox.value);
+            });
+
+            // NEW: Show equipment search button if TBDH is checked
+            selectedMethods.forEach(method => {
+                if (method === 'Thiết bị dạy học') equipmentSearchBtn.style.display = 'inline-block';
             });
 
             // Hiển thị và thiết lập bộ chọn tuần khi chỉnh sửa
@@ -607,6 +616,9 @@ const initializeTeacherRegisterPage = (user) => {
             document.getElementById('reg-day').disabled = true;
             document.getElementById('reg-period').disabled = true;
             // Đặt môn học mặc định từ lần đăng ký trước
+            // NEW: Hide equipment search button when creating new
+            document.getElementById('open-equipment-search-modal-btn').style.display = 'none';
+
             const subjectToSelect = currentUserInfo.subject || lastUsedSubject;
             if (subjectToSelect) {
                 document.getElementById('reg-subject').value = subjectToSelect;
