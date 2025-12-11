@@ -400,8 +400,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         `Lớp: ${reg.className}`,
                         `Môn: ${reg.subject}`,
                         `Bài dạy: ${reg.lessonName}`,
-                        reg.labUsage?.status === 'occupied' ? `PHBM: ${reg.labUsage.labName}` : (reg.labUsage?.status === 'in_class' ? 'PHBM: Thực hành trên lớp' : ''),
-                        `Thiết bị: ${Array.isArray(reg.equipment) ? reg.equipment.join(', ') : ''}`,
+                        // NEW: Lấy thông tin PHBM từ trường equipment để đảm bảo hiển thị đúng tên phòng đã chọn
+                        (Array.isArray(reg.equipment) && reg.equipment.find(e => e.startsWith('Thực hành tại'))) 
+                            ? `PHBM: ${reg.equipment.find(e => e.startsWith('Thực hành tại')).replace('Thực hành tại ', '')}` 
+                            : (reg.labUsage?.status === 'in_class' ? 'PHBM: Thực hành trên lớp' : ''),
+                        `Thiết bị: ${Array.isArray(reg.equipment) ? reg.equipment.filter(e => !e.startsWith('Thực hành')).join('; ') : ''}`,
                         `PPDH: ${Array.isArray(reg.teachingMethod) ? reg.teachingMethod.join(', ') : ''}`,
                         reg.notes ? `Ghi chú: ${reg.notes}` : ''
                     ].filter(part => part).join('\n');

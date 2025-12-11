@@ -721,39 +721,52 @@ const initializeTeacherRegisterPage = (user) => {
 
         // --- LOGIC MỚI: KIỂM TRA PHÒNG HỌC BỘ MÔN KHI ĐĂNG KÝ THỰC HÀNH ---
         let labUsage = null; // 'occupied' | 'in_class' | null
+        const equipmentInput = document.getElementById('reg-equipment-input');
         const subject = document.getElementById('reg-subject').value;
-
+        
         if (selectedMethods.includes('Thực hành')) {
-            // 1. Kiểm tra xem có phòng thực hành cho môn này không
-            const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), limit(1));
+            // Query for labs associated with the subject
+            const labsQuery = query(collection(firestore, 'labs'), where('schoolYear', '==', currentSchoolYear), where('subject', '==', subject), orderBy('name'));
             const labsSnapshot = await getDocs(labsQuery);
-
-            if (!labsSnapshot.empty) {
-                const labData = { id: labsSnapshot.docs[0].id, ...labsSnapshot.docs[0].data() };
-
-                // 2. Kiểm tra xem phòng đã bị chiếm dụng trong slot này chưa
-                const occupiedQuery = query(
-                    collection(firestore, 'registrations'),
-                    where('date', '==', date),
-                    where('period', '==', period),
-                    where('labUsage.labId', '==', labData.id) // Kiểm tra xem có ai đã chiếm phòng này chưa
-                );
-                const occupiedSnapshot = await getDocs(occupiedQuery);
-
-                let isOccupied = false;
-                // Nếu đang sửa, bỏ qua chính đăng ký hiện tại
-                if (currentEditingRegId) {
-                    if (occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId)) {
-                        isOccupied = true;
+        
+            if (labsSnapshot.empty) {
+                labUsage = { status: 'in_class', reason: 'Môn học không có phòng thực hành riêng.' };
+            } else {
+                const allLabsForSubject = labsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Tìm xem người dùng đã chọn phòng nào từ textarea chưa (qua hàm handlePracticeCheckboxChange)
+                const userIntendedLabName = selectedEquipment.find(s => s.startsWith('Thực hành tại'))?.replace('Thực hành tại ', '');
+                const intendedLab = allLabsForSubject.find(lab => lab.name === userIntendedLabName);
+        
+                if (intendedLab) {
+                    // Người dùng đã chọn một phòng cụ thể, kiểm tra phòng đó
+                    const occupiedQuery = query(collection(firestore, 'registrations'), where('date', '==', date), where('period', '==', period), where('labUsage.labId', '==', intendedLab.id));
+                    const occupiedSnapshot = await getDocs(occupiedQuery);
+                    const isOccupied = occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId);
+        
+                    if (isOccupied) {
+                        labUsage = { status: 'in_class', reason: `Phòng thực hành ${intendedLab.name} đã được sử dụng.` };
+                    } else {
+                        labUsage = { status: 'occupied', labId: intendedLab.id, labName: intendedLab.name };
                     }
                 } else {
-                    isOccupied = !occupiedSnapshot.empty;
-                }
-
-                if (isOccupied) {
-                    labUsage = { status: 'in_class', reason: `Phòng thực hành ${labData.name} đã được sử dụng.` };
-                } else {
-                    labUsage = { status: 'occupied', labId: labData.id, labName: labData.name };
+                    // Người dùng chưa chọn phòng nào (hoặc chỉ ghi "Thực hành"), hệ thống sẽ tự tìm phòng trống
+                    let foundAvailableLab = false;
+                    for (const lab of allLabsForSubject) {
+                        const occupiedQuery = query(collection(firestore, 'registrations'), where('date', '==', date), where('period', '==', period), where('labUsage.labId', '==', lab.id));
+                        const occupiedSnapshot = await getDocs(occupiedQuery);
+                        if (!occupiedSnapshot.docs.some(doc => doc.id !== currentEditingRegId)) {
+                            labUsage = { status: 'occupied', labId: lab.id, labName: lab.name };
+                            // Tự động cập nhật lại textarea với tên phòng đúng
+                            const practiceText = `Thực hành tại ${lab.name}`;
+                            const otherEquipment = selectedEquipment.filter(item => !item.startsWith('Thực hành'));
+                            equipmentInput.value = [practiceText, ...otherEquipment].join('; ');
+                            foundAvailableLab = true;
+                            break; // Dừng lại khi tìm thấy phòng trống đầu tiên
+                        }
+                    }
+                    if (!foundAvailableLab) {
+                        labUsage = { status: 'in_class', reason: 'Tất cả phòng thực hành đã được sử dụng.' };
+                    }
                 }
             }
         }
