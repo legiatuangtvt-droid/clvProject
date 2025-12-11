@@ -404,7 +404,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         (Array.isArray(reg.equipment) && reg.equipment.find(e => e.startsWith('Thực hành tại'))) 
                             ? `PHBM: ${reg.equipment.find(e => e.startsWith('Thực hành tại')).replace('Thực hành tại ', '')}` 
                             : (reg.labUsage?.status === 'in_class' ? 'PHBM: Thực hành trên lớp' : ''),
-                        `Thiết bị: ${Array.isArray(reg.equipment) ? reg.equipment.filter(e => !e.startsWith('Thực hành')).join('; ') : ''}`,
+                        // NEW: Chỉ hiển thị dòng thiết bị nếu có thiết bị sau khi lọc
+                        (Array.isArray(reg.equipment) && reg.equipment.filter(e => !e.startsWith('Thực hành')).length > 0)
+                            ? `Thiết bị: ${reg.equipment.filter(e => !e.startsWith('Thực hành')).join('; ')}`
+                            : '',
                         `PPDH: ${Array.isArray(reg.teachingMethod) ? reg.teachingMethod.join(', ') : ''}`,
                         reg.notes ? `Ghi chú: ${reg.notes}` : ''
                     ].filter(part => part).join('\n');
