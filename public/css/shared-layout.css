@@ -1419,6 +1419,42 @@ textarea.form-control {
     color: var(--primary-hover);
 }
 
+/* --- NEW: Lab Selection Modal (Radio Button Group) --- */
+.radio-group-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.radio-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+.radio-item:hover {
+    background-color: var(--surface-hover-bg);
+    border-color: var(--secondary-color);
+}
+
+.radio-item input[type="radio"] {
+    margin-right: 12px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.radio-item:has(input:checked) {
+    border-color: var(--primary-color);
+    background-color: var(--primary-light);
+    box-shadow: 0 0 0 2px rgba(26, 188, 156, 0.2);
+}
+
 .form-row {
     display: flex;
     justify-content: space-between;
