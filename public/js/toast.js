@@ -71,3 +71,59 @@ export function setButtonLoading(button, isLoading, loadingText = '') {
         button.classList.remove('loading');
     }
 }
+
+/**
+ * Hiển thị một hộp thoại xác nhận (confirm) hoặc thông báo (alert) tùy chỉnh.
+ * @param {object} options - Các tùy chọn cho hộp thoại.
+ * @param {string} options.title - Tiêu đề của hộp thoại.
+ * @param {string} options.message - Nội dung thông báo.
+ * @param {string} [options.okText='Xác nhận'] - Chữ trên nút OK.
+ * @param {string|null} [options.cancelText='Hủy'] - Chữ trên nút Hủy. Nếu là null, nút Hủy sẽ bị ẩn.
+ * @param {string} [options.okClass='btn-save'] - Class CSS cho nút OK.
+ * @param {string} [options.cancelClass='btn-cancel'] - Class CSS cho nút Hủy.
+ * @returns {Promise<boolean>} - Promise sẽ resolve thành true nếu nhấn OK, false nếu nhấn Hủy hoặc đóng hộp thoại.
+ */
+export function showConfirm({
+    title = 'Xác nhận',
+    message = 'Bạn có chắc chắn?',
+    okText = 'Xác nhận',
+    cancelText = 'Hủy',
+    okClass = 'btn-save',
+    cancelClass = 'btn-cancel'
+}) {
+    return new Promise((resolve) => {
+        const existingModal = document.getElementById('clv-generic-confirm-modal');
+        if (existingModal) existingModal.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'clv-generic-confirm-modal';
+        modal.className = 'modal-overlay';
+        modal.style.display = 'flex';
+
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 450px;">
+                <h2>${title}</h2>
+                <p>${message}</p>
+                <div class="modal-actions">
+                    ${cancelText ? `<button id="clv-confirm-cancel" class="${cancelClass}">${cancelText}</button>` : ''}
+                    <button id="clv-confirm-ok" class="${okClass}">${okText}</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        const close = (result) => {
+            modal.remove();
+            resolve(result);
+        };
+
+        document.getElementById('clv-confirm-ok').addEventListener('click', () => close(true));
+        if (cancelText) {
+            document.getElementById('clv-confirm-cancel').addEventListener('click', () => close(false));
+        }
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal && cancelText) close(false);
+        });
+    });
+}

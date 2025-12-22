@@ -1,6 +1,7 @@
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-functions.js";
 import { signInWithCustomToken } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import { auth, functions } from './firebase-config.js';
+import { showToast, showConfirm } from './toast.js';
 
 const impersonationKey = 'impersonation_manager';
 
@@ -9,9 +10,15 @@ const impersonationKey = 'impersonation_manager';
  * @param {string} targetUid - UID của user muốn login vào
  */
 export async function loginAsUser(targetUid) {
-    if (!confirm("Bạn có chắc chắn muốn đăng nhập dưới quyền người dùng này? Hành động này sẽ được ghi lại và bạn có thể quay lại tài khoản của mình bất cứ lúc nào.")) {
-        return;
-    }
+    const confirmed = await showConfirm({
+        title: 'Xác nhận Giả danh',
+        message: 'Bạn có chắc chắn muốn đăng nhập dưới quyền người dùng này? Hành động này sẽ được ghi lại và bạn có thể quay lại tài khoản của mình bất cứ lúc nào.',
+        okText: 'Đăng nhập',
+        cancelText: 'Hủy',
+        okClass: 'btn-warning' // Sử dụng màu vàng để cảnh báo
+    });
+
+    if (!confirmed) return;
 
     try {
         // Hiển thị loading (tùy chọn)
@@ -40,15 +47,21 @@ export async function loginAsUser(targetUid) {
             // 3. Đăng nhập bằng Custom Token. Việc này sẽ tự động sign-out tài khoản Manager hiện tại.
             await signInWithCustomToken(auth, token);
             
-            alert("Đăng nhập giả danh thành công! Trang sẽ tải lại.");
+            showToast("Đăng nhập giả danh thành công! Trang sẽ tải lại.", 'success');
             // 4. Chuyển hướng về trang chủ hoặc dashboard tương ứng
-            window.location.href = "/"; 
+            setTimeout(() => window.location.href = "/", 1500);
         }
     } catch (error) {
         // Nếu có lỗi, xóa thông tin giả danh đã lưu
         sessionStorage.removeItem(impersonationKey);
         console.error("Lỗi giả danh:", error);
-        alert("Không thể giả danh: " + error.message);
+        // Thay thế alert bằng popup tùy chỉnh
+        await showConfirm({
+            title: 'Giả danh thất bại',
+            message: `Không thể giả danh người dùng. Lỗi: ${error.message}`,
+            okText: 'Đã hiểu',
+            cancelText: null // Ẩn nút Hủy để hoạt động như một alert
+        });
     }
 }
 
@@ -69,12 +82,12 @@ export async function stopImpersonating() {
         if (managerToken) {
             await signInWithCustomToken(auth, managerToken);
             sessionStorage.removeItem(impersonationKey);
-            alert("Đã quay lại tài khoản Manager thành công!");
+            showToast("Đã quay lại tài khoản Manager thành công!", 'success');
             window.location.reload();
         }
     } catch (error) {
         console.error("Lỗi khi thoát giả danh:", error);
-        alert("Không thể thoát chế độ giả danh: " + error.message);
+        showToast(`Không thể thoát chế độ giả danh: ${error.message}`, 'error');
     }
 }
 
