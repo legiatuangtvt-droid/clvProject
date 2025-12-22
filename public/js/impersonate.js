@@ -32,6 +32,7 @@ export async function loginAsUser(targetUid) {
         const managerInfo = {
             uid: manager.uid,
             displayName: manager.displayName || manager.email,
+            returnUrl: window.location.href // Lưu URL hiện tại để quay lại sau khi thoát
         };
         sessionStorage.setItem(impersonationKey, JSON.stringify(managerInfo));
 
@@ -81,9 +82,10 @@ export async function stopImpersonating() {
 
         if (managerToken) {
             await signInWithCustomToken(auth, managerToken);
+            const returnUrl = managerInfo.returnUrl || '/'; // Lấy URL đã lưu hoặc mặc định về trang chủ
             sessionStorage.removeItem(impersonationKey);
             showToast("Đã quay lại tài khoản Manager thành công!", 'success');
-            window.location.reload();
+            setTimeout(() => window.location.href = returnUrl, 1000);
         }
     } catch (error) {
         console.error("Lỗi khi thoát giả danh:", error);
