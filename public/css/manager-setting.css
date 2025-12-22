@@ -384,6 +384,18 @@
     color: #343a40;
 }
 
+/* Style cho nút giả danh */
+.teacher-item .item-actions .impersonate-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    color: #f39c12; /* Màu cam để phân biệt */
+}
+
+/* Chỉ hiện nút giả danh khi hover vào hàng */
+.teacher-item:hover .item-actions .impersonate-btn {
+    opacity: 1;
+}
+
 /* --- Danh sách giáo viên --- */
 .teacher-list {
     list-style: none;

@@ -2,6 +2,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy,
 import { firestore } from "./firebase-config.js";
 import { showToast, setButtonLoading } from "./toast.js";
 import { formatDate } from "./utils.js";
+import { loginAsUser } from './impersonate.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // Chỉ thực thi code nếu element chính tồn tại
@@ -834,7 +835,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const emailPart = teacher.email ? ` (${teacher.email})` : ''; // Chỉ thêm email nếu tồn tại
 
         return `
-            <li class="teacher-item" data-teacher-id="${teacher.id}">
+            <li class="teacher-item" data-teacher-id="${teacher.id}" data-teacher-uid="${teacher.uid}">
                 <div class="teacher-info">
                     <i class="fas fa-grip-vertical teacher-drag-handle"></i>
                     <span class="teacher-stt">${index + 1}.</span>
@@ -842,6 +843,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="teacher-subject">${subjectPart}</span>
                 </div>
                 <div class="item-actions teacher-actions">
+                    <button class="impersonate-btn" title="Đăng nhập với tư cách giáo viên này"><i class="fas fa-user-secret"></i></button>
                     <button class="delete-teacher-btn" title="Xóa"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </li>
@@ -1894,6 +1896,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             openModal(confirmDeleteModal);
+        }
+
+        // Xử lý nút Giả danh (Impersonate)
+        if (target.closest('.impersonate-btn')) {
+            const teacherItem = target.closest('.teacher-item');
+            const uid = teacherItem.dataset.teacherUid;
+            if (uid && uid !== 'null' && uid !== 'undefined') {
+                loginAsUser(uid);
+            } else {
+                showToast('Giáo viên này chưa được liên kết tài khoản (UID).', 'warning');
+            }
         }
 
         // Mở modal xác nhận xóa Giáo viên

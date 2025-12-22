@@ -2,6 +2,7 @@ import { onAuthStateChanged, signOut, updateProfile, updatePassword, EmailAuthPr
 import { doc, getDoc, updateDoc, collection, query, where, limit, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { auth, firestore } from './firebase-config.js';
 
+import { getManagerInfo, stopImpersonating } from './impersonate.js';
 import { showToast } from './toast.js';
 // 1. Bảo vệ trang: Kiểm tra trạng thái đăng nhập của người dùng
 onAuthStateChanged(auth, async (user) => {
@@ -11,6 +12,7 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = 'index.html';
   } else {
     // Nếu người dùng đã đăng nhập, lấy và hiển thị tên của họ
+    displayImpersonationBanner(user); // Hiển thị banner giả danh nếu có
     injectSharedElements(); // Chèn các thành phần dùng chung vào trang
     await displayUserName(user); // Hiển thị tên
     setupProfileFunctionality(user); // Thiết lập chức năng cho nút bút chì
@@ -18,6 +20,45 @@ onAuthStateChanged(auth, async (user) => {
     setupMenuToggle(); // Thêm hàm thiết lập cho menu
   }
 });
+
+/**
+ * Hiển thị một banner cảnh báo nếu đang trong chế độ giả danh.
+ * @param {object} impersonatedUser - Đối tượng user hiện tại (người đang bị giả danh).
+ */
+function displayImpersonationBanner(impersonatedUser) {
+    const managerInfo = getManagerInfo();
+    if (!managerInfo) return; // Không làm gì nếu không phải là giả danh
+
+    // Tạo banner
+    const banner = document.createElement('div');
+    banner.id = 'impersonation-banner';
+    banner.style.cssText = `
+        background-color: #d9534f;
+        color: white;
+        text-align: center;
+        padding: 10px;
+        font-size: 1rem;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+    `;
+    banner.innerHTML = `
+        <span><i class="fas fa-user-secret"></i> Bạn (${managerInfo.displayName}) đang đăng nhập với tư cách <strong>${impersonatedUser.displayName || impersonatedUser.email}</strong>.</span>
+        <button id="stop-impersonating-btn" style="background: #fff; color: #d9534f; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">Thoát chế độ giả danh</button>
+    `;
+
+    // Chèn banner vào đầu trang (Overlay - không đẩy nội dung xuống)
+    document.body.prepend(banner);
+
+    // Gắn sự kiện cho nút thoát
+    document.getElementById('stop-impersonating-btn').addEventListener('click', stopImpersonating);
+}
 
 // Hàm để lấy và hiển thị tên người dùng
 async function displayUserName(user) {

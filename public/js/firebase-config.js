@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebas
 import { getAuth } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js";
+import { getFunctions } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-functions.js";
 
 // Cấu hình Firebase của bạn
 const firebaseConfig = {
@@ -21,3 +22,4 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const firestore = getFirestore(app);
 export const storage = getStorage(app);
+export const functions = getFunctions(app);
