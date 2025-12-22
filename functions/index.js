@@ -1,32 +1,71 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
-const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
+const admin = require("firebase-admin");
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+admin.initializeApp();
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+/**
+ * Hàm Cloud Function để Manager giả danh người dùng khác.
+ * Đã được nâng cấp lên v2 để xử lý CORS.
+ * Input: { uid: string } - UID của người dùng cần giả danh.
+ * Output: { token: string } - Custom Token để đăng nhập.
+ */
+exports.impersonateUser = onCall({ cors: true }, async (request) => {
+  // 1. Kiểm tra xem người gọi đã đăng nhập chưa
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Yêu cầu đăng nhập để thực hiện chức năng này.');
+  }
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+  const callerUid = request.auth.uid;
+  const targetUid = request.data.uid;
+
+  if (!targetUid) {
+    throw new HttpsError('invalid-argument', 'Thiếu UID người dùng mục tiêu.');
+  }
+
+  // 2. Kiểm tra quyền Manager trong Firestore (Bảo mật 2 lớp)
+  // Mặc dù client có thể check, nhưng server phải check lại để tránh hack.
+  const callerDoc = await admin.firestore().collection('users').doc(callerUid).get();
+  
+  if (!callerDoc.exists || callerDoc.data().rule !== 'manager') {
+    throw new HttpsError('permission-denied', 'Chỉ tài khoản Manager mới có quyền giả danh.');
+  }
+
+  try {
+    // 3. Tạo Custom Token bằng Admin SDK, thêm custom claim để biết ai đang giả danh
+    const customToken = await admin.auth().createCustomToken(targetUid, {
+      impersonatedBy: callerUid,
+    });
+    logger.log(`Manager ${callerUid} created impersonation token for ${targetUid}`);
+    return { token: customToken };
+  } catch (error) {
+    logger.error("Error creating custom token:", error);
+    throw new HttpsError('internal', 'Không thể tạo token giả danh.');
+  }
+});
+
+/**
+ * Hàm Cloud Function để thoát khỏi chế độ giả danh.
+ * Hàm này kiểm tra custom claim 'impersonatedBy' trong token của người gọi.
+ * Output: { token: string } - Custom Token để đăng nhập lại tài khoản Manager.
+ */
+exports.revertImpersonation = onCall({ cors: true }, async (request) => {
+  // 1. Kiểm tra xem người gọi đã đăng nhập và có claim 'impersonatedBy' chưa
+  if (!request.auth || !request.auth.token.impersonatedBy) {
+    throw new HttpsError('permission-denied', 'Chỉ tài khoản đang được giả danh mới có thể gọi hàm này.');
+  }
+
+  const managerUid = request.auth.token.impersonatedBy;
+  const impersonatedUid = request.auth.uid;
+
+  logger.log(`User ${impersonatedUid} is reverting impersonation to manager ${managerUid}`);
+
+  try {
+    // 2. Tạo custom token cho Manager UID đã được lưu trong claim
+    const managerToken = await admin.auth().createCustomToken(managerUid);
+    return { token: managerToken };
+  } catch (error) {
+    logger.error("Error creating manager token for revert:", error);
+    throw new HttpsError('internal', 'Không thể tạo token để quay lại tài khoản Manager.');
+  }
+});
