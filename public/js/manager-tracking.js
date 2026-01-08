@@ -609,8 +609,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 currentSubject = primarySubject;
 
-                // Render hàng giáo viên với hiển thị môn dạy và tổ
-                tableHTML += `<tr data-teacher-uid="${uid}" data-group="${primarySubject}"><td>${teacher.teacherName} (${allSubjectsStr} - ${teacher.groupName})</td>`;
+                // Render hàng giáo viên
+                tableHTML += `<tr data-teacher-uid="${uid}" data-group="${primarySubject}"><td>${teacher.teacherName}</td>`;
                 sortedMethods.forEach(method => {
                     tableHTML += `<td class="count-cell" data-method="${method}">0</td>`;
                 });
