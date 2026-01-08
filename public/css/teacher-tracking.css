@@ -104,6 +104,22 @@
     border-top: 2px solid var(--border-color);
 }
 
+.report-table .group-total-row {
+    font-weight: 600;
+    background-color: #e2e8f0;
+    border-top: 2px solid #64748b;
+    border-bottom: 2px solid #64748b;
+}
+
+.report-table .group-total-row td {
+    text-align: center;
+    padding: 10px 15px;
+}
+
+.report-table .group-total-row td:first-child {
+    text-align: left;
+}
+
 /* Căn chỉnh các cột số liệu cho bảng cá nhân */
 .report-table td:nth-child(1), /* STT */
 .report-table td:nth-child(3), /* Số tiết */

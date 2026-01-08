@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const subjectFilterSelect = document.getElementById('subject-filter');
     const filterTypeSelect = document.getElementById('time-filter-type');
     const filterValueSelect = document.getElementById('time-filter-value');
+    const sortTypeSelect = document.getElementById('sort-type');
     const reportContainer = document.querySelector('.report-container');
 
     let currentSchoolYear = null;
@@ -29,6 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let allSubjects = [];
     let allHolidays = [];
     let pieChartInstance = null;
+    let cachedDetailedData = null;
+    let cachedMethodsTemplate = null;
 
     const initializePage = async () => {
         try {
@@ -384,8 +387,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const teacherId = data.teacherId;
                     if (!detailedData[teacherId]) {
                         const teacher = allTeachers.find(t => t.uid === teacherId);
+                        const teacherGroup = teacher ? allGroups.find(g => g.group_id === teacher.group_id) : null;
                         detailedData[teacherId] = {
                             teacherName: teacher ? teacher.teacher_name : 'N/A',
+                            groupName: teacherGroup ? teacherGroup.group_name : 'Không xác định',
                             methodCounts: { ...allMethodsTemplate },
                             total: 0
                         };
@@ -505,6 +510,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderDetailedReport = async (detailedData, allMethodsTemplate, methodTotals) => {
+        cachedDetailedData = detailedData;
+        cachedMethodsTemplate = allMethodsTemplate;
+
         if (!document.getElementById('detailed-report-table')) {
             await createDetailedReportStructure(detailedData, allMethodsTemplate);
         }
@@ -513,29 +521,103 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPieChart(methodTotals, sortedMethods);
     };
 
+    const sortTeachersData = (detailedData) => {
+        const sortType = sortTypeSelect.value;
+        const teachersArray = Object.entries(detailedData);
+
+        if (sortType === 'asc') {
+            return teachersArray.sort((a, b) => a[1].teacherName.localeCompare(b[1].teacherName));
+        } else if (sortType === 'desc') {
+            return teachersArray.sort((a, b) => b[1].teacherName.localeCompare(a[1].teacherName));
+        } else if (sortType === 'group') {
+            // Sắp xếp theo tổ chuyên môn, sau đó theo tên giáo viên
+            return teachersArray.sort((a, b) => {
+                const groupCompare = (a[1].groupName || '').localeCompare(b[1].groupName || '');
+                if (groupCompare !== 0) return groupCompare;
+                return a[1].teacherName.localeCompare(b[1].teacherName);
+            });
+        } else {
+            // Mặc định: sắp xếp theo tổng giảm dần
+            return teachersArray.sort((a, b) => b[1].total - a[1].total);
+        }
+    };
+
     const createDetailedReportStructure = async (detailedData, allMethodsTemplate) => {
         const sortedMethods = Object.keys(allMethodsTemplate).sort();
-        const sortedTeachers = Object.entries(detailedData)
-            .sort((a, b) => b[1].total - a[1].total);
+        const sortedTeachers = sortTeachersData(detailedData);
 
         if (sortedTeachers.length === 0) {
             reportContainer.innerHTML = '<p>Không có dữ liệu giáo viên.</p>';
             return;
         }
 
+        const sortType = sortTypeSelect.value;
         let tableHTML = `<h4 class="report-subtitle">Bảng thống kê chi tiết theo giáo viên</h4><table class="report-table"><thead><tr><th>Giáo viên</th>`;
         sortedMethods.forEach(method => {
             tableHTML += `<th>${method}</th>`;
         });
         tableHTML += `<th>Tổng cộng</th></tr></thead><tbody>`;
 
-        sortedTeachers.forEach(([uid, teacher]) => {
-            tableHTML += `<tr data-teacher-uid="${uid}"><td>${teacher.teacherName}</td>`;
-            sortedMethods.forEach(method => {
-                tableHTML += `<td class="count-cell" data-method="${method}">0</td>`;
+        if (sortType === 'group') {
+            // Render theo nhóm tổ chuyên môn
+            let currentGroup = null;
+            const groupTotals = {};
+
+            sortedTeachers.forEach(([uid, teacher]) => {
+                const groupName = teacher.groupName || 'Không xác định';
+
+                // Nếu đổi tổ, tạo dòng tổng cộng cho tổ trước đó
+                if (currentGroup && currentGroup !== groupName) {
+                    tableHTML += `<tr class="group-total-row"><td style="font-weight: bold;">${currentGroup} - Tổng cộng</td>`;
+                    sortedMethods.forEach(method => {
+                        tableHTML += `<td style="font-weight: bold;">${groupTotals[currentGroup][method] || 0}</td>`;
+                    });
+                    const groupTotal = Object.values(groupTotals[currentGroup]).reduce((sum, val) => sum + val, 0);
+                    tableHTML += `<td style="font-weight: bold;">${groupTotal}</td></tr>`;
+                }
+
+                // Khởi tạo group totals nếu chưa có
+                if (!groupTotals[groupName]) {
+                    groupTotals[groupName] = {};
+                    sortedMethods.forEach(method => {
+                        groupTotals[groupName][method] = 0;
+                    });
+                }
+
+                // Cộng dồn vào tổng của tổ
+                sortedMethods.forEach(method => {
+                    groupTotals[groupName][method] += teacher.methodCounts[method] || 0;
+                });
+
+                currentGroup = groupName;
+
+                // Render hàng giáo viên
+                tableHTML += `<tr data-teacher-uid="${uid}" data-group="${groupName}"><td>${teacher.teacherName}</td>`;
+                sortedMethods.forEach(method => {
+                    tableHTML += `<td class="count-cell" data-method="${method}">0</td>`;
+                });
+                tableHTML += `<td class="total-cell">0</td></tr>`;
             });
-            tableHTML += `<td class="total-cell">0</td></tr>`;
-        });
+
+            // Thêm tổng cộng cho tổ cuối cùng
+            if (currentGroup) {
+                tableHTML += `<tr class="group-total-row"><td style="font-weight: bold;">${currentGroup} - Tổng cộng</td>`;
+                sortedMethods.forEach(method => {
+                    tableHTML += `<td style="font-weight: bold;">${groupTotals[currentGroup][method] || 0}</td>`;
+                });
+                const groupTotal = Object.values(groupTotals[currentGroup]).reduce((sum, val) => sum + val, 0);
+                tableHTML += `<td style="font-weight: bold;">${groupTotal}</td></tr>`;
+            }
+        } else {
+            // Render bình thường
+            sortedTeachers.forEach(([uid, teacher]) => {
+                tableHTML += `<tr data-teacher-uid="${uid}"><td>${teacher.teacherName}</td>`;
+                sortedMethods.forEach(method => {
+                    tableHTML += `<td class="count-cell" data-method="${method}">0</td>`;
+                });
+                tableHTML += `<td class="total-cell">0</td></tr>`;
+            });
+        }
 
         tableHTML += `<tr class="total-row"><td>Tổng cộng</td>`;
         sortedMethods.forEach(method => {
@@ -561,8 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateDetailedReportData = (detailedData, allMethodsTemplate) => {
         const sortedMethods = Object.keys(allMethodsTemplate).sort();
-        const sortedTeachers = Object.entries(detailedData)
-            .sort((a, b) => b[1].total - a[1].total);
+        const sortedTeachers = sortTeachersData(detailedData);
 
         sortedTeachers.forEach(([uid, teacher]) => {
             const row = document.querySelector(`tr[data-teacher-uid="${uid}"]`);
@@ -671,6 +752,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     filterValueSelect.addEventListener('change', generateReport);
+
+    sortTypeSelect.addEventListener('change', async () => {
+        if (cachedDetailedData && cachedMethodsTemplate) {
+            // Tạo lại cấu trúc bảng với sắp xếp mới
+            await createDetailedReportStructure(cachedDetailedData, cachedMethodsTemplate);
+            updateDetailedReportData(cachedDetailedData, cachedMethodsTemplate);
+        }
+    });
 
     // Khởi tạo bộ lọc giáo viên ban đầu
     populateTeacherFilter('all');
