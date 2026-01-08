@@ -626,7 +626,7 @@ body {
     font-weight: 600;
     font-size: 0.9rem;
     color: var(--text-light);
-    background-color: var(--surface-subtle-bg);
+    background-color: var(--surface-bg);
     display: flex;
     align-items: center;
     border-right: 1px solid var(--border-color);
