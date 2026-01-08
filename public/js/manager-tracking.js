@@ -391,9 +391,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         detailedData[teacherId] = {
                             teacherName: teacher ? teacher.teacher_name : 'N/A',
                             groupName: teacherGroup ? teacherGroup.group_name : 'Không xác định',
+                            subjects: new Set(), // Tập hợp các môn dạy
                             methodCounts: { ...allMethodsTemplate },
                             total: 0
                         };
+                    }
+                    // Thêm môn học vào danh sách môn dạy của giáo viên
+                    if (data.subject) {
+                        detailedData[teacherId].subjects.add(data.subject);
                     }
                     data.teachingMethod.forEach(method => {
                         if (detailedData[teacherId].methodCounts.hasOwnProperty(method)) {
@@ -521,10 +526,12 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPieChart(methodTotals, sortedMethods);
     };
 
-    const extractSubjectFromGroup = (groupName) => {
-        // Tách các môn học trong tên tổ (ví dụ: "Vật Lý - CNCN" => ["Vật Lý", "CNCN"])
-        if (!groupName) return ['Không xác định'];
-        return groupName.split('-').map(s => s.trim()).filter(s => s.length > 0);
+    const getPrimarySubject = (teacher) => {
+        // Lấy môn dạy chính của giáo viên (môn đầu tiên trong danh sách)
+        if (teacher.subjects && teacher.subjects.size > 0) {
+            return Array.from(teacher.subjects).sort()[0];
+        }
+        return 'Không xác định';
     };
 
     const sortTeachersData = (detailedData) => {
@@ -536,12 +543,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (sortType === 'desc') {
             return teachersArray.sort((a, b) => b[1].teacherName.localeCompare(a[1].teacherName));
         } else if (sortType === 'group') {
-            // Sắp xếp theo môn học đầu tiên của tổ, sau đó theo tên giáo viên
+            // Sắp xếp theo môn dạy được phân công, sau đó theo tên giáo viên
             return teachersArray.sort((a, b) => {
-                const subjectsA = extractSubjectFromGroup(a[1].groupName);
-                const subjectsB = extractSubjectFromGroup(b[1].groupName);
-                const groupCompare = subjectsA[0].localeCompare(subjectsB[0]);
-                if (groupCompare !== 0) return groupCompare;
+                const subjectA = getPrimarySubject(a[1]);
+                const subjectB = getPrimarySubject(b[1]);
+                const subjectCompare = subjectA.localeCompare(subjectB);
+                if (subjectCompare !== 0) return subjectCompare;
                 return a[1].teacherName.localeCompare(b[1].teacherName);
             });
         } else {
@@ -567,14 +574,15 @@ document.addEventListener('DOMContentLoaded', () => {
         tableHTML += `<th>Tổng cộng</th></tr></thead><tbody>`;
 
         if (sortType === 'group') {
-            // Render theo nhóm môn học (tách các môn từ tên tổ)
+            // Render theo nhóm môn dạy được phân công
             let currentSubject = null;
             const subjectTotals = {};
 
             sortedTeachers.forEach(([uid, teacher]) => {
-                const groupName = teacher.groupName || 'Không xác định';
-                const subjects = extractSubjectFromGroup(groupName);
-                const primarySubject = subjects[0]; // Lấy môn đầu tiên làm môn chính
+                const primarySubject = getPrimarySubject(teacher);
+                const allSubjectsStr = teacher.subjects && teacher.subjects.size > 0
+                    ? Array.from(teacher.subjects).sort().join(', ')
+                    : 'Không xác định';
 
                 // Nếu đổi môn học, tạo dòng tổng cộng cho môn trước đó
                 if (currentSubject && currentSubject !== primarySubject) {
@@ -601,8 +609,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 currentSubject = primarySubject;
 
-                // Render hàng giáo viên với hiển thị tên tổ đầy đủ
-                tableHTML += `<tr data-teacher-uid="${uid}" data-group="${primarySubject}"><td>${teacher.teacherName} (${groupName})</td>`;
+                // Render hàng giáo viên với hiển thị môn dạy và tổ
+                tableHTML += `<tr data-teacher-uid="${uid}" data-group="${primarySubject}"><td>${teacher.teacherName} (${allSubjectsStr} - ${teacher.groupName})</td>`;
                 sortedMethods.forEach(method => {
                     tableHTML += `<td class="count-cell" data-method="${method}">0</td>`;
                 });
