@@ -15,7 +15,13 @@
 
 ### Deploy
 - Nhắc nhở deploy lên Firebase khi có screen/feature hoàn thiện
-- Sử dụng `firebase deploy` hoặc script deploy_clv.bat
+- Các lệnh deploy:
+  - `firebase deploy` - Deploy tất cả (hosting, functions, firestore, storage)
+  - `firebase deploy --only hosting` - Chỉ deploy hosting
+  - `firebase deploy --only functions` - Chỉ deploy functions
+  - `firebase deploy --only firestore` - Deploy rules và indexes
+  - `firebase deploy --only firestore:indexes` - Chỉ deploy indexes
+  - Script: `deploy_clv.bat`
 
 ## Cấu hình dự án Firebase
 
@@ -95,7 +101,12 @@ Dự án hoàn toàn sử dụng các dịch vụ của Firebase với project I
 ### Cấu trúc dự án
 - Frontend: HTML/CSS/JS trong `public/`
 - Backend: Cloud Functions trong `functions/`
-- Config: `firebase.json`, `firebase-config.js`
+- Config Firebase (đã được khởi tạo đầy đủ trên local):
+  - `firebase.json` - Cấu hình chính cho tất cả services
+  - `firebase-config.js` - Client-side Firebase config
+  - `firestore.rules` - Security rules cho Firestore
+  - `firestore.indexes.json` - 19 composite indexes (đã sync với server)
+  - `storage.rules` - Security rules cho Storage
 
 ### Tính năng chính theo module
 
@@ -103,10 +114,15 @@ Dự án hoàn toàn sử dụng các dịch vụ của Firebase với project I
    - Dashboard: `manager-main.js`
    - Quản lý thiết bị: `manager-device.js` (có upload Storage + QR code)
    - Cài đặt hệ thống: `manager-setting.js` (file lớn nhất)
-   - Báo cáo: `manager-report.js`
+   - Báo cáo: `manager-report.js` (Tổng = CNTT + TBDH + TH)
    - Quản lý bài thực hành: `manager-labs.js`
    - Quản lý giáo trình: `manager-syllabus.js`
    - Tổng hợp dữ liệu: `manager-synthetic.js`
+   - **Theo dõi & Tổng hợp: `manager-tracking.js` (MỚI)**
+     - Bộ lọc đa cấp: Tổ / Giáo viên / Môn học / Thời gian
+     - Hiển thị báo cáo tổng quan hoặc chi tiết
+     - Biểu đồ doughnut visualize PPDH
+     - Tự động loại trừ ngày nghỉ lễ
    - Giả danh người dùng: `impersonate.js`
 
 2. **Supervisory Module**
@@ -127,10 +143,19 @@ Dự án hoàn toàn sử dụng các dịch vụ của Firebase với project I
 
 ### Lưu ý bảo mật
 - Sử dụng Firebase Rules cho Firestore và Storage
-- Kiểm tra file `rules.txt` và `rules_storage.txt`
+- Files rules (đã được version control):
+  - `firestore.rules` (copy từ `rules.txt`)
+  - `storage.rules` (copy từ `rules_storage.txt`)
 - Cloud Functions có kiểm tra quyền Manager (2 lớp bảo mật)
 - Custom claims để theo dõi giả danh
 - SessionStorage cho trạng thái giả danh (không dùng localStorage)
+
+### Firestore Indexes
+- File: `firestore.indexes.json` (19 composite indexes)
+- Đã sync với Firebase server
+- Hỗ trợ query phức tạp cho tất cả modules
+- Collections có indexes: devices, groups, labs, registrations, subjects, teachers, teachingMethods
+- Deploy indexes: `firebase deploy --only firestore:indexes`
 
 ### Công cụ
 - Linter: `linter.js`, script `run-linter.bat`
@@ -139,6 +164,32 @@ Dự án hoàn toàn sử dụng các dịch vụ của Firebase với project I
 ### Files quan trọng cần lưu ý
 - `manager-setting.js`: File lớn nhất, chứa nhiều logic cài đặt
 - `manager-device.js`: Xử lý Storage, upload file, tạo QR code
+- `manager-report.js`: Báo cáo với công thức Tổng = CNTT + TBDH + TH
+- `manager-tracking.js`: Theo dõi chi tiết với bộ lọc đa cấp (MỚI)
 - `impersonate.js`: Tính năng giả danh độc đáo
 - `auth-guard.js`: Bảo vệ tất cả các trang, kiểm tra quyền
 - `functions/index.js`: Backend logic cho impersonation
+
+## Lịch sử cập nhật quan trọng
+
+### 2026-01-08
+1. **Tạo screen manager-tracking**
+   - Bộ lọc: Tổ chuyên môn / Giáo viên / Môn học / Thời gian
+   - Hiển thị: Báo cáo tổng quan + Chi tiết theo giáo viên
+   - Biểu đồ: Chart.js với doughnut chart
+   - Tự động loại trừ ngày nghỉ lễ
+
+2. **Sửa phương pháp tính Tổng trong manager-report**
+   - Trước: Tổng = Số lượt đăng ký
+   - Sau: Tổng = CNTT + TBDH + TH
+   - Label: "Tổng (lượt)"
+
+3. **Khởi tạo Firebase config đầy đủ trên local**
+   - Export indexes từ Firebase: 19 composite indexes
+   - Tạo `firestore.rules` và `storage.rules`
+   - Cập nhật `firebase.json` với cấu hình đầy đủ
+   - Deploy test thành công
+
+4. **Cập nhật .gitignore**
+   - Thêm `.claude/` (Claude Code config)
+   - Thêm `nul` (temp files)
