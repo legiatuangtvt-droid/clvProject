@@ -359,29 +359,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const methodCounts = { ...allMethodsTemplate };
             const detailedData = {};
 
-            // Nếu chọn môn học, lấy danh sách tất cả giáo viên dạy môn đó từ registrations
+            // Nếu chọn môn học, khởi tạo tất cả giáo viên được phân công dạy môn đó với giá trị 0
             if (selectedSubject !== 'all') {
-                const teachersSet = new Set();
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data.subject === selectedSubject && !isHoliday(data.date)) {
-                        teachersSet.add(data.teacherId);
-                    }
-                });
-
-                // Khởi tạo tất cả giáo viên dạy môn đó với giá trị 0
-                teachersSet.forEach(teacherId => {
-                    const teacher = allTeachers.find(t => t.uid === teacherId);
-                    if (teacher) {
-                        const teacherGroup = allGroups.find(g => g.group_id === teacher.group_id);
-                        detailedData[teacherId] = {
-                            teacherName: teacher.teacher_name,
-                            groupName: teacherGroup ? teacherGroup.group_name : 'Không xác định',
-                            subjects: new Set(),
-                            methodCounts: { ...allMethodsTemplate },
-                            total: 0
-                        };
-                    }
+                const assignedTeachers = allTeachers.filter(t => t.subject === selectedSubject);
+                assignedTeachers.forEach(teacher => {
+                    const teacherGroup = allGroups.find(g => g.group_id === teacher.group_id);
+                    detailedData[teacher.uid] = {
+                        teacherName: teacher.teacher_name,
+                        groupName: teacherGroup ? teacherGroup.group_name : 'Không xác định',
+                        subjects: new Set(),
+                        methodCounts: { ...allMethodsTemplate },
+                        total: 0
+                    };
                 });
             }
 
