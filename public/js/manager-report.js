@@ -262,16 +262,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Khởi tạo dữ liệu báo cáo với tất cả giáo viên và tổ chuyên môn
             const groupData = new Map();
             allGroups.forEach(group => {
-                groupData.set(group.group_id, { name: group.group_name, count: 0, cnttCount: 0, tbdhCount: 0, thCount: 0 });
+                groupData.set(group.group_id, { name: group.group_name, cnttCount: 0, tbdhCount: 0, thCount: 0 });
             });
  
             const teacherData = new Map();
             allTeachers.forEach(teacher => {
                 // Find group name for the teacher
                 const group = allGroups.find(g => g.group_id === teacher.group_id);
-                teacherData.set(teacher.uid, { 
-                    name: teacher.teacher_name, groupName: group ? group.group_name : 'N/A', 
-                    count: 0, cnttCount: 0, tbdhCount: 0, thCount: 0 
+                teacherData.set(teacher.uid, {
+                    name: teacher.teacher_name, groupName: group ? group.group_name : 'N/A',
+                    cnttCount: 0, tbdhCount: 0, thCount: 0
                 });
             });
 
@@ -306,7 +306,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Count for group
                 if (groupIdToCount && groupData.has(groupIdToCount)) {
                     const currentGroup = groupData.get(groupIdToCount);
-                    currentGroup.count++;
 
                     // Đếm PPDH cho tổ
                     if (reg.teachingMethod && Array.isArray(reg.teachingMethod)) {
@@ -325,7 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Count for teacher
                 if (teacherData.has(reg.teacherId)) {
                     const currentTeacher = teacherData.get(reg.teacherId);
-                    currentTeacher.count++;
 
                     // Đếm số lần sử dụng từng PPDH
                     if (reg.teachingMethod && Array.isArray(reg.teachingMethod)) {
@@ -355,17 +353,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderReport = (title, subtitle, groupData, teacherData, reportEndDate, holidayRegsCount) => {
         // --- Teacher Table ---
         let teacherTableRows = '';
-        let teacherTotalCount = 0;
         let teacherIndex = 1;
         // Khởi tạo biến tổng cho các cột PPDH
         let totalCntt = 0, totalTbdh = 0, totalTh = 0;
-        const sortedTeachers = [...teacherData.values()].sort((a, b) => b.count - a.count);
+
+        // Sắp xếp theo tổng (CNTT + TBDH + TH) giảm dần
+        const sortedTeachers = [...teacherData.values()].sort((a, b) => {
+            const totalA = a.cnttCount + a.tbdhCount + a.thCount;
+            const totalB = b.cnttCount + b.tbdhCount + b.thCount;
+            return totalB - totalA;
+        });
 
         sortedTeachers.forEach(teacher => {
             // Cộng dồn vào tổng PPDH
             totalCntt += teacher.cnttCount;
             totalTbdh += teacher.tbdhCount;
             totalTh += teacher.thCount;
+
+            // Tính tổng cho mỗi giáo viên = CNTT + TBDH + TH
+            const teacherTotal = teacher.cnttCount + teacher.tbdhCount + teacher.thCount;
 
             teacherTableRows += `
                 <tr>
@@ -375,28 +381,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td style="text-align: center;">${teacher.cnttCount}</td>
                     <td style="text-align: center;">${teacher.tbdhCount}</td>
                     <td style="text-align: center;">${teacher.thCount}</td>
-                    <td style="text-align: center; font-weight: bold;">${teacher.count}</td>
+                    <td style="text-align: center; font-weight: bold;">${teacherTotal}</td>
                     <td></td>
                 </tr>
             `;
-            teacherTotalCount += teacher.count;
         });
+
+        // Tổng = CNTT + TBDH + TH
+        const teacherTotalCount = totalCntt + totalTbdh + totalTh;
 
         // --- Group Table ---
         let groupTableRows = '';
-        let groupTotalCount = 0;
         let groupIndex = 1;
-        // NEW: Khởi tạo tổng cho các cột PPDH của tổ
+        // Khởi tạo tổng cho các cột PPDH của tổ
         let groupTotalCntt = 0, groupTotalTbdh = 0, groupTotalTh = 0;
 
-        // Sắp xếp các tổ theo tổng số lượt đăng ký giảm dần
-        const sortedGroupsData = [...groupData.values()].sort((a, b) => b.count - a.count);
+        // Sắp xếp các tổ theo tổng (CNTT + TBDH + TH) giảm dần
+        const sortedGroupsData = [...groupData.values()].sort((a, b) => {
+            const totalA = a.cnttCount + a.tbdhCount + a.thCount;
+            const totalB = b.cnttCount + b.tbdhCount + b.thCount;
+            return totalB - totalA;
+        });
 
         sortedGroupsData.forEach(group => {
             // Cộng dồn vào tổng PPDH của tổ
             groupTotalCntt += group.cnttCount;
             groupTotalTbdh += group.tbdhCount;
             groupTotalTh += group.thCount;
+
+            // Tính tổng cho mỗi tổ = CNTT + TBDH + TH
+            const groupTotal = group.cnttCount + group.tbdhCount + group.thCount;
 
             groupTableRows += `
                 <tr>
@@ -405,12 +419,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td style="text-align: center;">${group.cnttCount}</td>
                     <td style="text-align: center;">${group.tbdhCount}</td>
                     <td style="text-align: center;">${group.thCount}</td>
-                    <td style="text-align: center; font-weight: bold;">${group.count}</td>
+                    <td style="text-align: center; font-weight: bold;">${groupTotal}</td>
                     <td></td>
                 </tr>
             `;
-            groupTotalCount += group.count;
         });
+
+        // Tổng = CNTT + TBDH + TH
+        const groupTotalCount = groupTotalCntt + groupTotalTbdh + groupTotalTh;
 
 
         const [year, month, day] = reportEndDate.split('-');
@@ -449,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <th rowspan="2" style="width: 25%;">Giáo viên</th>
                         <th rowspan="2" style="width: 25%;">Tổ chuyên môn</th>
                         <th colspan="3">PPDH</th>
-                        <th rowspan="2" style="width: 10%;">Tổng</th>
+                        <th rowspan="2" style="width: 10%;">Tổng (lượt)</th>
                         <th rowspan="2" style="width: 15%;">Ghi chú</th>
                     </tr>
                     <tr>
@@ -478,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <th rowspan="2" style="width: 5%;">STT</th>
                         <th rowspan="2" style="width: 45%;">Tổ chuyên môn</th>
                         <th colspan="3">PPDH</th>
-                        <th rowspan="2" style="width: 10%;">Tổng</th>
+                        <th rowspan="2" style="width: 10%;">Tổng (lượt)</th>
                         <th rowspan="2" style="width: 15%;">Ghi chú</th>
                     </tr>
                     <tr>
