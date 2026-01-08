@@ -142,6 +142,29 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "schoolYear",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "teacherId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "registrations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "teacherId",
           "order": "ASCENDING"
         },
