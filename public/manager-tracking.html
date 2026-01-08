@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theo dõi & Tổng hợp</title>
+    <link rel="stylesheet" href="css/shared-layout.css">
+    <link rel="stylesheet" href="css/teacher-tracking.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Thư viện biểu đồ và plugin hiển thị nhãn dữ liệu -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <link rel="icon" href="images/magnetic.png" type="image/png">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Menu -->
+        <nav class="sidebar">
+            <ul class="menu-links">
+                <li><a href="manager-main.html" class="nav-link"><i class="fas fa-home"></i><span>Main</span></a></li>
+                <li><a href="manager-setting.html" class="nav-link"><i class="fas fa-calendar-alt"></i><span>Quản lý thông tin năm học</span></a></li>
+                <li><a href="manager-syllabus.html" class="nav-link"><i class="fas fa-book-open"></i><span>Phân phối chương trình</span></a></li>
+                <li><a href="manager-device.html" class="nav-link"><i class="fas fa-desktop"></i><span>Danh mục thiết bị</span></a></li>
+                <li><a href="manager-labs.html" class="nav-link"><i class="fas fa-flask"></i><span>Phòng học bộ môn</span></a></li>
+                <li><a href="manager-synthetic.html" class="nav-link"><i class="fas fa-chart-pie"></i><span>Tổng hợp</span></a></li>
+                <li><a href="manager-report.html" class="nav-link"><i class="fas fa-file-alt"></i><span>Báo cáo</span></a></li>
+                <li><a href="manager-tracking.html" class="nav-link active"><i class="fas fa-chart-line"></i><span>Theo dõi & Tổng hợp</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Wrapper -->
+        <div class="content-wrapper">
+            <div class="top-bar">
+                <h1>Theo dõi & Tổng hợp</h1>
+                <div class="top-bar-actions">
+                    <div class="user-info">
+                        <span>Chào, <span id="user-name">Manager</span>!</span>
+                        <button id="edit-profile-button" class="icon-button" title="Chỉnh sửa thông tin">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                    </div>
+                    <button id="logout-button" class="logout-button">Đăng xuất</button>
+                </div>
+            </div>
+            <main class="main-content">
+                <div class="content-card">
+                    <div class="page-header">
+                        <div class="filter-controls">
+                            <!-- Bộ lọc Tổ chuyên môn -->
+                            <div class="filter-group">
+                                <label for="group-filter">Tổ chuyên môn:</label>
+                                <select id="group-filter" class="filter-select">
+                                    <option value="all">Tất cả</option>
+                                </select>
+                            </div>
+                            <!-- Bộ lọc Giáo viên -->
+                            <div class="filter-group">
+                                <label for="teacher-filter">Giáo viên:</label>
+                                <select id="teacher-filter" class="filter-select">
+                                    <option value="all">Tất cả</option>
+                                </select>
+                            </div>
+                            <!-- Bộ lọc Môn học -->
+                            <div class="filter-group">
+                                <label for="subject-filter">Môn học:</label>
+                                <select id="subject-filter" class="filter-select">
+                                    <option value="all">Tất cả</option>
+                                </select>
+                            </div>
+                            <!-- Bộ lọc Thời gian -->
+                            <div class="filter-group">
+                                <label for="time-filter-type">Thống kê theo:</label>
+                                <select id="time-filter-type" class="filter-select">
+                                    <option value="week">Tuần</option>
+                                    <option value="month">Tháng</option>
+                                    <option value="semester">Học kỳ</option>
+                                    <option value="year">Năm học</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="time-filter-value">Chọn giá trị:</label>
+                                <select id="time-filter-value" class="filter-select">
+                                    <option value="all">Tất cả</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="report-container">
+                        <p class="instruction-text"><i class="fas fa-info-circle"></i> Chọn bộ lọc và khoảng thời gian để xem báo cáo chi tiết.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="js/auth-guard.js"></script>
+    <script type="module" src="js/manager-nav.js"></script>
+    <script type="module" src="js/toast.js"></script>
+    <script type="module" src="js/manager-tracking.js"></script>
+</body>
+</html>
