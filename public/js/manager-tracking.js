@@ -356,6 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const snapshot = await getDocs(regsQuery);
 
             let holidayRegsCount = 0;
+            let filteredBySubjectCount = 0;
             const methodCounts = { ...allMethodsTemplate };
             const detailedData = {}; // Dữ liệu chi tiết theo giáo viên
 
@@ -370,6 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Áp dụng bộ lọc môn học
                 if (selectedSubject !== 'all' && data.subject !== selectedSubject) {
+                    filteredBySubjectCount++;
                     return;
                 }
 
@@ -415,7 +417,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (Object.keys(detailedData).length > 0) {
                 await renderDetailedReport(detailedData, allMethodsTemplate, methodCounts);
             } else {
-                reportContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>';
+                let message = 'Không có dữ liệu để hiển thị.';
+                if (snapshot.size > 0) {
+                    if (filteredBySubjectCount > 0) {
+                        message += ` (Đã loại bỏ ${filteredBySubjectCount} tiết do không khớp môn học)`;
+                    }
+                    if (holidayRegsCount === snapshot.size) {
+                        message = 'Tất cả các tiết dạy trong khoảng thời gian này đều rơi vào ngày nghỉ.';
+                    }
+                } else {
+                    message = 'Không có dữ liệu đăng ký trong khoảng thời gian này.';
+                }
+                reportContainer.innerHTML = `<p>${message}</p>`;
             }
 
         } catch (error) {
