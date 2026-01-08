@@ -116,10 +116,6 @@
     padding: 10px 15px;
 }
 
-.report-table .group-total-row td:first-child {
-    text-align: left;
-}
-
 /* Căn chỉnh các cột số liệu cho bảng cá nhân */
 .report-table td:nth-child(1), /* STT */
 .report-table td:nth-child(3), /* Số tiết */

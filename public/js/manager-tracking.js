@@ -586,12 +586,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Nếu đổi môn học, tạo dòng tổng cộng cho môn trước đó
                 if (currentSubject && currentSubject !== primarySubject) {
-                    tableHTML += `<tr class="group-total-row"><td style="font-weight: bold;">${currentSubject} - Tổng cộng</td>`;
+                    tableHTML += `<tr class="group-total-row"><td>${currentSubject} - Tổng cộng</td>`;
                     sortedMethods.forEach(method => {
-                        tableHTML += `<td style="font-weight: bold;">${subjectTotals[currentSubject][method] || 0}</td>`;
+                        tableHTML += `<td>${subjectTotals[currentSubject][method] || 0}</td>`;
                     });
                     const subjectTotal = Object.values(subjectTotals[currentSubject]).reduce((sum, val) => sum + val, 0);
-                    tableHTML += `<td style="font-weight: bold;">${subjectTotal}</td></tr>`;
+                    tableHTML += `<td>${subjectTotal}</td></tr>`;
                 }
 
                 // Khởi tạo subject totals nếu chưa có
@@ -619,12 +619,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Thêm tổng cộng cho môn cuối cùng
             if (currentSubject) {
-                tableHTML += `<tr class="group-total-row"><td style="font-weight: bold;">${currentSubject} - Tổng cộng</td>`;
+                tableHTML += `<tr class="group-total-row"><td>${currentSubject} - Tổng cộng</td>`;
                 sortedMethods.forEach(method => {
-                    tableHTML += `<td style="font-weight: bold;">${subjectTotals[currentSubject][method] || 0}</td>`;
+                    tableHTML += `<td>${subjectTotals[currentSubject][method] || 0}</td>`;
                 });
                 const subjectTotal = Object.values(subjectTotals[currentSubject]).reduce((sum, val) => sum + val, 0);
-                tableHTML += `<td style="font-weight: bold;">${subjectTotal}</td></tr>`;
+                tableHTML += `<td>${subjectTotal}</td></tr>`;
             }
         } else {
             // Render bình thường
