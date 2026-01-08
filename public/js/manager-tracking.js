@@ -382,42 +382,40 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                // Đếm chi tiết theo giáo viên (nếu cần)
-                if (selectedGroupId !== 'all' || selectedTeacherId === 'all') {
-                    const teacherId = data.teacherId;
-                    if (!detailedData[teacherId]) {
-                        const teacher = allTeachers.find(t => t.uid === teacherId);
-                        const teacherGroup = teacher ? allGroups.find(g => g.group_id === teacher.group_id) : null;
-                        detailedData[teacherId] = {
-                            teacherName: teacher ? teacher.teacher_name : 'N/A',
-                            groupName: teacherGroup ? teacherGroup.group_name : 'Không xác định',
-                            subjects: new Set(), // Tập hợp các môn dạy
-                            methodCounts: { ...allMethodsTemplate },
-                            total: 0
-                        };
-                    }
-                    // Thêm môn học vào danh sách môn dạy của giáo viên
-                    if (data.subject) {
-                        detailedData[teacherId].subjects.add(data.subject);
-                    }
-                    data.teachingMethod.forEach(method => {
-                        if (detailedData[teacherId].methodCounts.hasOwnProperty(method)) {
-                            detailedData[teacherId].methodCounts[method]++;
-                            detailedData[teacherId].total++;
-                        }
-                    });
+                // Đếm chi tiết theo giáo viên (luôn luôn đếm)
+                const teacherId = data.teacherId;
+                if (!detailedData[teacherId]) {
+                    const teacher = allTeachers.find(t => t.uid === teacherId);
+                    const teacherGroup = teacher ? allGroups.find(g => g.group_id === teacher.group_id) : null;
+                    detailedData[teacherId] = {
+                        teacherName: teacher ? teacher.teacher_name : 'N/A',
+                        groupName: teacherGroup ? teacherGroup.group_name : 'Không xác định',
+                        subjects: new Set(), // Tập hợp các môn dạy
+                        methodCounts: { ...allMethodsTemplate },
+                        total: 0
+                    };
                 }
+                // Thêm môn học vào danh sách môn dạy của giáo viên
+                if (data.subject) {
+                    detailedData[teacherId].subjects.add(data.subject);
+                }
+                data.teachingMethod.forEach(method => {
+                    if (detailedData[teacherId].methodCounts.hasOwnProperty(method)) {
+                        detailedData[teacherId].methodCounts[method]++;
+                        detailedData[teacherId].total++;
+                    }
+                });
             });
 
             if (holidayRegsCount > 0) {
                 showToast(`Đã loại trừ ${holidayRegsCount} tiết dạy trong ngày nghỉ.`, 'info');
             }
 
-            // 4. Render báo cáo
-            if (Object.keys(detailedData).length > 0 && selectedTeacherId === 'all') {
+            // 4. Render báo cáo (luôn dùng bảng chi tiết theo giáo viên)
+            if (Object.keys(detailedData).length > 0) {
                 await renderDetailedReport(detailedData, allMethodsTemplate, methodCounts);
             } else {
-                await renderSummaryReport(methodCounts);
+                reportContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>';
             }
 
         } catch (error) {
