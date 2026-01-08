@@ -359,7 +359,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const methodCounts = { ...allMethodsTemplate };
             const detailedData = {};
 
-            // 3. Xử lý dữ liệu - Thu thập thông tin giáo viên từ registrations
+            // Nếu chọn môn học, lấy danh sách tất cả giáo viên dạy môn đó từ registrations
+            if (selectedSubject !== 'all') {
+                const teachersSet = new Set();
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.subject === selectedSubject && !isHoliday(data.date)) {
+                        teachersSet.add(data.teacherId);
+                    }
+                });
+
+                // Khởi tạo tất cả giáo viên dạy môn đó với giá trị 0
+                teachersSet.forEach(teacherId => {
+                    const teacher = allTeachers.find(t => t.uid === teacherId);
+                    if (teacher) {
+                        const teacherGroup = allGroups.find(g => g.group_id === teacher.group_id);
+                        detailedData[teacherId] = {
+                            teacherName: teacher.teacher_name,
+                            groupName: teacherGroup ? teacherGroup.group_name : 'Không xác định',
+                            subjects: new Set(),
+                            methodCounts: { ...allMethodsTemplate },
+                            total: 0
+                        };
+                    }
+                });
+            }
+
+            // 3. Xử lý dữ liệu - Cập nhật số liệu từ registrations
             snapshot.forEach(doc => {
                 const data = doc.data();
 
@@ -377,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const teacherId = data.teacherId;
 
-                // Khởi tạo giáo viên nếu chưa có
+                // Khởi tạo giáo viên nếu chưa có (cho trường hợp không chọn môn học)
                 if (!detailedData[teacherId]) {
                     const teacher = allTeachers.find(t => t.uid === teacherId);
                     const teacherGroup = teacher ? allGroups.find(g => g.group_id === teacher.group_id) : null;
