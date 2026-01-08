@@ -527,8 +527,26 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getPrimarySubject = (teacher) => {
-        // Lấy môn dạy chính của giáo viên (môn đầu tiên trong danh sách)
+        // Danh sách các môn phụ cần loại trừ
+        const excludedSubjects = [
+            'Hoạt động trải nghiệm',
+            'Giáo dục thể chất',
+            'Giáo dục quốc phòng và an ninh',
+            'Giáo dục địa phương'
+        ];
+
+        // Lấy môn dạy chính của giáo viên (lọc bỏ các môn phụ)
         if (teacher.subjects && teacher.subjects.size > 0) {
+            const mainSubjects = Array.from(teacher.subjects)
+                .filter(subject => !excludedSubjects.includes(subject))
+                .sort();
+
+            // Nếu có môn chính, trả về môn đầu tiên
+            if (mainSubjects.length > 0) {
+                return mainSubjects[0];
+            }
+
+            // Nếu chỉ có môn phụ, vẫn trả về môn đầu tiên
             return Array.from(teacher.subjects).sort()[0];
         }
         return 'Không xác định';
