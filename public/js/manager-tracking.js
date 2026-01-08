@@ -521,6 +521,12 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPieChart(methodTotals, sortedMethods);
     };
 
+    const extractSubjectFromGroup = (groupName) => {
+        // Tách các môn học trong tên tổ (ví dụ: "Vật Lý - CNCN" => ["Vật Lý", "CNCN"])
+        if (!groupName) return ['Không xác định'];
+        return groupName.split('-').map(s => s.trim()).filter(s => s.length > 0);
+    };
+
     const sortTeachersData = (detailedData) => {
         const sortType = sortTypeSelect.value;
         const teachersArray = Object.entries(detailedData);
@@ -530,9 +536,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (sortType === 'desc') {
             return teachersArray.sort((a, b) => b[1].teacherName.localeCompare(a[1].teacherName));
         } else if (sortType === 'group') {
-            // Sắp xếp theo tổ chuyên môn, sau đó theo tên giáo viên
+            // Sắp xếp theo môn học đầu tiên của tổ, sau đó theo tên giáo viên
             return teachersArray.sort((a, b) => {
-                const groupCompare = (a[1].groupName || '').localeCompare(b[1].groupName || '');
+                const subjectsA = extractSubjectFromGroup(a[1].groupName);
+                const subjectsB = extractSubjectFromGroup(b[1].groupName);
+                const groupCompare = subjectsA[0].localeCompare(subjectsB[0]);
                 if (groupCompare !== 0) return groupCompare;
                 return a[1].teacherName.localeCompare(b[1].teacherName);
             });
@@ -559,54 +567,56 @@ document.addEventListener('DOMContentLoaded', () => {
         tableHTML += `<th>Tổng cộng</th></tr></thead><tbody>`;
 
         if (sortType === 'group') {
-            // Render theo nhóm tổ chuyên môn
-            let currentGroup = null;
-            const groupTotals = {};
+            // Render theo nhóm môn học (tách các môn từ tên tổ)
+            let currentSubject = null;
+            const subjectTotals = {};
 
             sortedTeachers.forEach(([uid, teacher]) => {
                 const groupName = teacher.groupName || 'Không xác định';
+                const subjects = extractSubjectFromGroup(groupName);
+                const primarySubject = subjects[0]; // Lấy môn đầu tiên làm môn chính
 
-                // Nếu đổi tổ, tạo dòng tổng cộng cho tổ trước đó
-                if (currentGroup && currentGroup !== groupName) {
-                    tableHTML += `<tr class="group-total-row"><td style="font-weight: bold;">${currentGroup} - Tổng cộng</td>`;
+                // Nếu đổi môn học, tạo dòng tổng cộng cho môn trước đó
+                if (currentSubject && currentSubject !== primarySubject) {
+                    tableHTML += `<tr class="group-total-row"><td style="font-weight: bold;">${currentSubject} - Tổng cộng</td>`;
                     sortedMethods.forEach(method => {
-                        tableHTML += `<td style="font-weight: bold;">${groupTotals[currentGroup][method] || 0}</td>`;
+                        tableHTML += `<td style="font-weight: bold;">${subjectTotals[currentSubject][method] || 0}</td>`;
                     });
-                    const groupTotal = Object.values(groupTotals[currentGroup]).reduce((sum, val) => sum + val, 0);
-                    tableHTML += `<td style="font-weight: bold;">${groupTotal}</td></tr>`;
+                    const subjectTotal = Object.values(subjectTotals[currentSubject]).reduce((sum, val) => sum + val, 0);
+                    tableHTML += `<td style="font-weight: bold;">${subjectTotal}</td></tr>`;
                 }
 
-                // Khởi tạo group totals nếu chưa có
-                if (!groupTotals[groupName]) {
-                    groupTotals[groupName] = {};
+                // Khởi tạo subject totals nếu chưa có
+                if (!subjectTotals[primarySubject]) {
+                    subjectTotals[primarySubject] = {};
                     sortedMethods.forEach(method => {
-                        groupTotals[groupName][method] = 0;
+                        subjectTotals[primarySubject][method] = 0;
                     });
                 }
 
-                // Cộng dồn vào tổng của tổ
+                // Cộng dồn vào tổng của môn học
                 sortedMethods.forEach(method => {
-                    groupTotals[groupName][method] += teacher.methodCounts[method] || 0;
+                    subjectTotals[primarySubject][method] += teacher.methodCounts[method] || 0;
                 });
 
-                currentGroup = groupName;
+                currentSubject = primarySubject;
 
-                // Render hàng giáo viên
-                tableHTML += `<tr data-teacher-uid="${uid}" data-group="${groupName}"><td>${teacher.teacherName}</td>`;
+                // Render hàng giáo viên với hiển thị tên tổ đầy đủ
+                tableHTML += `<tr data-teacher-uid="${uid}" data-group="${primarySubject}"><td>${teacher.teacherName} (${groupName})</td>`;
                 sortedMethods.forEach(method => {
                     tableHTML += `<td class="count-cell" data-method="${method}">0</td>`;
                 });
                 tableHTML += `<td class="total-cell">0</td></tr>`;
             });
 
-            // Thêm tổng cộng cho tổ cuối cùng
-            if (currentGroup) {
-                tableHTML += `<tr class="group-total-row"><td style="font-weight: bold;">${currentGroup} - Tổng cộng</td>`;
+            // Thêm tổng cộng cho môn cuối cùng
+            if (currentSubject) {
+                tableHTML += `<tr class="group-total-row"><td style="font-weight: bold;">${currentSubject} - Tổng cộng</td>`;
                 sortedMethods.forEach(method => {
-                    tableHTML += `<td style="font-weight: bold;">${groupTotals[currentGroup][method] || 0}</td>`;
+                    tableHTML += `<td style="font-weight: bold;">${subjectTotals[currentSubject][method] || 0}</td>`;
                 });
-                const groupTotal = Object.values(groupTotals[currentGroup]).reduce((sum, val) => sum + val, 0);
-                tableHTML += `<td style="font-weight: bold;">${groupTotal}</td></tr>`;
+                const subjectTotal = Object.values(subjectTotals[currentSubject]).reduce((sum, val) => sum + val, 0);
+                tableHTML += `<td style="font-weight: bold;">${subjectTotal}</td></tr>`;
             }
         } else {
             // Render bình thường
