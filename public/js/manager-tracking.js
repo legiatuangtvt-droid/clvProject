@@ -358,7 +358,30 @@ document.addEventListener('DOMContentLoaded', () => {
             let holidayRegsCount = 0;
             let filteredBySubjectCount = 0;
             const methodCounts = { ...allMethodsTemplate };
-            const detailedData = {}; // Dữ liệu chi tiết theo giáo viên
+
+            // Khởi tạo detailedData với tất cả giáo viên (dựa trên bộ lọc)
+            const detailedData = {};
+            let teachersToShow = allTeachers;
+
+            if (selectedTeacherId !== 'all') {
+                // Chỉ hiển thị giáo viên được chọn
+                teachersToShow = allTeachers.filter(t => t.uid === selectedTeacherId);
+            } else if (selectedGroupId !== 'all') {
+                // Chỉ hiển thị giáo viên trong tổ được chọn
+                teachersToShow = allTeachers.filter(t => t.group_id === selectedGroupId);
+            }
+
+            // Khởi tạo dữ liệu cho tất cả giáo viên
+            teachersToShow.forEach(teacher => {
+                const teacherGroup = allGroups.find(g => g.group_id === teacher.group_id);
+                detailedData[teacher.uid] = {
+                    teacherName: teacher.teacher_name,
+                    groupName: teacherGroup ? teacherGroup.group_name : 'Không xác định',
+                    subjects: new Set(),
+                    methodCounts: { ...allMethodsTemplate },
+                    total: 0
+                };
+            });
 
             // 3. Xử lý dữ liệu
             snapshot.forEach(doc => {
@@ -384,29 +407,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                // Đếm chi tiết theo giáo viên (luôn luôn đếm)
+                // Đếm chi tiết theo giáo viên
                 const teacherId = data.teacherId;
-                if (!detailedData[teacherId]) {
-                    const teacher = allTeachers.find(t => t.uid === teacherId);
-                    const teacherGroup = teacher ? allGroups.find(g => g.group_id === teacher.group_id) : null;
-                    detailedData[teacherId] = {
-                        teacherName: teacher ? teacher.teacher_name : 'N/A',
-                        groupName: teacherGroup ? teacherGroup.group_name : 'Không xác định',
-                        subjects: new Set(), // Tập hợp các môn dạy
-                        methodCounts: { ...allMethodsTemplate },
-                        total: 0
-                    };
-                }
-                // Thêm môn học vào danh sách môn dạy của giáo viên
-                if (data.subject) {
-                    detailedData[teacherId].subjects.add(data.subject);
-                }
-                data.teachingMethod.forEach(method => {
-                    if (detailedData[teacherId].methodCounts.hasOwnProperty(method)) {
-                        detailedData[teacherId].methodCounts[method]++;
-                        detailedData[teacherId].total++;
+                if (detailedData[teacherId]) {
+                    // Chỉ cập nhật nếu giáo viên đã có trong detailedData
+                    // Thêm môn học vào danh sách môn dạy của giáo viên
+                    if (data.subject) {
+                        detailedData[teacherId].subjects.add(data.subject);
                     }
-                });
+                    data.teachingMethod.forEach(method => {
+                        if (detailedData[teacherId].methodCounts.hasOwnProperty(method)) {
+                            detailedData[teacherId].methodCounts[method]++;
+                            detailedData[teacherId].total++;
+                        }
+                    });
+                }
             });
 
             if (holidayRegsCount > 0) {
@@ -416,19 +431,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // 4. Render báo cáo (luôn dùng bảng chi tiết theo giáo viên)
             if (Object.keys(detailedData).length > 0) {
                 await renderDetailedReport(detailedData, allMethodsTemplate, methodCounts);
-            } else {
-                let message = 'Không có dữ liệu để hiển thị.';
-                if (snapshot.size > 0) {
-                    if (filteredBySubjectCount > 0) {
-                        message += ` (Đã loại bỏ ${filteredBySubjectCount} tiết do không khớp môn học)`;
-                    }
-                    if (holidayRegsCount === snapshot.size) {
-                        message = 'Tất cả các tiết dạy trong khoảng thời gian này đều rơi vào ngày nghỉ.';
-                    }
-                } else {
-                    message = 'Không có dữ liệu đăng ký trong khoảng thời gian này.';
+
+                // Hiển thị thông báo thêm nếu có dữ liệu bị lọc
+                if (filteredBySubjectCount > 0) {
+                    showToast(`Đã loại bỏ ${filteredBySubjectCount} tiết do không khớp môn học được chọn.`, 'info');
                 }
-                reportContainer.innerHTML = `<p>${message}</p>`;
+            } else {
+                reportContainer.innerHTML = '<p>Không có giáo viên nào để hiển thị.</p>';
             }
 
         } catch (error) {
