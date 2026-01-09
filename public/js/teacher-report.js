@@ -151,7 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: doc.id,
                     uid: doc.data().uid,
                     teacher_name: doc.data().teacher_name,
-                    order: doc.data().order
+                    order: doc.data().order,
+                    subject: doc.data().subject || ''
                 }));
             }
 
@@ -324,6 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     teacherData.set(teacher.uid, {
                         name: teacher.teacher_name,
                         order: teacher.order,
+                        subject: teacher.subject,
                         cnttCount: 0,
                         tbdhCount: 0,
                         thCount: 0
@@ -408,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <tr>
                     <td style="text-align: center;">${teacherIndex++}</td>
                     <td>${teacher.name}</td>
-                    <td>${currentTeacherGroup}</td>
+                    <td>${teacher.subject || ''}</td>
                     <td style="text-align: center;">${teacher.cnttCount}</td>
                     <td style="text-align: center;">${teacher.tbdhCount}</td>
                     <td style="text-align: center;">${teacher.thCount}</td>
@@ -458,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <tr>
                         <th rowspan="2" style="width: 5%;">STT</th>
                         <th rowspan="2" style="width: 25%;">Giáo viên</th>
-                        <th rowspan="2" style="width: 25%;">Tổ chuyên môn</th>
+                        <th rowspan="2" style="width: 25%;">Môn dạy</th>
                         <th colspan="3">PPDH</th>
                         <th rowspan="2" style="width: 10%;">Tổng (lượt)</th>
                         <th rowspan="2" style="width: 15%;">Ghi chú</th>
