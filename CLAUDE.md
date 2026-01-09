@@ -217,10 +217,11 @@ Dự án hoàn toàn sử dụng các dịch vụ của Firebase với project I
    - **Mục đích:** Hiển thị số liệu PPDH chi tiết của từng giáo viên trong tổ
    - **Thay đổi:**
      - Thêm bảng "1. Tình hình sử dụng thiết bị theo giáo viên"
-       - Các cột: STT, Giáo viên, Tổ chuyên môn, CNTT, TBDH, TH, Tổng (lượt), Ghi chú
+       - Các cột: STT, Giáo viên, Môn dạy, CNTT, TBDH, TH, Tổng (lượt), Ghi chú
        - Sắp xếp giảm dần theo tổng số lượt
      - Đổi tên bảng tổng hợp thành "2. Tình hình sử dụng thiết bị dạy học"
      - Thu thập dữ liệu chi tiết cho từng giáo viên bằng Map structure
      - Tương tự format của manager-report nhưng chỉ cho 1 tổ
    - **File:** teacher-report.js
    - **Deploy:** firebase deploy --only hosting (thành công)
+   - **Update:** Đổi cột "Tổ chuyên môn" → "Môn dạy" (hiển thị subject từ teachers collection)
