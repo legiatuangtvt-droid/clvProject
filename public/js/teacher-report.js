@@ -580,16 +580,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     font-weight: bold;
                 }
                 .report-header-nd30 {
-                    display: flex;
-                    justify-content: space-between;
+                    width: 100%;
                     margin-bottom: 1.5cm;
                 }
-                .header-left, .header-right {
+                .report-header-nd30::after {
+                    content: "";
+                    display: table;
+                    clear: both;
+                }
+                .header-left {
+                    float: left;
+                    width: 41%;
                     text-align: center;
+                }
+                .header-right {
+                    float: right;
+                    width: 59%;
+                    text-align: center;
+                }
+                .header-left p, .header-right p {
+                    margin: 2px 0;
+                    font-size: 13pt;
                 }
                 .report-title-container {
                     text-align: center;
                     margin-bottom: 1cm;
+                    clear: both;
                 }
                 .report-main-title {
                     font-size: 16pt;
