@@ -193,3 +193,12 @@ Dự án hoàn toàn sử dụng các dịch vụ của Firebase với project I
 4. **Cập nhật .gitignore**
    - Thêm `.claude/` (Claude Code config)
    - Thêm `nul` (temp files)
+
+### 2026-01-10
+1. **Fix: Lỗi đọc field order = 0 trong teacher permission check**
+   - **Vấn đề:** Tổ trưởng (order = 0) không thể truy cập trang teacher-report
+   - **Nguyên nhân:** Code `teacherData.order || 999` đánh giá `0` là falsy → trả về `999`
+   - **Giải pháp:** Đổi thành `teacherData.order !== undefined ? teacherData.order : 999`
+   - **Files:** teacher-report.js:129, teacher-nav.js:58
+   - **Bài học:** Luôn cẩn thận với falsy values (0, false, '', null, undefined) khi dùng `||` operator
+   - **Deploy:** firebase deploy --only hosting (thành công)
