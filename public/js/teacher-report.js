@@ -308,10 +308,6 @@ document.addEventListener('DOMContentLoaded', () => {
         reportPage.innerHTML = '<p>Đang tổng hợp dữ liệu...</p>';
 
         try {
-            // Initialize counters
-            let cnttCount = 0, tbdhCount = 0, thCount = 0;
-            let holidayRegsCount = 0;
-
             // Collect teacher UIDs from the group
             const teacherUids = allTeachersInGroup.map(t => t.uid).filter(uid => uid);
 
@@ -320,6 +316,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 reportPage.innerHTML = '<p class="error-message">Không có giáo viên nào trong tổ.</p>';
                 return;
             }
+
+            // Initialize data structure for each teacher
+            const teacherData = new Map();
+            allTeachersInGroup.forEach(teacher => {
+                if (teacher.uid) {
+                    teacherData.set(teacher.uid, {
+                        name: teacher.teacher_name,
+                        order: teacher.order,
+                        cnttCount: 0,
+                        tbdhCount: 0,
+                        thCount: 0
+                    });
+                }
+            });
+
+            let holidayRegsCount = 0;
 
             // Query registrations for ALL teachers in the group
             const regsQuery = query(
@@ -330,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
             );
             const snapshot = await getDocs(regsQuery);
 
-            // Filter by teacherId and count teaching methods
+            // Count teaching methods for each teacher
             snapshot.forEach(doc => {
                 const reg = doc.data();
 
@@ -345,21 +357,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                if (reg.teachingMethod && Array.isArray(reg.teachingMethod)) {
-                    if (reg.teachingMethod.includes('Công nghệ thông tin')) {
-                        cnttCount++;
-                    }
-                    if (reg.teachingMethod.includes('Thiết bị dạy học')) {
-                        tbdhCount++;
-                    }
-                    if (reg.teachingMethod.includes('Thực hành')) {
-                        thCount++;
+                // Count for each teacher
+                if (teacherData.has(reg.teacherId)) {
+                    const teacher = teacherData.get(reg.teacherId);
+                    if (reg.teachingMethod && Array.isArray(reg.teachingMethod)) {
+                        if (reg.teachingMethod.includes('Công nghệ thông tin')) {
+                            teacher.cnttCount++;
+                        }
+                        if (reg.teachingMethod.includes('Thiết bị dạy học')) {
+                            teacher.tbdhCount++;
+                        }
+                        if (reg.teachingMethod.includes('Thực hành')) {
+                            teacher.thCount++;
+                        }
                     }
                 }
             });
 
             // Render report
-            renderReport(reportTitle, reportSubtitle, cnttCount, tbdhCount, thCount, endDate, holidayRegsCount);
+            renderReport(reportTitle, reportSubtitle, teacherData, endDate, holidayRegsCount);
 
         } catch (error) {
             console.error("Lỗi khi tạo báo cáo:", error);
@@ -368,8 +384,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const renderReport = (title, subtitle, cnttCount, tbdhCount, thCount, reportEndDate, holidayRegsCount) => {
-        const totalCount = cnttCount + tbdhCount + thCount;
+    const renderReport = (title, subtitle, teacherData, reportEndDate, holidayRegsCount) => {
+        // Build teacher table rows
+        let teacherTableRows = '';
+        let teacherIndex = 1;
+        let totalCntt = 0, totalTbdh = 0, totalTh = 0;
+
+        // Sort teachers by total count (descending)
+        const sortedTeachers = [...teacherData.values()].sort((a, b) => {
+            const totalA = a.cnttCount + a.tbdhCount + a.thCount;
+            const totalB = b.cnttCount + b.tbdhCount + b.thCount;
+            return totalB - totalA;
+        });
+
+        sortedTeachers.forEach(teacher => {
+            totalCntt += teacher.cnttCount;
+            totalTbdh += teacher.tbdhCount;
+            totalTh += teacher.thCount;
+
+            const teacherTotal = teacher.cnttCount + teacher.tbdhCount + teacher.thCount;
+
+            teacherTableRows += `
+                <tr>
+                    <td style="text-align: center;">${teacherIndex++}</td>
+                    <td>${teacher.name}</td>
+                    <td>${currentTeacherGroup}</td>
+                    <td style="text-align: center;">${teacher.cnttCount}</td>
+                    <td style="text-align: center;">${teacher.tbdhCount}</td>
+                    <td style="text-align: center;">${teacher.thCount}</td>
+                    <td style="text-align: center; font-weight: bold;">${teacherTotal}</td>
+                    <td></td>
+                </tr>
+            `;
+        });
+
+        const totalCount = totalCntt + totalTbdh + totalTh;
+
         const [year, month, day] = reportEndDate.split('-');
         const signatureDate = `Hiếu Giang, ngày ${day} tháng ${parseInt(month, 10)} năm ${year}`;
 
@@ -399,11 +449,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <div style="margin: 20px 0;">
                 <p><strong>Tổ chuyên môn:</strong> ${currentTeacherGroup}</p>
-                <p><strong>Danh sách giáo viên:</strong> ${allTeachersInGroup.map(t => t.teacher_name).join(', ')}</p>
                 <p><strong>Người lập báo cáo:</strong> ${currentTeacherName} ${allTeachersInGroup.find(t => t.uid === currentTeacherId)?.order === 0 ? '(Tổ trưởng)' : '(Tổ phó)'}</p>
             </div>
 
-            <h4>Tình hình sử dụng thiết bị dạy học</h4>
+            <h4>1. Tình hình sử dụng thiết bị theo giáo viên</h4>
+            <table class="report-table" id="teacher-report-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 5%;">STT</th>
+                        <th rowspan="2" style="width: 25%;">Giáo viên</th>
+                        <th rowspan="2" style="width: 25%;">Tổ chuyên môn</th>
+                        <th colspan="3">PPDH</th>
+                        <th rowspan="2" style="width: 10%;">Tổng (lượt)</th>
+                        <th rowspan="2" style="width: 15%;">Ghi chú</th>
+                    </tr>
+                    <tr>
+                        <th style="width: 5%;">CNTT</th>
+                        <th style="width: 5%;">TBDH</th>
+                        <th style="width: 5%;">TH</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${teacherTableRows}
+                    <tr class="total-row">
+                        <td colspan="3" style="text-align: center; font-weight: bold;">Tổng cộng</td>
+                        <td style="text-align: center; font-weight: bold;">${totalCntt}</td>
+                        <td style="text-align: center; font-weight: bold;">${totalTbdh}</td>
+                        <td style="text-align: center; font-weight: bold;">${totalTh}</td>
+                        <td style="text-align: center; font-weight: bold;">${totalCount}</td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>2. Tình hình sử dụng thiết bị dạy học</h4>
             <table class="report-table">
                 <thead>
                     <tr>
@@ -419,20 +498,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 <tbody>
                     <tr>
                         <td>Công nghệ thông tin</td>
-                        <td style="text-align: center;">${cnttCount}</td>
-                        <td style="text-align: center;">${totalCount > 0 ? ((cnttCount / totalCount) * 100).toFixed(1) : 0}%</td>
+                        <td style="text-align: center;">${totalCntt}</td>
+                        <td style="text-align: center;">${totalCount > 0 ? ((totalCntt / totalCount) * 100).toFixed(1) : 0}%</td>
                         <td></td>
                     </tr>
                     <tr>
                         <td>Thiết bị dạy học</td>
-                        <td style="text-align: center;">${tbdhCount}</td>
-                        <td style="text-align: center;">${totalCount > 0 ? ((tbdhCount / totalCount) * 100).toFixed(1) : 0}%</td>
+                        <td style="text-align: center;">${totalTbdh}</td>
+                        <td style="text-align: center;">${totalCount > 0 ? ((totalTbdh / totalCount) * 100).toFixed(1) : 0}%</td>
                         <td></td>
                     </tr>
                     <tr>
                         <td>Thực hành</td>
-                        <td style="text-align: center;">${thCount}</td>
-                        <td style="text-align: center;">${totalCount > 0 ? ((thCount / totalCount) * 100).toFixed(1) : 0}%</td>
+                        <td style="text-align: center;">${totalTh}</td>
+                        <td style="text-align: center;">${totalCount > 0 ? ((totalTh / totalCount) * 100).toFixed(1) : 0}%</td>
                         <td></td>
                     </tr>
                     <tr class="total-row">
