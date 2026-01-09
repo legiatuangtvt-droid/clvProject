@@ -55,7 +55,7 @@ async function checkReportPermission() {
             }
 
             const teacherData = teacherSnapshot.docs[0].data();
-            const teacherOrder = teacherData.order || 999;
+            const teacherOrder = teacherData.order !== undefined ? teacherData.order : 999;
             let groupName = '';
 
             // Load group name

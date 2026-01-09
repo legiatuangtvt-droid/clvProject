@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const teacherData = teacherSnapshot.docs[0].data();
             currentTeacherName = teacherData.teacher_name || 'Giáo viên';
-            const teacherOrder = teacherData.order || 999;
+            const teacherOrder = teacherData.order !== undefined ? teacherData.order : 999;
 
             // Load group name
             if (teacherData.group_id) {
