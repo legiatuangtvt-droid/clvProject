@@ -561,51 +561,43 @@ document.addEventListener('DOMContentLoaded', () => {
                     color: #000;
                     line-height: 1.5;
                 }
-                table {
+                .report-table, table {
                     width: 100%;
                     border-collapse: collapse;
                     font-size: 13pt;
                     margin-top: 0.5cm;
                 }
+                .report-table th, .report-table td,
                 table th, table td {
                     border: 1px solid #000;
                     padding: 4px 8px;
                     text-align: left;
                 }
-                table th {
+                .report-table th, table th {
                     font-weight: bold;
                     text-align: center;
                 }
                 .total-row {
                     font-weight: bold;
                 }
-                .report-header-nd30 {
+                .header-table {
                     width: 100%;
-                    margin-bottom: 1.5cm;
+                    border: none !important;
+                    margin: 0 0 1.5cm 0 !important;
                 }
-                .report-header-nd30::after {
-                    content: "";
-                    display: table;
-                    clear: both;
-                }
-                .header-left {
-                    float: left;
-                    width: 41%;
+                .header-table td {
+                    border: none !important;
+                    padding: 0 !important;
+                    vertical-align: top;
                     text-align: center;
-                }
-                .header-right {
-                    float: right;
-                    width: 59%;
-                    text-align: center;
-                }
-                .header-left p, .header-right p {
-                    margin: 2px 0;
                     font-size: 13pt;
+                }
+                .header-table p {
+                    margin: 2px 0;
                 }
                 .report-title-container {
                     text-align: center;
                     margin-bottom: 1cm;
-                    clear: both;
                 }
                 .report-main-title {
                     font-size: 16pt;
@@ -656,6 +648,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             </style>
         `;
+
+        // Replace header div with table for Word compatibility
+        let content = reportPage.innerHTML;
+        content = content.replace(
+            /<div class="report-header-nd30">[\s\S]*?<\/div>\s*<\/div>/,
+            `<table class="header-table">
+                <tr>
+                    <td style="width: 41%;">
+                        <p style="text-transform: uppercase;">SỞ GD&ĐT QUẢNG TRỊ</p>
+                        <p style="font-weight: bold; text-transform: uppercase;"><u>TRƯỜNG THPT CHẾ LAN VIÊN</u></p>
+                    </td>
+                    <td style="width: 59%;">
+                        <p style="font-weight: bold;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                        <p style="font-weight: bold;"><u>Độc lập - Tự do - Hạnh phúc</u></p>
+                    </td>
+                </tr>
+            </table>`
+        );
+
         const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
             <head>
                 <meta charset='utf-8'>
@@ -664,7 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </head>
             <body>`;
         const footer = "</body></html>";
-        const sourceHTML = header + reportPage.innerHTML + footer;
+        const sourceHTML = header + content + footer;
 
         const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
         const fileDownload = document.createElement("a");
