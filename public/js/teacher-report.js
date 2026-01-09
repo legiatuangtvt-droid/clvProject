@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTeacherId = null;
     let currentTeacherName = '';
     let currentTeacherGroup = '';
+    let currentGroupId = '';
+    let allTeachersInGroup = [];
 
     // Wait for auth state to be ready
     onAuthStateChanged(auth, async (user) => {
@@ -127,14 +129,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const teacherData = teacherSnapshot.docs[0].data();
             currentTeacherName = teacherData.teacher_name || 'Giáo viên';
             const teacherOrder = teacherData.order !== undefined ? teacherData.order : 999;
+            currentGroupId = teacherData.group_id || '';
 
             // Load group name
-            if (teacherData.group_id) {
-                const groupQuery = query(collection(firestore, 'groups'), where('group_id', '==', teacherData.group_id));
+            if (currentGroupId) {
+                const groupQuery = query(collection(firestore, 'groups'), where('group_id', '==', currentGroupId));
                 const groupSnapshot = await getDocs(groupQuery);
                 if (!groupSnapshot.empty) {
                     currentTeacherGroup = groupSnapshot.docs[0].data().group_name || '';
                 }
+
+                // Load all teachers in the same group
+                const teachersInGroupQuery = query(
+                    collection(firestore, 'teachers'),
+                    where('group_id', '==', currentGroupId),
+                    where('status', '==', 'active'),
+                    orderBy('order')
+                );
+                const teachersInGroupSnapshot = await getDocs(teachersInGroupQuery);
+                allTeachersInGroup = teachersInGroupSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    uid: doc.data().uid,
+                    teacher_name: doc.data().teacher_name,
+                    order: doc.data().order
+                }));
             }
 
             // Kiểm tra quyền xem báo cáo
@@ -294,19 +312,32 @@ document.addEventListener('DOMContentLoaded', () => {
             let cnttCount = 0, tbdhCount = 0, thCount = 0;
             let holidayRegsCount = 0;
 
-            // Query registrations for current teacher only
+            // Collect teacher UIDs from the group
+            const teacherUids = allTeachersInGroup.map(t => t.uid).filter(uid => uid);
+
+            if (teacherUids.length === 0) {
+                showToast('Không tìm thấy giáo viên nào trong tổ chuyên môn này.', 'warning');
+                reportPage.innerHTML = '<p class="error-message">Không có giáo viên nào trong tổ.</p>';
+                return;
+            }
+
+            // Query registrations for ALL teachers in the group
             const regsQuery = query(
                 collection(firestore, 'registrations'),
                 where('schoolYear', '==', currentSchoolYear),
-                where('teacherId', '==', currentTeacherId),
                 where('date', '>=', startDate),
                 where('date', '<=', endDate)
             );
             const snapshot = await getDocs(regsQuery);
 
-            // Count teaching methods
+            // Filter by teacherId and count teaching methods
             snapshot.forEach(doc => {
                 const reg = doc.data();
+
+                // Only count if teacher is in the group
+                if (!teacherUids.includes(reg.teacherId)) {
+                    return;
+                }
 
                 // Check if the registration date is a holiday and skip if it is
                 if (isHoliday(reg.date)) {
@@ -367,8 +398,9 @@ document.addEventListener('DOMContentLoaded', () => {
             ` : ''}
 
             <div style="margin: 20px 0;">
-                <p><strong>Giáo viên:</strong> ${currentTeacherName}</p>
                 <p><strong>Tổ chuyên môn:</strong> ${currentTeacherGroup}</p>
+                <p><strong>Danh sách giáo viên:</strong> ${allTeachersInGroup.map(t => t.teacher_name).join(', ')}</p>
+                <p><strong>Người lập báo cáo:</strong> ${currentTeacherName} ${allTeachersInGroup.find(t => t.uid === currentTeacherId)?.order === 0 ? '(Tổ trưởng)' : '(Tổ phó)'}</p>
             </div>
 
             <h4>Tình hình sử dụng thiết bị dạy học</h4>
