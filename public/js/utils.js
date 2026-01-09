@@ -29,3 +29,32 @@ export const getDevicesRecursive = (parentId, allDeviceItemsCache) => {
     });
     return devices.sort((a, b) => String(a.order || '').localeCompare(String(b.order || ''), undefined, { numeric: true, sensitivity: 'base' }));
 };
+
+/**
+ * Kiểm tra xem giáo viên có quyền xem báo cáo không.
+ * Quyền xem báo cáo:
+ * - Tổ trưởng (order = 0): Có quyền
+ * - Tổ phó (order = 1) của tổ ghép (tên có " - "): Có quyền
+ * - Tổ phó (order = 1) của tổ đơn (tên không có " - "): KHÔNG có quyền
+ * - Các giáo viên khác: KHÔNG có quyền
+ *
+ * @param {number} teacherOrder - Thứ tự của giáo viên trong tổ (0 = tổ trưởng, 1 = tổ phó, ...)
+ * @param {string} groupName - Tên tổ chuyên môn
+ * @returns {boolean} True nếu có quyền xem báo cáo, false nếu không
+ */
+export const canViewReport = (teacherOrder, groupName) => {
+    // Tổ trưởng (order = 0) luôn có quyền
+    if (teacherOrder === 0) {
+        return true;
+    }
+
+    // Tổ phó (order = 1)
+    if (teacherOrder === 1) {
+        // Kiểm tra xem có phải tổ ghép không (tên chứa " - ")
+        const isMultiSubjectGroup = groupName && groupName.includes(' - ');
+        return isMultiSubjectGroup; // Chỉ tổ phó của tổ ghép mới có quyền
+    }
+
+    // Các giáo viên khác không có quyền
+    return false;
+};

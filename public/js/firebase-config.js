@@ -23,3 +23,17 @@ export const auth = getAuth(app);
 export const firestore = getFirestore(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app);
+
+// Cấu hình cho môi trường local development
+// Kiểm tra xem có đang chạy trên localhost không
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    console.log('🔧 Running in LOCAL mode - using emulators if available');
+
+    // Nếu muốn sử dụng Functions emulator trên local, bỏ comment dòng dưới
+    // import { connectFunctionsEmulator } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-functions.js";
+    // connectFunctionsEmulator(functions, "localhost", 5001);
+
+    // LƯU Ý: Khi chạy local, nếu KHÔNG sử dụng emulator thì Functions vẫn gọi về production
+    // Để sử dụng production Functions trên local: KHÔNG cần làm gì thêm (mặc định)
+    // Để sử dụng emulator: Bỏ comment các dòng trên và chạy: firebase emulators:start
+}
