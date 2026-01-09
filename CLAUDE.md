@@ -202,3 +202,13 @@ Dự án hoàn toàn sử dụng các dịch vụ của Firebase với project I
    - **Files:** teacher-report.js:129, teacher-nav.js:58
    - **Bài học:** Luôn cẩn thận với falsy values (0, false, '', null, undefined) khi dùng `||` operator
    - **Deploy:** firebase deploy --only hosting (thành công)
+
+2. **Feature: Báo cáo tổng hợp theo tổ chuyên môn trong teacher-report**
+   - **Mục đích:** Tổ trưởng/tổ phó xem báo cáo toàn bộ giáo viên trong tổ để báo cáo BGH
+   - **Thay đổi:**
+     - Query tất cả giáo viên trong cùng tổ (group_id + status=active)
+     - Tổng hợp registrations của toàn bộ giáo viên trong tổ
+     - Hiển thị danh sách giáo viên và vai trò người lập báo cáo
+     - Thêm Firestore index: teachers (group_id + status + order)
+   - **Files:** teacher-report.js, firestore.indexes.json
+   - **Deploy:** firebase deploy --only hosting,firestore:indexes (thành công)
