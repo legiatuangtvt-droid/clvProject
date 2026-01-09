@@ -409,8 +409,8 @@ document.addEventListener('DOMContentLoaded', () => {
             teacherTableRows += `
                 <tr>
                     <td style="text-align: center;">${teacherIndex++}</td>
-                    <td>${teacher.name}</td>
-                    <td>${teacher.subject || ''}</td>
+                    <td style="white-space: nowrap;">${teacher.name}</td>
+                    <td style="text-align: center;">${teacher.subject || ''}</td>
                     <td style="text-align: center;">${teacher.cnttCount}</td>
                     <td style="text-align: center;">${teacher.tbdhCount}</td>
                     <td style="text-align: center;">${teacher.thCount}</td>
@@ -451,7 +451,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <div style="margin: 20px 0;">
                 <p><strong>Tổ chuyên môn:</strong> ${currentTeacherGroup}</p>
-                <p><strong>Người lập báo cáo:</strong> ${currentTeacherName} ${allTeachersInGroup.find(t => t.uid === currentTeacherId)?.order === 0 ? '(Tổ trưởng)' : '(Tổ phó)'}</p>
             </div>
 
             <h4>1. Tình hình sử dụng thiết bị theo giáo viên</h4>
