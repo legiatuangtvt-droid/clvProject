@@ -554,7 +554,99 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     exportWordBtn.addEventListener('click', () => {
-        const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML to Word</title></head><body>`;
+        const styles = `
+            <style>
+                body {
+                    font-family: 'Times New Roman', Times, serif;
+                    color: #000;
+                    line-height: 1.5;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 13pt;
+                    margin-top: 0.5cm;
+                }
+                table th, table td {
+                    border: 1px solid #000;
+                    padding: 4px 8px;
+                    text-align: left;
+                }
+                table th {
+                    font-weight: bold;
+                    text-align: center;
+                }
+                .total-row {
+                    font-weight: bold;
+                }
+                .report-header-nd30 {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 1.5cm;
+                }
+                .header-left, .header-right {
+                    text-align: center;
+                }
+                .report-title-container {
+                    text-align: center;
+                    margin-bottom: 1cm;
+                }
+                .report-main-title {
+                    font-size: 16pt;
+                    font-weight: bold;
+                    margin: 0.5cm 0;
+                }
+                .report-sub-title {
+                    font-size: 14pt;
+                    font-weight: bold;
+                    margin: 0.3cm 0;
+                }
+                .report-time-range {
+                    font-size: 13pt;
+                    font-style: italic;
+                    margin: 0.3cm 0;
+                }
+                .report-signature {
+                    margin-top: 2cm;
+                    text-align: right;
+                }
+                .signature-block {
+                    display: inline-block;
+                    text-align: center;
+                    min-width: 6cm;
+                }
+                .signature-date {
+                    font-style: italic;
+                    margin-bottom: 0.3cm;
+                }
+                .signature-title {
+                    font-weight: bold;
+                    margin-bottom: 2cm;
+                }
+                .signature-name {
+                    font-weight: bold;
+                }
+                h4 {
+                    font-size: 13pt;
+                    font-weight: bold;
+                    margin-top: 0.8cm;
+                    margin-bottom: 0.3cm;
+                }
+                .underline-2-3 {
+                    text-decoration: underline;
+                }
+                .underline-full {
+                    text-decoration: underline;
+                }
+            </style>
+        `;
+        const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head>
+                <meta charset='utf-8'>
+                <title>Báo cáo sử dụng TBDH</title>
+                ${styles}
+            </head>
+            <body>`;
         const footer = "</body></html>";
         const sourceHTML = header + reportPage.innerHTML + footer;
 
@@ -562,7 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fileDownload = document.createElement("a");
         document.body.appendChild(fileDownload);
         fileDownload.href = source;
-        fileDownload.download = 'bao-cao.doc';
+        fileDownload.download = 'bao-cao-su-dung-tbdh.doc';
         fileDownload.click();
         document.body.removeChild(fileDownload);
         showToast('Đang tải file Word...', 'info');
