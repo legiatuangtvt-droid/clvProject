@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const reportTypeSelect = document.getElementById('report-type-select');
     const reportValueSelect = document.getElementById('report-value-select');
     const viewReportBtn = document.getElementById('view-report-btn');
-    const exportWordBtn = document.getElementById('export-word-btn');
-    const printReportBtn = document.getElementById('print-report-btn'); // NEW
-    const exportPdfBtn = document.getElementById('export-pdf-btn');
+    const exportReportBtn = document.getElementById('export-report-btn');
+    const exportDropdownMenu = document.getElementById('export-dropdown-menu');
+    const printReportBtn = document.getElementById('print-report-btn');
     const reportPage = document.getElementById('report-page');
 
     // State
@@ -26,8 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let timePlan = [];
     let timePlanConfig = { reportDay: 23, semester1EndWeek: 19 }; // Default config
     let allGroups = [];
-    let allHolidays = []; // NEW: State for holidays
+    let allHolidays = [];
     let allTeachers = [];
+    let currentReportData = null; // Store current report data for Excel export
 
     const initializePage = async () => {
         try {
@@ -340,7 +341,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // 4. Render báo cáo với dữ liệu đã được tổng hợp
+            // 4. Store data for Excel export
+            currentReportData = {
+                title: reportTitle,
+                subtitle: reportSubtitle,
+                groupData: groupData,
+                teacherData: teacherData,
+                endDate: endDate,
+                holidayRegsCount: holidayRegsCount
+            };
+
+            // 5. Render báo cáo với dữ liệu đã được tổng hợp
             renderReport(reportTitle, reportSubtitle, groupData, teacherData, endDate, holidayRegsCount);
 
         } catch (error) {
@@ -532,7 +543,42 @@ document.addEventListener('DOMContentLoaded', () => {
     reportTypeSelect.addEventListener('change', updateFilterValueOptions);
     viewReportBtn.addEventListener('click', generateReport);
 
-    // NEW: Print Report Listener (with null check)
+    // Dropdown toggle
+    exportReportBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isShown = exportDropdownMenu.classList.toggle('show');
+        exportReportBtn.setAttribute('aria-expanded', isShown);
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', () => {
+        exportDropdownMenu.classList.remove('show');
+        exportReportBtn.setAttribute('aria-expanded', 'false');
+    });
+
+    // Handle dropdown item clicks
+    exportDropdownMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const button = e.target.closest('.dropdown-item');
+        if (!button) return;
+
+        const exportType = button.getAttribute('data-export');
+        exportDropdownMenu.classList.remove('show');
+
+        switch (exportType) {
+            case 'excel':
+                exportExcel();
+                break;
+            case 'word':
+                exportWord();
+                break;
+            case 'pdf':
+                exportPdf();
+                break;
+        }
+    });
+
+    // Print Report Listener
     if (printReportBtn) {
         printReportBtn.addEventListener('click', () => {
             showToast('Đang mở hộp thoại in...', 'info');
@@ -540,13 +586,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'p' && currentReportData) {
+            e.preventDefault();
+            window.print();
+        }
+        if (e.ctrlKey && e.key === 'e' && currentReportData) {
+            e.preventDefault();
+            exportReportBtn.click();
+        }
+    });
+
     const formatDate = (dateString) => {
         if (!dateString) return '';
         const [year, month, day] = dateString.split('-');
         return `${day}/${month}/${year}`;
     };
 
-    exportWordBtn.addEventListener('click', () => {
+    const exportWord = () => {
         const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML to Word</title></head><body>`;
         const footer = "</body></html>";
         const sourceHTML = header + reportPage.innerHTML + footer;
@@ -559,9 +617,252 @@ document.addEventListener('DOMContentLoaded', () => {
         fileDownload.click();
         document.body.removeChild(fileDownload);
         showToast('Đang tải file Word...', 'info');
-    });
+    };
 
-    exportPdfBtn.addEventListener('click', async () => {
+    const exportExcel = async () => {
+        if (!currentReportData) {
+            showToast('Chưa có dữ liệu báo cáo. Vui lòng tạo báo cáo trước.', 'error');
+            return;
+        }
+
+        try {
+            showToast('Đang tạo file Excel...', 'info');
+
+            const { title, subtitle, groupData, teacherData, endDate } = currentReportData;
+
+            // Sort teachers and groups
+            const sortedTeachers = [...teacherData.values()].sort((a, b) => {
+                const totalA = a.cnttCount + a.tbdhCount + a.thCount;
+                const totalB = b.cnttCount + b.tbdhCount + b.thCount;
+                return totalB - totalA;
+            });
+
+            const sortedGroups = [...groupData.values()].sort((a, b) => {
+                const totalA = a.cnttCount + a.tbdhCount + a.thCount;
+                const totalB = b.cnttCount + b.tbdhCount + b.thCount;
+                return totalB - totalA;
+            });
+
+            // Calculate totals
+            let totalCntt = 0, totalTbdh = 0, totalTh = 0;
+            sortedTeachers.forEach(teacher => {
+                totalCntt += teacher.cnttCount;
+                totalTbdh += teacher.tbdhCount;
+                totalTh += teacher.thCount;
+            });
+            const totalCount = totalCntt + totalTbdh + totalTh;
+
+            let groupTotalCntt = 0, groupTotalTbdh = 0, groupTotalTh = 0;
+            sortedGroups.forEach(group => {
+                groupTotalCntt += group.cnttCount;
+                groupTotalTbdh += group.tbdhCount;
+                groupTotalTh += group.thCount;
+            });
+            const groupTotalCount = groupTotalCntt + groupTotalTbdh + groupTotalTh;
+
+            // Create workbook using ExcelJS
+            const ExcelJS = window.ExcelJS;
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Báo cáo TBDH');
+
+            // Set column widths
+            worksheet.columns = [
+                { width: 6 },   // A: STT
+                { width: 30 },  // B: Giáo viên / Tổ chuyên môn
+                { width: 25 },  // C: Tổ chuyên môn (for teacher table)
+                { width: 10 },  // D: CNTT
+                { width: 10 },  // E: TBDH
+                { width: 10 },  // F: TH
+                { width: 14 },  // G: Tổng
+                { width: 18 }   // H: Ghi chú
+            ];
+
+            let currentRow = 1;
+
+            // Table 1: Teacher details
+            worksheet.getCell(`A${currentRow}`).value = '1. Tình hình sử dụng thiết bị theo giáo viên';
+            worksheet.getCell(`A${currentRow}`).font = { bold: true };
+            currentRow += 2;
+
+            // Table 1 Header
+            const table1HeaderRow = worksheet.getRow(currentRow);
+            table1HeaderRow.values = ['STT', 'Giáo viên', 'Tổ chuyên môn', 'CNTT', 'TBDH', 'TH', 'Tổng (lượt)', 'Ghi chú'];
+            table1HeaderRow.eachCell((cell) => {
+                cell.font = { bold: true };
+                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            });
+            currentRow++;
+
+            // Table 1 Data rows
+            sortedTeachers.forEach((teacher, index) => {
+                const teacherTotal = teacher.cnttCount + teacher.tbdhCount + teacher.thCount;
+                const row = worksheet.getRow(currentRow);
+                row.values = [
+                    index + 1,
+                    teacher.name,
+                    teacher.groupName,
+                    teacher.cnttCount,
+                    teacher.tbdhCount,
+                    teacher.thCount,
+                    teacherTotal,
+                    ''
+                ];
+
+                row.eachCell((cell, colNumber) => {
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+
+                    if (colNumber === 1) {
+                        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    } else if (colNumber >= 4 && colNumber <= 7) {
+                        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    } else {
+                        cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                    }
+                });
+
+                currentRow++;
+            });
+
+            // Table 1 Total row
+            const totalRow1 = worksheet.getRow(currentRow);
+            totalRow1.values = ['Tổng cộng', '', '', totalCntt, totalTbdh, totalTh, totalCount, ''];
+            totalRow1.eachCell((cell, colNumber) => {
+                cell.font = { bold: true };
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+                if (colNumber >= 4 && colNumber <= 7) {
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                } else {
+                    cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                }
+            });
+            currentRow += 3; // Add spacing
+
+            // Table 2: Group details
+            worksheet.getCell(`A${currentRow}`).value = '2. Tình hình sử dụng thiết bị theo tổ chuyên môn';
+            worksheet.getCell(`A${currentRow}`).font = { bold: true };
+            currentRow += 2;
+
+            // Table 2 Header
+            const table2HeaderRow = worksheet.getRow(currentRow);
+            table2HeaderRow.values = ['STT', 'Tổ chuyên môn', '', 'CNTT', 'TBDH', 'TH', 'Tổng (lượt)', 'Ghi chú'];
+
+            // Merge cells for "Tổ chuyên môn" column (B and C)
+            worksheet.mergeCells(`B${currentRow}:C${currentRow}`);
+
+            table2HeaderRow.eachCell((cell, colNumber) => {
+                if (colNumber === 3) return; // Skip merged cell
+                cell.font = { bold: true };
+                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            });
+            currentRow++;
+
+            // Table 2 Data rows
+            sortedGroups.forEach((group, index) => {
+                const groupTotal = group.cnttCount + group.tbdhCount + group.thCount;
+                const row = worksheet.getRow(currentRow);
+                row.values = [
+                    index + 1,
+                    group.name,
+                    '',
+                    group.cnttCount,
+                    group.tbdhCount,
+                    group.thCount,
+                    groupTotal,
+                    ''
+                ];
+
+                // Merge cells for group name (B and C)
+                worksheet.mergeCells(`B${currentRow}:C${currentRow}`);
+
+                row.eachCell((cell, colNumber) => {
+                    if (colNumber === 3) return; // Skip merged cell
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+
+                    if (colNumber === 1) {
+                        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    } else if (colNumber >= 4 && colNumber <= 7) {
+                        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    } else {
+                        cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                    }
+                });
+
+                currentRow++;
+            });
+
+            // Table 2 Total row
+            const totalRow2 = worksheet.getRow(currentRow);
+            totalRow2.values = ['Tổng cộng', '', '', groupTotalCntt, groupTotalTbdh, groupTotalTh, groupTotalCount, ''];
+
+            // Merge cells for "Tổng cộng"
+            worksheet.mergeCells(`A${currentRow}:C${currentRow}`);
+
+            totalRow2.eachCell((cell, colNumber) => {
+                if (colNumber === 2 || colNumber === 3) return; // Skip merged cells
+                cell.font = { bold: true };
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+                if (colNumber >= 4 && colNumber <= 7) {
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                } else {
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                }
+            });
+
+            // Generate filename
+            const [year, month, day] = endDate.split('-');
+            const filename = `bao-cao-su-dung-tbdh-${day}-${month}-${year}.xlsx`;
+
+            // Write file
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            showToast('Đã xuất file Excel thành công!', 'success');
+
+        } catch (error) {
+            console.error('Lỗi khi xuất Excel:', error);
+            showToast('Có lỗi xảy ra khi xuất file Excel.', 'error');
+        }
+    };
+
+    const exportPdf = async () => {
         showToast('Đang chuẩn bị file PDF...', 'info');
         const reportContent = document.getElementById('report-page');
 
@@ -569,10 +870,9 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Không tìm thấy nội dung báo cáo để xuất.', 'error');
             return;
         }
-        
-        // Sử dụng html2canvas để chụp ảnh chất lượng cao hơn
+
         const canvas = await html2canvas(reportContent, {
-            scale: 2, // Tăng độ phân giải để ảnh nét hơn
+            scale: 2,
             useCORS: true,
             logging: false,
         });
@@ -580,7 +880,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgData = canvas.toDataURL('image/png');
         const { jsPDF } = window.jspdf;
 
-        // Khởi tạo jsPDF với định dạng A4
         const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'mm',
@@ -593,7 +892,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgHeight = canvas.height;
         const ratio = imgWidth / imgHeight;
 
-        // Tính toán chiều cao của ảnh trong PDF để giữ đúng tỷ lệ
         const imgHeightInPdf = pdfWidth / ratio;
 
         let heightLeft = imgHeightInPdf;
@@ -604,7 +902,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         pdf.save('bao-cao.pdf');
         showToast('Đã xuất file PDF thành công!', 'success');
-    });
+    };
 
     // --- Run ---
     initializePage();
