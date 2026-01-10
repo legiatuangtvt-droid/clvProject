@@ -11,6 +11,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://unpkg.com/html-to-docx@1.8.0/dist/html-to-docx.js"></script>
+    <!-- Thư viện SheetJS để xuất Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="icon" href="images/magnetic.png" type="image/png">
 </head>
 <body>
@@ -57,8 +59,14 @@
                     </div>
 
                     <div class="report-actions">
-                        <button id="export-word-btn" class="btn-secondary"><i class="fas fa-file-word"></i> Xuất Word</button>
-                        <button id="export-pdf-btn" class="btn-secondary"><i class="fas fa-file-pdf"></i> Xuất PDF</button>
+                        <div class="export-dropdown">
+                            <button id="export-report-btn" class="btn-secondary"><i class="fas fa-file-export"></i> Xuất báo cáo</button>
+                            <div id="export-dropdown-menu" class="dropdown-menu">
+                                <button class="dropdown-item" data-export="excel"><i class="fas fa-file-excel"></i> Xuất Excel</button>
+                                <button class="dropdown-item" data-export="word"><i class="fas fa-file-word"></i> Xuất Word</button>
+                                <button class="dropdown-item" data-export="pdf"><i class="fas fa-file-pdf"></i> Xuất PDF</button>
+                            </div>
+                        </div>
                         <button id="print-report-btn" class="btn-secondary"><i class="fas fa-print"></i> In báo cáo</button>
                     </div>
 

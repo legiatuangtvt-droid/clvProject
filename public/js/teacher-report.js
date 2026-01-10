@@ -18,9 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const reportTypeSelect = document.getElementById('report-type-select');
     const reportValueSelect = document.getElementById('report-value-select');
     const viewReportBtn = document.getElementById('view-report-btn');
-    const exportWordBtn = document.getElementById('export-word-btn');
+    const exportReportBtn = document.getElementById('export-report-btn');
+    const exportDropdownMenu = document.getElementById('export-dropdown-menu');
     const printReportBtn = document.getElementById('print-report-btn');
-    const exportPdfBtn = document.getElementById('export-pdf-btn');
     const reportPage = document.getElementById('report-page');
 
     // State
@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTeacherGroup = '';
     let currentGroupId = '';
     let allTeachersInGroup = [];
+    let currentReportData = null; // Store current report data for Excel export
 
     // Wait for auth state to be ready
     onAuthStateChanged(auth, async (user) => {
@@ -376,6 +377,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+            // Store data for Excel export
+            currentReportData = {
+                title: reportTitle,
+                subtitle: reportSubtitle,
+                teacherData: teacherData,
+                endDate: endDate,
+                holidayRegsCount: holidayRegsCount,
+                groupName: currentTeacherGroup
+            };
+
             // Render report
             renderReport(reportTitle, reportSubtitle, teacherData, endDate, holidayRegsCount);
 
@@ -408,14 +419,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             teacherTableRows += `
                 <tr>
-                    <td style="text-align: center;">${teacherIndex++}</td>
-                    <td style="white-space: nowrap;">${teacher.name}</td>
-                    <td style="text-align: center;">${teacher.subject || ''}</td>
-                    <td style="text-align: center;">${teacher.cnttCount}</td>
-                    <td style="text-align: center;">${teacher.tbdhCount}</td>
-                    <td style="text-align: center;">${teacher.thCount}</td>
-                    <td style="text-align: center; font-weight: bold;">${teacherTotal}</td>
-                    <td></td>
+                    <td style="border: 1pt solid black; text-align: center;">${teacherIndex++}</td>
+                    <td style="border: 1pt solid black; white-space: nowrap;">${teacher.name}</td>
+                    <td style="border: 1pt solid black; text-align: center;">${teacher.subject || ''}</td>
+                    <td style="border: 1pt solid black; text-align: center;">${teacher.cnttCount}</td>
+                    <td style="border: 1pt solid black; text-align: center;">${teacher.tbdhCount}</td>
+                    <td style="border: 1pt solid black; text-align: center;">${teacher.thCount}</td>
+                    <td style="border: 1pt solid black; text-align: center; font-weight: bold;">${teacherTotal}</td>
+                    <td style="border: 1pt solid black;"></td>
                 </tr>
             `;
         });
@@ -457,28 +468,28 @@ document.addEventListener('DOMContentLoaded', () => {
             <table class="report-table" id="teacher-report-table">
                 <thead>
                     <tr>
-                        <th rowspan="2" style="width: 5%;">STT</th>
-                        <th rowspan="2" style="width: 25%;">Giáo viên</th>
-                        <th rowspan="2" style="width: 25%;">Môn dạy</th>
-                        <th colspan="3">PPDH</th>
-                        <th rowspan="2" style="width: 10%;">Tổng (lượt)</th>
-                        <th rowspan="2" style="width: 15%;">Ghi chú</th>
+                        <th rowspan="2" style="border: 1pt solid black; width: 5%;">STT</th>
+                        <th rowspan="2" style="border: 1pt solid black; width: 25%;">Giáo viên</th>
+                        <th rowspan="2" style="border: 1pt solid black; width: 25%;">Môn dạy</th>
+                        <th colspan="3" style="border: 1pt solid black;">PPDH</th>
+                        <th rowspan="2" style="border: 1pt solid black; width: 10%;">Tổng (lượt)</th>
+                        <th rowspan="2" style="border: 1pt solid black; width: 15%;">Ghi chú</th>
                     </tr>
                     <tr>
-                        <th style="width: 5%;">CNTT</th>
-                        <th style="width: 5%;">TBDH</th>
-                        <th style="width: 5%;">TH</th>
+                        <th style="border: 1pt solid black; width: 5%;">CNTT</th>
+                        <th style="border: 1pt solid black; width: 5%;">TBDH</th>
+                        <th style="border: 1pt solid black; width: 5%;">TH</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${teacherTableRows}
                     <tr class="total-row">
-                        <td colspan="3" style="text-align: center; font-weight: bold;">Tổng cộng</td>
-                        <td style="text-align: center; font-weight: bold;">${totalCntt}</td>
-                        <td style="text-align: center; font-weight: bold;">${totalTbdh}</td>
-                        <td style="text-align: center; font-weight: bold;">${totalTh}</td>
-                        <td style="text-align: center; font-weight: bold;">${totalCount}</td>
-                        <td></td>
+                        <td colspan="3" style="border: 1pt solid black; text-align: center; font-weight: bold;">Tổng cộng</td>
+                        <td style="border: 1pt solid black; text-align: center; font-weight: bold;">${totalCntt}</td>
+                        <td style="border: 1pt solid black; text-align: center; font-weight: bold;">${totalTbdh}</td>
+                        <td style="border: 1pt solid black; text-align: center; font-weight: bold;">${totalTh}</td>
+                        <td style="border: 1pt solid black; text-align: center; font-weight: bold;">${totalCount}</td>
+                        <td style="border: 1pt solid black;"></td>
                     </tr>
                 </tbody>
             </table>
@@ -487,39 +498,39 @@ document.addEventListener('DOMContentLoaded', () => {
             <table class="report-table">
                 <thead>
                     <tr>
-                        <th rowspan="2" style="width: 50%;">Phương pháp dạy học</th>
-                        <th colspan="2">Số lượt sử dụng</th>
-                        <th rowspan="2" style="width: 20%;">Ghi chú</th>
+                        <th rowspan="2" style="border: 1pt solid black; width: 50%;">Phương pháp dạy học</th>
+                        <th colspan="2" style="border: 1pt solid black;">Số lượt sử dụng</th>
+                        <th rowspan="2" style="border: 1pt solid black; width: 20%;">Ghi chú</th>
                     </tr>
                     <tr>
-                        <th style="width: 15%;">Số lần</th>
-                        <th style="width: 15%;">Tỷ lệ (%)</th>
+                        <th style="border: 1pt solid black; width: 15%;">Số lần</th>
+                        <th style="border: 1pt solid black; width: 15%;">Tỷ lệ (%)</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Công nghệ thông tin</td>
-                        <td style="text-align: center;">${totalCntt}</td>
-                        <td style="text-align: center;">${totalCount > 0 ? ((totalCntt / totalCount) * 100).toFixed(1) : 0}%</td>
-                        <td></td>
+                        <td style="border: 1pt solid black;">Công nghệ thông tin</td>
+                        <td style="border: 1pt solid black; text-align: center;">${totalCntt}</td>
+                        <td style="border: 1pt solid black; text-align: center;">${totalCount > 0 ? ((totalCntt / totalCount) * 100).toFixed(1) : 0}%</td>
+                        <td style="border: 1pt solid black;"></td>
                     </tr>
                     <tr>
-                        <td>Thiết bị dạy học</td>
-                        <td style="text-align: center;">${totalTbdh}</td>
-                        <td style="text-align: center;">${totalCount > 0 ? ((totalTbdh / totalCount) * 100).toFixed(1) : 0}%</td>
-                        <td></td>
+                        <td style="border: 1pt solid black;">Thiết bị dạy học</td>
+                        <td style="border: 1pt solid black; text-align: center;">${totalTbdh}</td>
+                        <td style="border: 1pt solid black; text-align: center;">${totalCount > 0 ? ((totalTbdh / totalCount) * 100).toFixed(1) : 0}%</td>
+                        <td style="border: 1pt solid black;"></td>
                     </tr>
                     <tr>
-                        <td>Thực hành</td>
-                        <td style="text-align: center;">${totalTh}</td>
-                        <td style="text-align: center;">${totalCount > 0 ? ((totalTh / totalCount) * 100).toFixed(1) : 0}%</td>
-                        <td></td>
+                        <td style="border: 1pt solid black;">Thực hành</td>
+                        <td style="border: 1pt solid black; text-align: center;">${totalTh}</td>
+                        <td style="border: 1pt solid black; text-align: center;">${totalCount > 0 ? ((totalTh / totalCount) * 100).toFixed(1) : 0}%</td>
+                        <td style="border: 1pt solid black;"></td>
                     </tr>
                     <tr class="total-row">
-                        <td style="font-weight: bold;">Tổng cộng</td>
-                        <td style="text-align: center; font-weight: bold;">${totalCount}</td>
-                        <td style="text-align: center; font-weight: bold;">100%</td>
-                        <td></td>
+                        <td style="border: 1pt solid black; font-weight: bold;">Tổng cộng</td>
+                        <td style="border: 1pt solid black; text-align: center; font-weight: bold;">${totalCount}</td>
+                        <td style="border: 1pt solid black; text-align: center; font-weight: bold;">100%</td>
+                        <td style="border: 1pt solid black;"></td>
                     </tr>
                 </tbody>
             </table>
@@ -540,6 +551,39 @@ document.addEventListener('DOMContentLoaded', () => {
     reportTypeSelect.addEventListener('change', updateFilterValueOptions);
     viewReportBtn.addEventListener('click', generateReport);
 
+    // Dropdown toggle
+    exportReportBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        exportDropdownMenu.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', () => {
+        exportDropdownMenu.classList.remove('show');
+    });
+
+    // Handle dropdown item clicks
+    exportDropdownMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const button = e.target.closest('.dropdown-item');
+        if (!button) return;
+
+        const exportType = button.getAttribute('data-export');
+        exportDropdownMenu.classList.remove('show');
+
+        switch (exportType) {
+            case 'excel':
+                exportExcel();
+                break;
+            case 'word':
+                exportWord();
+                break;
+            case 'pdf':
+                exportPdf();
+                break;
+        }
+    });
+
     if (printReportBtn) {
         printReportBtn.addEventListener('click', () => {
             showToast('Đang mở hộp thoại in...', 'info');
@@ -553,7 +597,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${day}/${month}/${year}`;
     };
 
-    exportWordBtn.addEventListener('click', () => {
+    const exportWord = () => {
         const styles = `
             <style>
                 body {
@@ -563,13 +607,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 .report-table, table {
                     width: 100%;
-                    border-collapse: collapse;
                     font-size: 13pt;
                     margin-top: 0.5cm;
                 }
                 .report-table th, .report-table td,
                 table th, table td {
-                    border: 1px solid #000;
                     padding: 4px 8px;
                     text-align: left;
                 }
@@ -685,9 +727,173 @@ document.addEventListener('DOMContentLoaded', () => {
         fileDownload.click();
         document.body.removeChild(fileDownload);
         showToast('Đang tải file Word...', 'info');
-    });
+    };
 
-    exportPdfBtn.addEventListener('click', async () => {
+    const exportExcel = () => {
+        if (!currentReportData) {
+            showToast('Chưa có dữ liệu báo cáo. Vui lòng tạo báo cáo trước.', 'error');
+            return;
+        }
+
+        try {
+            const { title, subtitle, teacherData, endDate, groupName } = currentReportData;
+
+            // Sort teachers by total count (descending)
+            const sortedTeachers = [...teacherData.values()].sort((a, b) => {
+                const totalA = a.cnttCount + a.tbdhCount + a.thCount;
+                const totalB = b.cnttCount + b.tbdhCount + b.thCount;
+                return totalB - totalA;
+            });
+
+            // Calculate totals
+            let totalCntt = 0, totalTbdh = 0, totalTh = 0;
+            sortedTeachers.forEach(teacher => {
+                totalCntt += teacher.cnttCount;
+                totalTbdh += teacher.tbdhCount;
+                totalTh += teacher.thCount;
+            });
+            const totalCount = totalCntt + totalTbdh + totalTh;
+
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+
+            // Prepare data for Table 1: Teacher details
+            const table1Data = [];
+            table1Data.push([`Tổ chuyên môn: ${groupName}`]);
+            table1Data.push([]);
+            table1Data.push(['1. Tình hình sử dụng thiết bị theo giáo viên']);
+            table1Data.push([]);
+            table1Data.push(['STT', 'Giáo viên', 'Môn dạy', 'CNTT', 'TBDH', 'TH', 'Tổng (lượt)', 'Ghi chú']);
+
+            sortedTeachers.forEach((teacher, index) => {
+                const teacherTotal = teacher.cnttCount + teacher.tbdhCount + teacher.thCount;
+                table1Data.push([
+                    index + 1,
+                    teacher.name,
+                    teacher.subject || '',
+                    teacher.cnttCount,
+                    teacher.tbdhCount,
+                    teacher.thCount,
+                    teacherTotal,
+                    ''
+                ]);
+            });
+
+            table1Data.push([
+                'Tổng cộng',
+                '',
+                '',
+                totalCntt,
+                totalTbdh,
+                totalTh,
+                totalCount,
+                ''
+            ]);
+
+            // Add spacing
+            table1Data.push([]);
+            table1Data.push([]);
+
+            // Prepare data for Table 2: Summary
+            table1Data.push(['2. Tình hình sử dụng thiết bị dạy học']);
+            table1Data.push([]);
+            table1Data.push(['Phương pháp dạy học', 'Số lần', 'Tỷ lệ (%)', 'Ghi chú']);
+            table1Data.push([
+                'Công nghệ thông tin',
+                totalCntt,
+                totalCount > 0 ? ((totalCntt / totalCount) * 100).toFixed(1) + '%' : '0%',
+                ''
+            ]);
+            table1Data.push([
+                'Thiết bị dạy học',
+                totalTbdh,
+                totalCount > 0 ? ((totalTbdh / totalCount) * 100).toFixed(1) + '%' : '0%',
+                ''
+            ]);
+            table1Data.push([
+                'Thực hành',
+                totalTh,
+                totalCount > 0 ? ((totalTh / totalCount) * 100).toFixed(1) + '%' : '0%',
+                ''
+            ]);
+            table1Data.push([
+                'Tổng cộng',
+                totalCount,
+                '100%',
+                ''
+            ]);
+
+            // Create worksheet
+            const ws = XLSX.utils.aoa_to_sheet(table1Data);
+
+            // Set column widths
+            ws['!cols'] = [
+                { wch: 5 },  // STT
+                { wch: 25 }, // Giáo viên
+                { wch: 15 }, // Môn dạy
+                { wch: 8 },  // CNTT
+                { wch: 8 },  // TBDH
+                { wch: 8 },  // TH
+                { wch: 12 }, // Tổng
+                { wch: 15 }  // Ghi chú
+            ];
+
+            // Add borders to all cells in the tables
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const borderStyle = {
+                top: { style: 'thin', color: { rgb: '000000' } },
+                bottom: { style: 'thin', color: { rgb: '000000' } },
+                left: { style: 'thin', color: { rgb: '000000' } },
+                right: { style: 'thin', color: { rgb: '000000' } }
+            };
+
+            // Table 1 starts at row 4 (0-indexed: row 3)
+            const table1HeaderRow = 4;
+            const table1EndRow = 4 + sortedTeachers.length + 1; // Header + teachers + total row
+
+            // Table 2 starts after spacing
+            const table2StartRow = table1EndRow + 3;
+            const table2EndRow = table2StartRow + 5; // Header row + 4 data rows
+
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!ws[cellAddress]) continue;
+
+                    // Apply borders to table cells only
+                    if ((R >= table1HeaderRow && R <= table1EndRow) ||
+                        (R >= table2StartRow && R <= table2EndRow)) {
+                        if (!ws[cellAddress].s) ws[cellAddress].s = {};
+                        ws[cellAddress].s.border = borderStyle;
+
+                        // Center align for header rows and numeric cells
+                        if (R === table1HeaderRow || R === table2StartRow || R === table2StartRow + 1) {
+                            ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' };
+                        } else if (C >= 3 && C <= 6) { // CNTT, TBDH, TH, Tổng columns
+                            ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' };
+                        }
+                    }
+                }
+            }
+
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Báo cáo TBDH');
+
+            // Generate filename
+            const [year, month, day] = endDate.split('-');
+            const filename = `bao-cao-su-dung-tbdh-${day}-${month}-${year}.xlsx`;
+
+            // Export file
+            XLSX.writeFile(wb, filename);
+            showToast('Đã xuất file Excel thành công!', 'success');
+
+        } catch (error) {
+            console.error('Lỗi khi xuất Excel:', error);
+            showToast('Có lỗi xảy ra khi xuất file Excel.', 'error');
+        }
+    };
+
+    const exportPdf = async () => {
         showToast('Đang chuẩn bị file PDF...', 'info');
         const reportContent = document.getElementById('report-page');
 
@@ -727,5 +933,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
         pdf.save('bao-cao.pdf');
         showToast('Đã xuất file PDF thành công!', 'success');
-    });
+    };
 });
