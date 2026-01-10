@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentGroupId = '';
     let allTeachersInGroup = [];
     let currentReportData = null; // Store current report data for Excel export
+    let isGenerating = false; // Track if report is being generated
 
     // Wait for auth state to be ready
     onAuthStateChanged(auth, async (user) => {
@@ -80,7 +81,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 reportValueSelect.selectedIndex = 0;
             }
 
-            // 7. Tự động tạo báo cáo khi tải trang
+            // 7. Load saved filter preferences
+            loadFilterPreferences();
+
+            // 8. Tự động tạo báo cáo khi tải trang
             await generateReport();
         } catch (error) {
             console.error("Lỗi khởi tạo trang báo cáo:", error);
@@ -228,6 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const generateReport = async () => {
+        if (isGenerating) return;
+
         const filterType = reportTypeSelect.value;
         const filterValue = reportValueSelect.value;
         let startDate, endDate, reportTitle, reportSubtitle;
@@ -237,6 +243,13 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Chưa có kế hoạch thời gian cho năm học này.', 'error');
             return;
         }
+
+        // Save filter preferences
+        saveFilterPreferences();
+
+        // Show loading state
+        setGeneratingState(true);
+        showSkeletonLoading();
 
         // Determine date range and title
         switch (filterType) {
@@ -303,17 +316,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!startDate || !endDate) {
+            setGeneratingState(false);
             reportPage.innerHTML = `<p>Không tìm thấy dữ liệu thời gian cho lựa chọn này.</p>`;
             return;
         }
-
-        reportPage.innerHTML = '<p>Đang tổng hợp dữ liệu...</p>';
 
         try {
             // Collect teacher UIDs from the group
             const teacherUids = allTeachersInGroup.map(t => t.uid).filter(uid => uid);
 
             if (teacherUids.length === 0) {
+                setGeneratingState(false);
                 showToast('Không tìm thấy giáo viên nào trong tổ chuyên môn này.', 'warning');
                 reportPage.innerHTML = '<p class="error-message">Không có giáo viên nào trong tổ.</p>';
                 return;
@@ -390,10 +403,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Render report
             renderReport(reportTitle, reportSubtitle, teacherData, endDate, holidayRegsCount);
 
+            // Update UI state
+            setGeneratingState(false);
+
         } catch (error) {
             console.error("Lỗi khi tạo báo cáo:", error);
             showToast('Lỗi khi tạo báo cáo. Kiểm tra Firestore Index.', 'error');
             reportPage.innerHTML = '<p class="error-message">Đã có lỗi xảy ra.</p>';
+            setGeneratingState(false);
         }
     };
 
@@ -554,12 +571,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Dropdown toggle
     exportReportBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        exportDropdownMenu.classList.toggle('show');
+        const isShown = exportDropdownMenu.classList.toggle('show');
+        exportReportBtn.setAttribute('aria-expanded', isShown);
     });
 
     // Close dropdown when clicking outside
     document.addEventListener('click', () => {
         exportDropdownMenu.classList.remove('show');
+        exportReportBtn.setAttribute('aria-expanded', 'false');
     });
 
     // Handle dropdown item clicks
@@ -584,6 +603,65 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Keyboard navigation for dropdown
+    let focusedIndex = -1;
+    const dropdownItems = Array.from(exportDropdownMenu.querySelectorAll('.dropdown-item'));
+
+    exportReportBtn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            exportDropdownMenu.classList.toggle('show');
+            if (exportDropdownMenu.classList.contains('show')) {
+                focusedIndex = 0;
+                dropdownItems[0]?.focus();
+            }
+        }
+    });
+
+    exportDropdownMenu.addEventListener('keydown', (e) => {
+        if (!exportDropdownMenu.classList.contains('show')) return;
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                focusedIndex = (focusedIndex + 1) % dropdownItems.length;
+                dropdownItems[focusedIndex]?.focus();
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                focusedIndex = (focusedIndex - 1 + dropdownItems.length) % dropdownItems.length;
+                dropdownItems[focusedIndex]?.focus();
+                break;
+            case 'Escape':
+                e.preventDefault();
+                exportDropdownMenu.classList.remove('show');
+                exportReportBtn.focus();
+                focusedIndex = -1;
+                break;
+            case 'Enter':
+            case ' ':
+                e.preventDefault();
+                if (focusedIndex >= 0) {
+                    dropdownItems[focusedIndex]?.click();
+                }
+                break;
+        }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Ctrl+P for print
+        if (e.ctrlKey && e.key === 'p' && currentReportData) {
+            e.preventDefault();
+            window.print();
+        }
+        // Ctrl+E for export dropdown
+        if (e.ctrlKey && e.key === 'e' && currentReportData) {
+            e.preventDefault();
+            exportReportBtn.click();
+        }
+    });
+
     if (printReportBtn) {
         printReportBtn.addEventListener('click', () => {
             showToast('Đang mở hộp thoại in...', 'info');
@@ -595,6 +673,75 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!dateString) return '';
         const [year, month, day] = dateString.split('-');
         return `${day}/${month}/${year}`;
+    };
+
+    // UI Helper Functions
+    const setGeneratingState = (generating) => {
+        isGenerating = generating;
+        if (generating) {
+            viewReportBtn.classList.add('loading');
+            viewReportBtn.disabled = true;
+        } else {
+            viewReportBtn.classList.remove('loading');
+            viewReportBtn.disabled = false;
+        }
+        updateExportButtonState();
+    };
+
+    const updateExportButtonState = () => {
+        const hasData = currentReportData !== null;
+        exportReportBtn.disabled = !hasData || isGenerating;
+        printReportBtn.disabled = !hasData || isGenerating;
+    };
+
+    const showSkeletonLoading = () => {
+        reportPage.innerHTML = `
+            <div class="skeleton-loading">
+                <div class="skeleton-header">
+                    <div class="skeleton-box" style="width: 40%; height: 60px;"></div>
+                    <div class="skeleton-box" style="width: 40%; height: 60px;"></div>
+                </div>
+                <div class="skeleton-box skeleton-title"></div>
+                <div class="skeleton-box skeleton-subtitle"></div>
+                <div class="skeleton-table">
+                    ${Array(5).fill(0).map(() => `
+                        <div class="skeleton-table-row">
+                            <div class="skeleton-box skeleton-table-cell"></div>
+                            <div class="skeleton-box skeleton-table-cell"></div>
+                            <div class="skeleton-box skeleton-table-cell"></div>
+                            <div class="skeleton-box skeleton-table-cell"></div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    };
+
+    // Save and Load Filter Preferences
+    const saveFilterPreferences = () => {
+        const preferences = {
+            reportType: reportTypeSelect.value,
+            reportValue: reportValueSelect.value
+        };
+        localStorage.setItem('teacher-report-filters', JSON.stringify(preferences));
+    };
+
+    const loadFilterPreferences = () => {
+        try {
+            const saved = localStorage.getItem('teacher-report-filters');
+            if (saved) {
+                const preferences = JSON.parse(saved);
+                if (preferences.reportType) {
+                    reportTypeSelect.value = preferences.reportType;
+                    updateFilterValueOptions();
+                }
+                if (preferences.reportValue && reportValueSelect.querySelector(`option[value="${preferences.reportValue}"]`)) {
+                    reportValueSelect.value = preferences.reportValue;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading filter preferences:', error);
+        }
     };
 
     const exportWord = () => {

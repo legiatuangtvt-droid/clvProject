@@ -4,13 +4,22 @@
     gap: 15px;
     align-items: center;
     flex-wrap: wrap;
+    margin-bottom: 5px;
 }
 
 .filter-container select {
-    padding: 8px 12px;
+    padding: 10px 14px;
     border-radius: 8px;
     border: 1px solid #ced4da;
     min-width: 180px;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filter-container select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 .report-actions {
@@ -18,6 +27,7 @@
     margin-bottom: 20px;
     display: flex;
     gap: 10px;
+    align-items: center;
 }
 
 .btn-primary {
@@ -31,8 +41,35 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    transition: background-color 0.2s, transform 0.1s;
+    position: relative;
 }
-.btn-primary:hover { background-color: #0056b3; }
+.btn-primary:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}
+.btn-primary:active {
+    transform: translateY(0);
+}
+.btn-primary:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+.btn-primary.loading {
+    pointer-events: none;
+}
+.btn-primary.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-left: 8px;
+}
 
 .btn-secondary {
     background-color: #6c757d;
@@ -45,8 +82,25 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    transition: background-color 0.2s, transform 0.1s;
 }
-.btn-secondary:hover { background-color: #5a6268; }
+.btn-secondary:hover {
+    background-color: #5a6268;
+    transform: translateY(-1px);
+}
+.btn-secondary:active {
+    transform: translateY(0);
+}
+.btn-secondary:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.6;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
 
 /* --- Export Dropdown --- */
 .export-dropdown {
@@ -63,13 +117,24 @@
     background-color: white;
     border: 1px solid #ced4da;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     z-index: 1000;
     min-width: 180px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s, transform 0.2s;
 }
 
 .dropdown-menu.show {
     display: block;
+    animation: fadeIn 0.2s forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .dropdown-item {
@@ -84,11 +149,18 @@
     cursor: pointer;
     font-size: 14px;
     color: #333;
-    transition: background-color 0.2s;
+    transition: background-color 0.15s, color 0.15s;
 }
 
 .dropdown-item:hover {
-    background-color: #f8f9fa;
+    background-color: #e9ecef;
+    color: #007bff;
+}
+
+.dropdown-item:focus {
+    outline: none;
+    background-color: #e9ecef;
+    color: #007bff;
 }
 
 .dropdown-item:first-child {
@@ -101,6 +173,70 @@
 
 .dropdown-item i {
     width: 16px;
+}
+
+/* --- Skeleton Loading --- */
+.skeleton-loading {
+    padding: 40px;
+}
+
+.skeleton-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+}
+
+.skeleton-box {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+.skeleton-title {
+    height: 30px;
+    width: 60%;
+    margin: 20px auto;
+}
+
+.skeleton-subtitle {
+    height: 20px;
+    width: 40%;
+    margin: 10px auto;
+}
+
+.skeleton-table {
+    width: 100%;
+    margin-top: 30px;
+}
+
+.skeleton-table-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.skeleton-table-cell {
+    height: 40px;
+    flex: 1;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* --- Sticky Table Header --- */
+.report-table thead {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 /* --- Report Preview Area --- */
@@ -344,23 +480,84 @@
 }
 
 /* --- Responsive Styles --- */
+@media (max-width: 1024px) {
+    .filter-container {
+        gap: 10px;
+    }
+
+    .report-preview-area {
+        padding: 20px;
+    }
+}
+
 @media (max-width: 768px) {
     .filter-container {
         flex-direction: column;
         align-items: stretch;
     }
+
+    .filter-container select,
+    .filter-container button {
+        width: 100%;
+    }
+
     .report-actions {
         flex-direction: column;
+        align-items: stretch;
+    }
+
+    .export-dropdown {
+        width: 100%;
+    }
+
+    #export-report-btn,
+    #print-report-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .dropdown-menu {
+        width: 100%;
+        left: 0;
+        right: 0;
     }
 
     .report-preview-area {
-        padding: 10px; /* Giảm padding trên mobile */
-        background-color: transparent; /* Bỏ nền xám */
+        padding: 10px;
+        background-color: transparent;
     }
 
     .report-page {
-        width: 100%; /* Chiếm toàn bộ chiều rộng */
-        padding: 1cm; /* Giảm lề */
-        box-shadow: none; /* Bỏ bóng đổ */
+        width: 100%;
+        padding: 15px;
+        box-shadow: none;
+        overflow-x: auto;
+    }
+
+    .report-table {
+        font-size: 11pt;
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .skeleton-loading {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .report-page {
+        padding: 10px;
+    }
+
+    .report-table {
+        font-size: 10pt;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        padding: 8px 12px;
+        font-size: 13px;
     }
 }
