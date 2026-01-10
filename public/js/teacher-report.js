@@ -876,13 +876,15 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Đang tải file Word...', 'info');
     };
 
-    const exportExcel = () => {
+    const exportExcel = async () => {
         if (!currentReportData) {
             showToast('Chưa có dữ liệu báo cáo. Vui lòng tạo báo cáo trước.', 'error');
             return;
         }
 
         try {
+            showToast('Đang tạo file Excel...', 'info');
+
             const { title, subtitle, teacherData, endDate, groupName } = currentReportData;
 
             // Sort teachers by total count (descending)
@@ -901,20 +903,58 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const totalCount = totalCntt + totalTbdh + totalTh;
 
-            // Create workbook
-            const wb = XLSX.utils.book_new();
+            // Create workbook and worksheet using ExcelJS
+            const ExcelJS = window.ExcelJS;
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Báo cáo TBDH');
 
-            // Prepare data for Table 1: Teacher details
-            const table1Data = [];
-            table1Data.push([`Tổ chuyên môn: ${groupName}`]);
-            table1Data.push([]);
-            table1Data.push(['1. Tình hình sử dụng thiết bị theo giáo viên']);
-            table1Data.push([]);
-            table1Data.push(['STT', 'Giáo viên', 'Môn dạy', 'CNTT', 'TBDH', 'TH', 'Tổng (lượt)', 'Ghi chú']);
+            // Set column widths
+            worksheet.columns = [
+                { width: 6 },   // A: STT
+                { width: 30 },  // B: Giáo viên
+                { width: 18 },  // C: Môn dạy
+                { width: 10 },  // D: CNTT
+                { width: 10 },  // E: TBDH
+                { width: 10 },  // F: TH
+                { width: 14 },  // G: Tổng
+                { width: 18 }   // H: Ghi chú
+            ];
 
+            let currentRow = 1;
+
+            // Add group name
+            worksheet.getCell(`A${currentRow}`).value = `Tổ chuyên môn: ${groupName}`;
+            worksheet.getCell(`A${currentRow}`).font = { bold: true };
+            currentRow += 2;
+
+            // Table 1: Teacher details
+            worksheet.getCell(`A${currentRow}`).value = '1. Tình hình sử dụng thiết bị theo giáo viên';
+            worksheet.getCell(`A${currentRow}`).font = { bold: true };
+            currentRow += 2;
+
+            // Table 1 Header
+            const table1HeaderRow = currentRow;
+            const headerRow = worksheet.getRow(currentRow);
+            headerRow.values = ['STT', 'Giáo viên', 'Môn dạy', 'CNTT', 'TBDH', 'TH', 'Tổng (lượt)', 'Ghi chú'];
+
+            // Style header row
+            headerRow.eachCell((cell) => {
+                cell.font = { bold: true };
+                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            });
+            currentRow++;
+
+            // Table 1 Data rows
             sortedTeachers.forEach((teacher, index) => {
                 const teacherTotal = teacher.cnttCount + teacher.tbdhCount + teacher.thCount;
-                table1Data.push([
+                const row = worksheet.getRow(currentRow);
+                row.values = [
                     index + 1,
                     teacher.name,
                     teacher.subject || '',
@@ -923,115 +963,127 @@ document.addEventListener('DOMContentLoaded', () => {
                     teacher.thCount,
                     teacherTotal,
                     ''
-                ]);
+                ];
+
+                // Apply borders to all cells
+                row.eachCell((cell, colNumber) => {
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+
+                    // Alignment
+                    if (colNumber === 1) { // STT
+                        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    } else if (colNumber >= 4 && colNumber <= 7) { // CNTT, TBDH, TH, Tổng
+                        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    } else {
+                        cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                    }
+                });
+
+                currentRow++;
             });
 
-            table1Data.push([
-                'Tổng cộng',
-                '',
-                '',
-                totalCntt,
-                totalTbdh,
-                totalTh,
-                totalCount,
-                ''
-            ]);
+            // Table 1 Total row
+            const totalRow1 = worksheet.getRow(currentRow);
+            totalRow1.values = ['Tổng cộng', '', '', totalCntt, totalTbdh, totalTh, totalCount, ''];
+            totalRow1.eachCell((cell, colNumber) => {
+                cell.font = { bold: true };
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+                if (colNumber >= 4 && colNumber <= 7) {
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                } else {
+                    cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                }
+            });
+            currentRow += 3; // Add spacing
 
-            // Add spacing
-            table1Data.push([]);
-            table1Data.push([]);
+            // Table 2: Summary
+            worksheet.getCell(`A${currentRow}`).value = '2. Tình hình sử dụng thiết bị dạy học';
+            worksheet.getCell(`A${currentRow}`).font = { bold: true };
+            currentRow += 2;
 
-            // Prepare data for Table 2: Summary
-            table1Data.push(['2. Tình hình sử dụng thiết bị dạy học']);
-            table1Data.push([]);
-            table1Data.push(['Phương pháp dạy học', 'Số lần', 'Tỷ lệ (%)', 'Ghi chú']);
-            table1Data.push([
-                'Công nghệ thông tin',
-                totalCntt,
-                totalCount > 0 ? ((totalCntt / totalCount) * 100).toFixed(1) + '%' : '0%',
-                ''
-            ]);
-            table1Data.push([
-                'Thiết bị dạy học',
-                totalTbdh,
-                totalCount > 0 ? ((totalTbdh / totalCount) * 100).toFixed(1) + '%' : '0%',
-                ''
-            ]);
-            table1Data.push([
-                'Thực hành',
-                totalTh,
-                totalCount > 0 ? ((totalTh / totalCount) * 100).toFixed(1) + '%' : '0%',
-                ''
-            ]);
-            table1Data.push([
-                'Tổng cộng',
-                totalCount,
-                '100%',
-                ''
-            ]);
+            // Table 2 Header
+            const table2HeaderRow = worksheet.getRow(currentRow);
+            table2HeaderRow.values = ['Phương pháp dạy học', 'Số lần', 'Tỷ lệ (%)', 'Ghi chú'];
+            table2HeaderRow.eachCell((cell) => {
+                cell.font = { bold: true };
+                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            });
+            currentRow++;
 
-            // Create worksheet
-            const ws = XLSX.utils.aoa_to_sheet(table1Data);
-
-            // Set column widths
-            ws['!cols'] = [
-                { wch: 5 },  // STT
-                { wch: 25 }, // Giáo viên
-                { wch: 15 }, // Môn dạy
-                { wch: 8 },  // CNTT
-                { wch: 8 },  // TBDH
-                { wch: 8 },  // TH
-                { wch: 12 }, // Tổng
-                { wch: 15 }  // Ghi chú
+            // Table 2 Data rows
+            const methodsData = [
+                ['Công nghệ thông tin', totalCntt, totalCount > 0 ? ((totalCntt / totalCount) * 100).toFixed(1) + '%' : '0%'],
+                ['Thiết bị dạy học', totalTbdh, totalCount > 0 ? ((totalTbdh / totalCount) * 100).toFixed(1) + '%' : '0%'],
+                ['Thực hành', totalTh, totalCount > 0 ? ((totalTh / totalCount) * 100).toFixed(1) + '%' : '0%']
             ];
 
-            // Add borders to all cells in the tables
-            const range = XLSX.utils.decode_range(ws['!ref']);
-            const borderStyle = {
-                top: { style: 'thin', color: { rgb: '000000' } },
-                bottom: { style: 'thin', color: { rgb: '000000' } },
-                left: { style: 'thin', color: { rgb: '000000' } },
-                right: { style: 'thin', color: { rgb: '000000' } }
-            };
-
-            // Table 1 starts at row 4 (0-indexed: row 3)
-            const table1HeaderRow = 4;
-            const table1EndRow = 4 + sortedTeachers.length + 1; // Header + teachers + total row
-
-            // Table 2 starts after spacing
-            const table2StartRow = table1EndRow + 3;
-            const table2EndRow = table2StartRow + 5; // Header row + 4 data rows
-
-            for (let R = range.s.r; R <= range.e.r; ++R) {
-                for (let C = range.s.c; C <= range.e.c; ++C) {
-                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-                    if (!ws[cellAddress]) continue;
-
-                    // Apply borders to table cells only
-                    if ((R >= table1HeaderRow && R <= table1EndRow) ||
-                        (R >= table2StartRow && R <= table2EndRow)) {
-                        if (!ws[cellAddress].s) ws[cellAddress].s = {};
-                        ws[cellAddress].s.border = borderStyle;
-
-                        // Center align for header rows and numeric cells
-                        if (R === table1HeaderRow || R === table2StartRow || R === table2StartRow + 1) {
-                            ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' };
-                        } else if (C >= 3 && C <= 6) { // CNTT, TBDH, TH, Tổng columns
-                            ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' };
-                        }
+            methodsData.forEach(([method, count, percentage]) => {
+                const row = worksheet.getRow(currentRow);
+                row.values = [method, count, percentage, ''];
+                row.eachCell((cell, colNumber) => {
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+                    if (colNumber >= 2 && colNumber <= 3) {
+                        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    } else {
+                        cell.alignment = { vertical: 'middle', horizontal: 'left' };
                     }
-                }
-            }
+                });
+                currentRow++;
+            });
 
-            // Add worksheet to workbook
-            XLSX.utils.book_append_sheet(wb, ws, 'Báo cáo TBDH');
+            // Table 2 Total row
+            const totalRow2 = worksheet.getRow(currentRow);
+            totalRow2.values = ['Tổng cộng', totalCount, '100%', ''];
+            totalRow2.eachCell((cell, colNumber) => {
+                cell.font = { bold: true };
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+                if (colNumber >= 2 && colNumber <= 3) {
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                } else {
+                    cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                }
+            });
 
             // Generate filename
             const [year, month, day] = endDate.split('-');
             const filename = `bao-cao-su-dung-tbdh-${day}-${month}-${year}.xlsx`;
 
-            // Export file
-            XLSX.writeFile(wb, filename);
+            // Write file
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+
             showToast('Đã xuất file Excel thành công!', 'success');
 
         } catch (error) {
