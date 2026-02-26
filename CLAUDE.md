@@ -1,227 +1,45 @@
-# CLAUDE.md - Ghi chú phiên làm việc
+# CLAUDE.md
 
-## Quy tắc làm việc
+## Project Overview
 
-### Bắt đầu phiên làm việc
-- Luôn check branch hiện tại: `git branch`
-- Fetch và sync với remote: `git fetch origin` và `git pull origin <branch>`
-- Đảm bảo đồng bộ với remote trước khi bắt đầu code
+Dự án quản lý thiết bị dạy học THPT, sử dụng Firebase (project ID: `thptclvqt`).
 
-### Trong phiên làm việc
-- Luôn commit & push mỗi khi có thay đổi code:
-  - `git add .`
-  - `git commit -m "message"`
-  - `git push origin <branch>`
+- **Frontend:** Vanilla HTML/CSS/JS trong `public/`
+- **Backend:** Cloud Functions (Node.js) trong `functions/`
+- **Services:** Hosting, Auth, Firestore, Storage, Cloud Functions
+- **Modules:** Manager, Supervisory, Teacher
 
-### Deploy
-- Nhắc nhở deploy lên Firebase khi có screen/feature hoàn thiện
-- Các lệnh deploy:
-  - `firebase deploy` - Deploy tất cả (hosting, functions, firestore, storage)
-  - `firebase deploy --only hosting` - Chỉ deploy hosting
-  - `firebase deploy --only functions` - Chỉ deploy functions
-  - `firebase deploy --only firestore` - Deploy rules và indexes
-  - `firebase deploy --only firestore:indexes` - Chỉ deploy indexes
-  - Script: `deploy_clv.bat`
+## Workflow (mỗi nhánh fix/feature/screen)
 
-## Cấu hình dự án Firebase
+1. `/plan Loại: [feature/fix] | Mô tả: [yêu cầu]`
+2. Review plan → user chốt plan
+3. `/spec` → Tạo/cập nhật spec từ plan (HỎI user trước khi edit spec)
+4. `/impl` → Implement code theo plan (plan là source of truth)
+5. Test local → fix bug/error nếu có
+6. (Tùy chọn) `/deploy` → Deploy lên production
+7. (Tùy chọn) Test production → fix bug/error nếu có
+8. `/changelog` → Update CHANGELOG
+9. `/merge` → Merge vào main → tạo tag → push tổng
 
-Dự án hoàn toàn sử dụng các dịch vụ của Firebase với project ID: `thptclvqt`
+## Sau mỗi lệnh/task xong
 
-### Các dịch vụ Firebase đã sử dụng:
+- `/done` → `git status` → có changes → đề xuất 1 commit message. User tự commit.
 
-1. **Firebase Hosting**
-   - Cấu hình trong `firebase.json`
-   - Public folder: `public/`
-   - Rewrites cho SPA routing (device-info, index.html)
+## Commit Format
 
-2. **Firebase Authentication (Auth)**
-   - **Tính năng chính:**
-     - Đăng nhập/đăng xuất: `signInWithEmailAndPassword()`, `signOut()`
-     - Theo dõi trạng thái: `onAuthStateChanged()`
-     - Quản lý mật khẩu: `sendPasswordResetEmail()`, `updatePassword()`, `reauthenticateWithCredential()`
-     - Quản lý profile: `updateProfile()`
-     - Persistence: `setPersistence()` (Local/Session)
-     - Custom tokens cho impersonation: `signInWithCustomToken()`
-   - **Files chính sử dụng:**
-     - `main.js`: Đăng nhập chính, redirect theo role
-     - `auth-guard.js`: Bảo vệ trang, quản lý profile, đổi mật khẩu
-     - `impersonate.js`: Giả danh người dùng (Manager)
-     - `teacher-register.js`: Xác thực giáo viên
+- Format: `<type>(<scope>): <mô tả ngắn>`
+- Types: feat | fix | refactor | docs | style | chore
+- Scopes: frontend | backend | db | api | docs
 
-3. **Cloud Firestore**
-   - **Collections chính:**
-     - `users`: Thông tin user (uid, name, rule, email)
-     - `teachers`: Chi tiết giáo viên (teacher_name, group_id, status)
-     - `labs`: Bài thực hành (schoolYear, subject, name, order)
-     - `devices`: Thiết bị/công cụ (name, category, subject)
-     - `registrations`: Đăng ký bài học (teacherId, date, period, labId, status)
-     - `groups`: Nhóm/lớp học (schoolYear, name, status)
-     - `schoolYears`: Năm học
-     - `subjects`: Môn học
-     - `syllabuses`: Giáo trình
-     - `teachingMethods`: Phương pháp giảng dạy
-     - `timePlans`: Kế hoạch thời gian (weeks, holidays)
-   - **Sử dụng rộng rãi trong 21 files:**
-     - Manager: main, setting, device, report, synthetic, labs, syllabus, nav
-     - Supervisory: main, report, synthetic, nav
-     - Teacher: main, register, tracking, nav
-     - Common: auth-guard, device-info, main, toast
+## Deploy (Firebase)
 
-4. **Firebase Storage**
-   - **Tính năng:**
-     - Upload file: `uploadBytes()`
-     - Tạo reference: `ref()`
-     - Xóa file: `deleteObject()`
-     - Lấy URL: `getDownloadURL()`
-   - **Chức năng chính:**
-     - Upload hướng dẫn sử dụng thiết bị
-     - Quản lý file tài liệu
-     - Tạo mã QR cho thiết bị
-   - **File chính:** `manager-device.js`
-   - **Sử dụng trong 13 files** (manager/supervisory/teacher modules)
+- `firebase deploy` — Deploy tất cả
+- `firebase deploy --only hosting` — Chỉ hosting
+- `firebase deploy --only functions` — Chỉ functions
+- `firebase deploy --only firestore` — Rules + indexes
+- `firebase deploy --only firestore:indexes` — Chỉ indexes
+- Script: `deploy_clv.bat`
 
-5. **Cloud Functions**
-   - **Hàm 1: impersonateUser** (onCall với CORS)
-     - Input: `{ uid: string }`
-     - Output: `{ token: string }`
-     - Chức năng: Manager giả danh user khác
-     - Bảo mật: Kiểm tra quyền Manager trong Firestore (2 lớp)
-     - Tạo custom token với claim: `{ impersonatedBy: callerUid }`
-   - **Hàm 2: revertImpersonation** (onCall với CORS)
-     - Output: `{ token: string }`
-     - Chức năng: Thoát chế độ giả danh
-     - Kiểm tra claim 'impersonatedBy' trước khi tạo lại token Manager
-   - **File backend:** `functions/index.js`
-   - **File gọi:** `impersonate.js` (sử dụng httpsCallable)
+## Công cụ
 
-6. **Firebase Analytics**
-   - Có measurementId: `G-E3H9L4FW4D` trong config
-   - Chưa thấy sử dụng rõ ràng trong code
-
-### Cấu trúc dự án
-- Frontend: HTML/CSS/JS trong `public/`
-- Backend: Cloud Functions trong `functions/`
-- Config Firebase (đã được khởi tạo đầy đủ trên local):
-  - `firebase.json` - Cấu hình chính cho tất cả services
-  - `firebase-config.js` - Client-side Firebase config
-  - `firestore.rules` - Security rules cho Firestore
-  - `firestore.indexes.json` - 19 composite indexes (đã sync với server)
-  - `storage.rules` - Security rules cho Storage
-
-### Tính năng chính theo module
-
-1. **Manager Module**
-   - Dashboard: `manager-main.js`
-   - Quản lý thiết bị: `manager-device.js` (có upload Storage + QR code)
-   - Cài đặt hệ thống: `manager-setting.js` (file lớn nhất)
-   - Báo cáo: `manager-report.js` (Tổng = CNTT + TBDH + TH)
-   - Quản lý bài thực hành: `manager-labs.js`
-   - Quản lý giáo trình: `manager-syllabus.js`
-   - Tổng hợp dữ liệu: `manager-synthetic.js`
-   - **Theo dõi & Tổng hợp: `manager-tracking.js` (MỚI)**
-     - Bộ lọc đa cấp: Tổ / Giáo viên / Môn học / Thời gian
-     - Hiển thị báo cáo tổng quan hoặc chi tiết
-     - Biểu đồ doughnut visualize PPDH
-     - Tự động loại trừ ngày nghỉ lễ
-   - Giả danh người dùng: `impersonate.js`
-
-2. **Supervisory Module**
-   - Dashboard: `supervisory-main.js`
-   - Báo cáo: `supervisory-report.js`
-   - Tổng hợp dữ liệu: `supervisory-synthetic.js`
-
-3. **Teacher Module**
-   - Dashboard: `teacher-main.js`
-   - Đăng ký bài học: `teacher-register.js`
-   - Theo dõi hoạt động: `teacher-tracking.js`
-
-4. **Common/Shared**
-   - Xác thực & bảo vệ: `auth-guard.js`, `main.js`
-   - Thông tin thiết bị: `device-info.js`
-   - Navigation: `*-nav.js`
-   - Utils: `utils.js`, `toast.js`
-
-### Lưu ý bảo mật
-- Sử dụng Firebase Rules cho Firestore và Storage
-- Files rules (đã được version control):
-  - `firestore.rules` (copy từ `rules.txt`)
-  - `storage.rules` (copy từ `rules_storage.txt`)
-- Cloud Functions có kiểm tra quyền Manager (2 lớp bảo mật)
-- Custom claims để theo dõi giả danh
-- SessionStorage cho trạng thái giả danh (không dùng localStorage)
-
-### Firestore Indexes
-- File: `firestore.indexes.json` (19 composite indexes)
-- Đã sync với Firebase server
-- Hỗ trợ query phức tạp cho tất cả modules
-- Collections có indexes: devices, groups, labs, registrations, subjects, teachers, teachingMethods
-- Deploy indexes: `firebase deploy --only firestore:indexes`
-
-### Công cụ
 - Linter: `linter.js`, script `run-linter.bat`
-- Deploy: `deploy_clv.bat`
-
-### Files quan trọng cần lưu ý
-- `manager-setting.js`: File lớn nhất, chứa nhiều logic cài đặt
-- `manager-device.js`: Xử lý Storage, upload file, tạo QR code
-- `manager-report.js`: Báo cáo với công thức Tổng = CNTT + TBDH + TH
-- `manager-tracking.js`: Theo dõi chi tiết với bộ lọc đa cấp (MỚI)
-- `impersonate.js`: Tính năng giả danh độc đáo
-- `auth-guard.js`: Bảo vệ tất cả các trang, kiểm tra quyền
-- `functions/index.js`: Backend logic cho impersonation
-
-## Lịch sử cập nhật quan trọng
-
-### 2026-01-08
-1. **Tạo screen manager-tracking**
-   - Bộ lọc: Tổ chuyên môn / Giáo viên / Môn học / Thời gian
-   - Hiển thị: Báo cáo tổng quan + Chi tiết theo giáo viên
-   - Biểu đồ: Chart.js với doughnut chart
-   - Tự động loại trừ ngày nghỉ lễ
-
-2. **Sửa phương pháp tính Tổng trong manager-report**
-   - Trước: Tổng = Số lượt đăng ký
-   - Sau: Tổng = CNTT + TBDH + TH
-   - Label: "Tổng (lượt)"
-
-3. **Khởi tạo Firebase config đầy đủ trên local**
-   - Export indexes từ Firebase: 19 composite indexes
-   - Tạo `firestore.rules` và `storage.rules`
-   - Cập nhật `firebase.json` với cấu hình đầy đủ
-   - Deploy test thành công
-
-4. **Cập nhật .gitignore**
-   - Thêm `.claude/` (Claude Code config)
-   - Thêm `nul` (temp files)
-
-### 2026-01-10
-1. **Fix: Lỗi đọc field order = 0 trong teacher permission check**
-   - **Vấn đề:** Tổ trưởng (order = 0) không thể truy cập trang teacher-report
-   - **Nguyên nhân:** Code `teacherData.order || 999` đánh giá `0` là falsy → trả về `999`
-   - **Giải pháp:** Đổi thành `teacherData.order !== undefined ? teacherData.order : 999`
-   - **Files:** teacher-report.js:129, teacher-nav.js:58
-   - **Bài học:** Luôn cẩn thận với falsy values (0, false, '', null, undefined) khi dùng `||` operator
-   - **Deploy:** firebase deploy --only hosting (thành công)
-
-2. **Feature: Báo cáo tổng hợp theo tổ chuyên môn trong teacher-report**
-   - **Mục đích:** Tổ trưởng/tổ phó xem báo cáo toàn bộ giáo viên trong tổ để báo cáo BGH
-   - **Thay đổi:**
-     - Query tất cả giáo viên trong cùng tổ (group_id + status=active)
-     - Tổng hợp registrations của toàn bộ giáo viên trong tổ
-     - Hiển thị danh sách giáo viên và vai trò người lập báo cáo
-     - Thêm Firestore index: teachers (group_id + status + order)
-   - **Files:** teacher-report.js, firestore.indexes.json
-   - **Deploy:** firebase deploy --only hosting,firestore:indexes (thành công)
-
-3. **Feature: Thêm bảng chi tiết theo giáo viên trong teacher-report**
-   - **Mục đích:** Hiển thị số liệu PPDH chi tiết của từng giáo viên trong tổ
-   - **Thay đổi:**
-     - Thêm bảng "1. Tình hình sử dụng thiết bị theo giáo viên"
-       - Các cột: STT, Giáo viên, Môn dạy, CNTT, TBDH, TH, Tổng (lượt), Ghi chú
-       - Sắp xếp giảm dần theo tổng số lượt
-     - Đổi tên bảng tổng hợp thành "2. Tình hình sử dụng thiết bị dạy học"
-     - Thu thập dữ liệu chi tiết cho từng giáo viên bằng Map structure
-     - Tương tự format của manager-report nhưng chỉ cho 1 tổ
-   - **File:** teacher-report.js
-   - **Deploy:** firebase deploy --only hosting (thành công)
-   - **Update:** Đổi cột "Tổ chuyên môn" → "Môn dạy" (hiển thị subject từ teachers collection)
