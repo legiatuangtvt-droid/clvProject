@@ -270,6 +270,18 @@
     flex-direction: column;
 }
 
+.inventory-preview-modal-content .modal-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.inventory-preview-modal-content .modal-actions-left {
+    display: flex;
+    gap: 8px;
+}
+
 .inventory-preview-container {
     flex: 1;
     overflow-y: auto;
@@ -277,4 +289,25 @@
     background: #fff;
     border: 1px solid var(--border-color);
     border-radius: 8px;
+}
+
+.inventory-preview-container .editable-field {
+    padding: 0 2px;
+    cursor: text;
+    transition: background-color 0.2s;
+}
+
+.inventory-preview-container .editable-field:empty::before {
+    content: '.....';
+    color: #ccc;
+}
+
+.inventory-preview-container .editable-field:hover {
+    background-color: #fff3cd;
+}
+
+.inventory-preview-container .editable-field:focus {
+    background-color: #fff3cd;
+    border-bottom: 1px solid var(--primary-color);
+    outline: none;
 }

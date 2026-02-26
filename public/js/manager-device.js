@@ -1003,29 +1003,44 @@ document.addEventListener('DOMContentLoaded', () => {
         return numerals[num - 1] || String(num);
     };
 
-    const renderInventoryTreeRows = (parentId, counter) => {
+    // depth 0 → A,B,C  |  depth 1 → I,II,III  |  depth 2 → 1,2,3  |  devices → parentNum.x
+    const renderInventoryTreeRows = (parentId, depth, parentNumStr) => {
         let html = '';
         const children = allItemsCache
             .filter(item => item.parentId === parentId)
             .sort((a, b) => String(a.order || '').localeCompare(String(b.order || ''), undefined, { numeric: true, sensitivity: 'base' }));
 
+        let catIdx = 0;
+        let deviceIdx = 0;
+
         children.forEach(child => {
             if (child.type === 'category') {
-                // Category row - bold, spanning all columns
+                catIdx++;
+                let stt;
+                if (depth === 0) {
+                    stt = String.fromCharCode(64 + catIdx); // A, B, C...
+                } else if (depth === 1) {
+                    stt = toRoman(catIdx); // I, II, III...
+                } else {
+                    stt = String(catIdx); // 1, 2, 3...
+                }
                 html += `<tr>
-                    <td colspan="6" style="border: 1px solid #000; padding: 4px 8px; font-weight: bold; text-transform: uppercase; font-size: 13pt;">
+                    <td style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: bold; font-size: 13pt;">${stt}</td>
+                    <td colspan="5" style="border: 1px solid #000; padding: 4px 8px; font-weight: bold; text-transform: uppercase; font-size: 13pt;">
                         ${child.name}
                     </td>
                 </tr>`;
-                const result = renderInventoryTreeRows(child.id, counter);
+                // depth >= 2 categories pass their number as prefix for device STT
+                const numStr = depth >= 2 ? String(catIdx) : '';
+                const result = renderInventoryTreeRows(child.id, depth + 1, numStr);
                 html += result.html;
-                counter = result.counter;
             } else if (child.type === 'device') {
-                counter++;
+                deviceIdx++;
+                const stt = parentNumStr ? `${parentNumStr}.${deviceIdx}` : String(deviceIdx);
                 const desc = child.description ? child.description.replace(/\n/g, '<br/>') : '';
                 const nameAndDesc = desc ? `${child.name || ''}<br/>${desc}` : (child.name || '');
                 html += `<tr>
-                    <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${counter}</td>
+                    <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${stt}</td>
                     <td style="border: 1px solid #000; padding: 4px; font-size: 13pt;">${child.topic || ''}</td>
                     <td style="border: 1px solid #000; padding: 4px; font-size: 13pt;">${nameAndDesc}</td>
                     <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.unit || ''}</td>
@@ -1035,29 +1050,45 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        return { html, counter };
+        return { html };
     };
 
     const buildInventoryHTML = () => {
         const topLevelCategories = allItemsCache.filter(item => !item.parentId && item.type === 'category');
 
-        // Build subject-to-categories mapping
-        const subjectMap = new Map();
+        // Normalize Vietnamese for flexible matching (case-insensitive, ý/í variants)
+        const normalizeVi = (str) => str.normalize('NFC').replace(/[ýỳỷỹỵÝỲỶỸỴ]/g, m => m === m.toUpperCase() ? 'i' : 'i').toLowerCase().trim();
+
+        // Build subject-to-categories mapping using normalized keys
+        const subjectMap = new Map(); // normalized key → categories[]
         topLevelCategories.forEach(cat => {
             if (cat.subjects && cat.subjects.length > 0) {
                 cat.subjects.forEach(subjectName => {
-                    if (!subjectMap.has(subjectName)) {
-                        subjectMap.set(subjectName, []);
+                    const normKey = normalizeVi(subjectName);
+                    if (!subjectMap.has(normKey)) {
+                        subjectMap.set(normKey, []);
                     }
-                    subjectMap.get(subjectName).push(cat);
+                    subjectMap.get(normKey).push(cat);
                 });
             }
         });
 
-        // Sort subjects by allSubjectsCache order
-        const sortedSubjects = allSubjectsCache
-            .map(s => s.name)
-            .filter(name => subjectMap.has(name));
+        // Sort subjects by predefined order (using actual DB names), then remaining alphabetically
+        const SUBJECT_ORDER = ['Toán', 'Vật Lý', 'Hóa học', 'Sinh học', 'CNCN', 'CNNN', 'Lịch sử', 'Địa Lý', 'Tin học', 'Ngữ Văn', 'GDQP AN', 'Giáo dục thể chất', 'Hoạt động trải nghiệm', 'KTGD&PL'];
+        const findOrderIndex = (name) => {
+            const norm = normalizeVi(name);
+            return SUBJECT_ORDER.findIndex(s => normalizeVi(s) === norm);
+        };
+        // Filter subjects that have categories mapped (using normalized matching)
+        const allSubjectNames = allSubjectsCache.map(s => s.name).filter(name => subjectMap.has(normalizeVi(name)));
+        const sortedSubjects = allSubjectNames.sort((a, b) => {
+            const idxA = findOrderIndex(a);
+            const idxB = findOrderIndex(b);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+            return a.localeCompare(b, 'vi');
+        });
 
         const hStyle = 'border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; font-size: 13pt;';
 
@@ -1081,15 +1112,18 @@ document.addEventListener('DOMContentLoaded', () => {
         html += `<p style="text-align: center; font-weight: bold; font-size: 15pt; margin-top: 25px; margin-bottom: 0;">BIÊN BẢN</p>`;
         html += `<p style="text-align: center; font-weight: bold; font-size: 13pt; margin-top: 5px;">Về việc kiểm kê thiết bị dạy học</p>`;
 
+        // Editable field helper with ID for localStorage persistence
+        const ef = (id, text) => `<span contenteditable="true" class="editable-field" data-field-id="${id}">${text}</span>`;
+
         // Body intro
-        html += `<p style="text-indent: 30px;">Căn cứ nhiệm vụ năm học .........., Trường THPT Chế Lan Viên thành lập Hội đồng kiểm kê thiết bị dạy học tối thiểu các bộ môn Vật lý, Hóa học, Sinh học, Công nghệ, Toán học, Lịch sử, Địa Lý, Ngữ văn, TD- QPAN, Trải nghiệm, Hướng nghiệp...</p>`;
-        html += `<p style="text-indent: 30px;">Thời gian kiểm kê: ..........</p>`;
-        html += `<p style="text-indent: 30px;">Địa điểm: Phòng học bộ môn Vật lý, Hóa học, Sinh học, Phòng Thiết bị, Phòng Bản đồ, Kho TD- QPAN trường THPT Chế Lan Viên</p>`;
+        html += `<p style="text-indent: 30px;">Căn cứ nhiệm vụ năm học ${ef('nam-hoc', '')}, Trường THPT Chế Lan Viên thành lập Hội đồng kiểm kê thiết bị dạy học tối thiểu các bộ môn Vật lý, Hóa học, Sinh học, Công nghệ, Toán học, Lịch sử, Địa Lý, Ngữ văn, TD- QPAN, Trải nghiệm, Hướng nghiệp...</p>`;
+        html += `<p style="text-indent: 30px;">Thời gian kiểm kê: ${ef('thoi-gian', '')}</p>`;
+        html += `<p style="text-indent: 30px;">Địa điểm: ${ef('dia-diem', '')}</p>`;
         html += `<p style="text-indent: 30px;">Thành phần kiểm kê gồm:</p>`;
 
-        // Committee members (placeholder)
+        // Committee members (editable placeholders)
         for (let i = 1; i <= 10; i++) {
-            html += `<p style="margin-left: 50px; margin-top: 2px; margin-bottom: 2px;">${i}. ..........</p>`;
+            html += `<p style="margin-left: 50px; margin-top: 2px; margin-bottom: 2px;">${i}. ${ef(`member-${i}`, '')}</p>`;
         }
 
         // For each subject, create a section with table
@@ -1110,13 +1144,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 </thead>
                 <tbody>`;
 
-            const categories = subjectMap.get(subjectName);
-            let deviceCounter = 0;
+            const categories = subjectMap.get(normalizeVi(subjectName));
 
             categories.forEach(topCat => {
-                const result = renderInventoryTreeRows(topCat.id, deviceCounter);
+                const result = renderInventoryTreeRows(topCat.id, 0, '');
                 html += result.html;
-                deviceCounter = result.counter;
             });
 
             html += `</tbody></table>`;
@@ -1126,9 +1158,71 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     };
 
+    const INVENTORY_STORAGE_KEY = 'inventoryReportFields';
+
+    const INVENTORY_SAMPLE_DATA = {
+        'nam-hoc': '2024-2025',
+        'thoi-gian': '7h30 ngày 30 tháng 12 năm 2024',
+        'dia-diem': 'Phòng học bộ môn Vật lý, Hóa học, Sinh học, Phòng Thiết bị, Phòng Bản đồ, Kho TD- QPAN trường THPT Chế Lan Viên',
+        'member-1': 'Bà Nguyễn Thị Tân, Phó hiệu trưởng – Phụ trách CSVC',
+        'member-2': 'Bà Nguyễn Thị Loan, Nhân viên thiết bị',
+        'member-3': 'Bà Nguyễn Thị Mỹ Hạnh, Kế toán',
+        'member-4': 'Ông Hoàng Ngọc Phúc, TTCM tổ Sinh-TD-GDQP',
+        'member-5': 'Bà Nguyễn Thị Thùy Hoài, TPCM tổ Vật lý- CN',
+        'member-6': 'Ông Nguyễn Đức Đạt, TTCM tổ Địa -Tin',
+        'member-7': 'Ông Phan Quốc Dũng, TTCM tổ Sử- GDKT&PL',
+        'member-8': 'Ông Phạm Văn Lê Long, TPCM tổ Địa –Tin',
+        'member-9': 'Bà Nguyễn Thị Hải Hiền, TPCM tổ Sinh-TD-GDQP',
+        'member-10': 'Ông Từ Xuân Thành, TTCM tổ Hóa học'
+    };
+
+    const fillSampleData = () => {
+        inventoryPreviewContainer.querySelectorAll('.editable-field[data-field-id]').forEach(el => {
+            const value = INVENTORY_SAMPLE_DATA[el.dataset.fieldId];
+            if (value) el.innerHTML = value;
+        });
+        saveInventoryFields();
+    };
+
+    const clearAllFields = () => {
+        inventoryPreviewContainer.querySelectorAll('.editable-field[data-field-id]').forEach(el => {
+            el.innerHTML = '';
+        });
+        saveInventoryFields();
+    };
+
+    const saveInventoryFields = () => {
+        const fields = {};
+        inventoryPreviewContainer.querySelectorAll('.editable-field[data-field-id]').forEach(el => {
+            fields[el.dataset.fieldId] = el.innerHTML;
+        });
+        localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(fields));
+    };
+
+    const restoreInventoryFields = () => {
+        try {
+            const saved = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY));
+            if (!saved) return;
+            inventoryPreviewContainer.querySelectorAll('.editable-field[data-field-id]').forEach(el => {
+                if (saved[el.dataset.fieldId] !== undefined) {
+                    el.innerHTML = saved[el.dataset.fieldId];
+                }
+            });
+        } catch (e) { /* ignore parse errors */ }
+    };
+
     const openInventoryPreview = () => {
         const html = buildInventoryHTML();
         inventoryPreviewContainer.innerHTML = html;
+        restoreInventoryFields();
+
+        // Auto-save on edit
+        inventoryPreviewContainer.addEventListener('input', (e) => {
+            if (e.target.classList.contains('editable-field')) {
+                saveInventoryFields();
+            }
+        });
+
         inventoryPreviewModal.style.display = 'flex';
     };
 
@@ -1154,7 +1248,6 @@ document.addEventListener('DOMContentLoaded', () => {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        showToast('Đã tải file Word thành công!', 'success');
     };
 
     // --- BULK IMPORT ---
@@ -1313,6 +1406,8 @@ document.addEventListener('DOMContentLoaded', () => {
         exportInventoryBtn?.addEventListener('click', openInventoryPreview);
         cancelInventoryPreviewBtn?.addEventListener('click', () => inventoryPreviewModal.style.display = 'none');
         downloadWordBtn?.addEventListener('click', downloadInventoryWord);
+        document.getElementById('fill-sample-btn')?.addEventListener('click', fillSampleData);
+        document.getElementById('clear-fields-btn')?.addEventListener('click', clearAllFields);
 
         // Đóng/Lưu modal Danh mục
         cancelCategoryBtn?.addEventListener('click', () => {
