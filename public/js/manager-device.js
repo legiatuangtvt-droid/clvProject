@@ -84,8 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const inventoryPreviewContainer = document.getElementById('inventory-preview-container');
     const cancelInventoryPreviewBtn = document.getElementById('cancel-inventory-preview-btn');
     const downloadWordBtn = document.getElementById('download-word-btn');
+    const compactModeToggle = document.getElementById('compact-mode-toggle');
+    const compactModeLabel = document.getElementById('compact-mode-label');
 
     // --- STATE ---
+    let isCompactMode = false;
     let allItemsCache = [];
     let selectedNodeId = null;
     let currentEditingId = null;
@@ -1003,8 +1006,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return numerals[num - 1] || String(num);
     };
 
+    // Rút gọn tên thiết bị: chỉ lấy dòng đầu tiên
+    const getCompactName = (name) => {
+        if (!name) return '';
+        // Lấy dòng đầu tiên không rỗng
+        const firstLine = name.split('\n').map(l => l.trim()).find(l => l.length > 0) || '';
+        // Nếu dòng vẫn dài và có dấu chấm câu → cắt tại dấu chấm đầu tiên
+        if (firstLine.length > 100) {
+            const dotIdx = firstLine.indexOf('.');
+            if (dotIdx > 0 && dotIdx < firstLine.length - 1) {
+                return firstLine.substring(0, dotIdx).trim();
+            }
+        }
+        return firstLine;
+    };
+
     // depth 0 → A,B,C  |  depth 1 → I,II,III  |  depth 2 → 1,2,3  |  devices → parentNum.x
-    const renderInventoryTreeRows = (parentId, depth, parentNumStr) => {
+    const renderInventoryTreeRows = (parentId, depth, parentNumStr, compact) => {
         let html = '';
         const children = allItemsCache
             .filter(item => item.parentId === parentId)
@@ -1032,15 +1050,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 </tr>`;
                 // depth >= 2 categories pass their number as prefix for device STT
                 const numStr = depth >= 2 ? String(catIdx) : '';
-                const result = renderInventoryTreeRows(child.id, depth + 1, numStr);
+                const result = renderInventoryTreeRows(child.id, depth + 1, numStr, compact);
                 html += result.html;
             } else if (child.type === 'device') {
                 deviceIdx++;
                 const stt = parentNumStr ? `${parentNumStr}.${deviceIdx}` : String(deviceIdx);
-                const desc = child.description ? child.description.replace(/\n/g, '<br/>') : '';
-                const nameCell = desc
-                    ? `${child.name || ''}<div class="inv-desc" onclick="this.classList.toggle('expanded')">${desc}</div>`
-                    : (child.name || '');
+                let nameCell;
+                if (compact) {
+                    nameCell = getCompactName(child.name);
+                } else {
+                    const desc = child.description ? child.description.replace(/\n/g, '<br/>') : '';
+                    nameCell = desc
+                        ? `${child.name || ''}<div class="inv-desc" onclick="this.classList.toggle('expanded')">${desc}</div>`
+                        : (child.name || '');
+                }
                 html += `<tr>
                     <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${stt}</td>
                     <td style="border: 1px solid #000; padding: 4px; font-size: 13pt;">${child.topic || ''}</td>
@@ -1055,7 +1078,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return { html };
     };
 
-    const buildInventoryHTML = () => {
+    const buildInventoryHTML = (compact = false) => {
         const topLevelCategories = allItemsCache.filter(item => !item.parentId && item.type === 'category');
 
         // Normalize Vietnamese for flexible matching (case-insensitive, ý/í variants)
@@ -1149,7 +1172,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const categories = subjectMap.get(normalizeVi(subjectName));
 
             categories.forEach(topCat => {
-                const result = renderInventoryTreeRows(topCat.id, 0, '');
+                const result = renderInventoryTreeRows(topCat.id, 0, '', compact);
                 html += result.html;
             });
 
@@ -1213,8 +1236,19 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) { /* ignore parse errors */ }
     };
 
+    const rebuildInventoryPreview = () => {
+        saveInventoryFields();
+        const html = buildInventoryHTML(isCompactMode);
+        inventoryPreviewContainer.innerHTML = html;
+        restoreInventoryFields();
+    };
+
     const openInventoryPreview = () => {
-        const html = buildInventoryHTML();
+        // Reset toggle to match current state
+        if (compactModeToggle) compactModeToggle.checked = isCompactMode;
+        if (compactModeLabel) compactModeLabel.textContent = isCompactMode ? 'Bản rút gọn' : 'Bản đầy đủ';
+
+        const html = buildInventoryHTML(isCompactMode);
         inventoryPreviewContainer.innerHTML = html;
         restoreInventoryFields();
 
@@ -1470,6 +1504,11 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadWordBtn?.addEventListener('click', downloadInventoryWord);
         document.getElementById('fill-sample-btn')?.addEventListener('click', fillSampleData);
         document.getElementById('clear-fields-btn')?.addEventListener('click', clearAllFields);
+        compactModeToggle?.addEventListener('change', () => {
+            isCompactMode = compactModeToggle.checked;
+            if (compactModeLabel) compactModeLabel.textContent = isCompactMode ? 'Bản rút gọn' : 'Bản đầy đủ';
+            rebuildInventoryPreview();
+        });
 
         // Đóng/Lưu modal Danh mục
         cancelCategoryBtn?.addEventListener('click', () => {

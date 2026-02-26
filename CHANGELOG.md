@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.1.0] - 2026-02-26
+
+### Added
+- Chế độ rút gọn biên bản kiểm kê (toggle "Bản đầy đủ / Bản rút gọn")
+  - Bản rút gọn chỉ giữ dòng đầu tiên của tên thiết bị, ẩn mô tả chi tiết
+  - Giảm đáng kể số trang file Word khi in đi kiểm kê thực tế
+  - Chuyển đổi giữa 2 chế độ không mất dữ liệu đã nhập
+  - Export Word tự động theo chế độ đang chọn
+
+### Fixed
+- Tối ưu Firestore reads: cập nhật cache local thay vì reload toàn bộ khi xóa
+
+### Deployment Info
+- **Branch**: `feature/v1.1.0-inventory-compact-mode`
+- **Commit**: `52ec915`
+- **Deployed**: Firebase Hosting (thptclvqt)
+
 ## [v1.0.0] - 2026-02-26
 
 ### Added
