@@ -915,8 +915,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 await batch.commit();
 
                 showToast('Đã xóa thành công!', 'success', 3000);
-                // Tải lại toàn bộ dữ liệu từ đầu để đảm bảo cache được làm mới hoàn toàn
-                await loadAllItems();
+                // Cập nhật cache local thay vì reload toàn bộ collection (tiết kiệm reads)
+                allItemsCache = allItemsCache.filter(item => !idsToDelete.includes(item.id));
                 renderList(selectedNodeId);
             } catch (error) {
                 console.error("Lỗi khi xóa:", error);
