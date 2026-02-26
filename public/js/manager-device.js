@@ -1133,7 +1133,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const romanNum = toRoman(index + 1);
             html += `<p style="font-weight: bold; margin-top: 20px; font-size: 13pt;">${romanNum}. MÔN ${subjectName.toUpperCase()}</p>`;
 
-            html += `<table style="width: 100%; border-collapse: collapse;">
+            html += `<table style="width: 100%; border-collapse: collapse; table-layout: fixed; word-break: break-word;">
                 <thead>
                     <tr>
                         <th style="${hStyle} width: 6%;">Số<br/>TT</th>
@@ -1224,6 +1224,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveInventoryFields();
             }
         });
+
+        // Auto-select all text on focus for quantity/broken cells
+        inventoryPreviewContainer.addEventListener('focus', (e) => {
+            if (e.target.dataset?.deviceId && e.target.dataset?.field) {
+                const range = document.createRange();
+                range.selectNodeContents(e.target);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }, true);
 
         // Save quantity/broken to Firestore on blur
         inventoryPreviewContainer.addEventListener('blur', async (e) => {

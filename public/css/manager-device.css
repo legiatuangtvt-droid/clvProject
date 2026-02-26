@@ -359,14 +359,18 @@
     }
 
     .inventory-preview-modal-content .modal-actions {
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 8px;
     }
 
     .inventory-preview-modal-content .modal-actions-left,
     .inventory-preview-modal-content .modal-actions-right {
+        display: contents;
+    }
+
+    .inventory-preview-modal-content .modal-actions button {
         width: 100%;
-        justify-content: center;
     }
 
     /* Thu gọn mô tả thiết bị trong preview */
