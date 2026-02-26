@@ -1046,8 +1046,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td style="border: 1px solid #000; padding: 4px; font-size: 13pt;">${child.topic || ''}</td>
                     <td style="border: 1px solid #000; padding: 4px; font-size: 13pt;">${nameCell}</td>
                     <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.unit || ''}</td>
-                    <td contenteditable="true" data-device-id="${child.id}" data-field="quantity" style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.quantity || 0}</td>
-                    <td contenteditable="true" data-device-id="${child.id}" data-field="broken" style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.broken || 0}</td>
+                    <td contenteditable="true" inputmode="numeric" data-device-id="${child.id}" data-field="quantity" style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.quantity || 0}</td>
+                    <td contenteditable="true" inputmode="numeric" data-device-id="${child.id}" data-field="broken" style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.broken || 0}</td>
                 </tr>`;
             }
         });
@@ -1226,13 +1226,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Auto-select all text on focus for quantity/broken cells
+        // Delay to avoid triggering mobile context menu (Cut/Copy/Paste) immediately
         inventoryPreviewContainer.addEventListener('focus', (e) => {
             if (e.target.dataset?.deviceId && e.target.dataset?.field) {
-                const range = document.createRange();
-                range.selectNodeContents(e.target);
-                const sel = window.getSelection();
-                sel.removeAllRanges();
-                sel.addRange(range);
+                setTimeout(() => {
+                    const range = document.createRange();
+                    range.selectNodeContents(e.target);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }, 50);
             }
         }, true);
 
