@@ -1038,14 +1038,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 deviceIdx++;
                 const stt = parentNumStr ? `${parentNumStr}.${deviceIdx}` : String(deviceIdx);
                 const desc = child.description ? child.description.replace(/\n/g, '<br/>') : '';
-                const nameAndDesc = desc ? `${child.name || ''}<br/>${desc}` : (child.name || '');
+                const nameCell = desc
+                    ? `${child.name || ''}<div class="inv-desc" onclick="this.classList.toggle('expanded')">${desc}</div>`
+                    : (child.name || '');
                 html += `<tr>
                     <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${stt}</td>
                     <td style="border: 1px solid #000; padding: 4px; font-size: 13pt;">${child.topic || ''}</td>
-                    <td style="border: 1px solid #000; padding: 4px; font-size: 13pt;">${nameAndDesc}</td>
+                    <td style="border: 1px solid #000; padding: 4px; font-size: 13pt;">${nameCell}</td>
                     <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.unit || ''}</td>
-                    <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.quantity || 0}</td>
-                    <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.broken || 0}</td>
+                    <td contenteditable="true" data-device-id="${child.id}" data-field="quantity" style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.quantity || 0}</td>
+                    <td contenteditable="true" data-device-id="${child.id}" data-field="broken" style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.broken || 0}</td>
                 </tr>`;
             }
         });
@@ -1216,12 +1218,58 @@ document.addEventListener('DOMContentLoaded', () => {
         inventoryPreviewContainer.innerHTML = html;
         restoreInventoryFields();
 
-        // Auto-save on edit
+        // Auto-save editable fields on edit
         inventoryPreviewContainer.addEventListener('input', (e) => {
             if (e.target.classList.contains('editable-field')) {
                 saveInventoryFields();
             }
         });
+
+        // Save quantity/broken to Firestore on blur
+        inventoryPreviewContainer.addEventListener('blur', async (e) => {
+            const cell = e.target;
+            const deviceId = cell.dataset?.deviceId;
+            const field = cell.dataset?.field;
+            if (!deviceId || !field) return;
+
+            const newValue = parseInt(cell.textContent.trim(), 10);
+            const item = allItemsCache.find(i => i.id === deviceId);
+            if (isNaN(newValue) || newValue < 0) {
+                cell.textContent = item ? (item[field] || 0) : 0;
+                return;
+            }
+
+            // Validate: broken <= quantity
+            if (field === 'broken') {
+                const qty = item ? (item.quantity || 0) : 0;
+                if (newValue > qty) {
+                    showToast(`Số hỏng (${newValue}) không được lớn hơn tổng số (${qty})!`, 'error');
+                    cell.textContent = item ? (item.broken || 0) : 0;
+                    return;
+                }
+            }
+            if (field === 'quantity') {
+                const broken = item ? (item.broken || 0) : 0;
+                if (newValue < broken) {
+                    showToast(`Tổng số (${newValue}) không được nhỏ hơn số hỏng (${broken})!`, 'error');
+                    cell.textContent = item ? (item.quantity || 0) : 0;
+                    return;
+                }
+            }
+
+            if (item && item[field] === newValue) return;
+
+            try {
+                await updateDoc(doc(firestore, 'devices', deviceId), { [field]: newValue });
+                // Update local cache
+                if (item) item[field] = newValue;
+            } catch (err) {
+                console.error('Lỗi cập nhật:', err);
+                showToast('Lỗi cập nhật dữ liệu!', 'error');
+                // Revert on error
+                cell.textContent = item ? (item[field] || 0) : 0;
+            }
+        }, true);
 
         inventoryPreviewModal.style.display = 'flex';
     };

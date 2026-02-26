@@ -311,3 +311,94 @@
     border-bottom: 1px solid var(--primary-color);
     outline: none;
 }
+
+/* --- Responsive Mobile --- */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .page-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .page-actions .btn-secondary,
+    .page-actions .btn-primary,
+    .page-actions .btn-cancel {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Table scroll ngang */
+    #device-list-container {
+        overflow-x: auto;
+    }
+
+    .device-table {
+        min-width: 900px;
+    }
+
+    /* Inventory preview modal */
+    .inventory-preview-modal-content {
+        width: 100%;
+        max-width: none;
+        max-height: 100vh;
+        border-radius: 0;
+        padding: 15px;
+    }
+
+    .inventory-preview-modal-content h2 {
+        font-size: 1.2rem;
+    }
+
+    .inventory-preview-container {
+        padding: 10px;
+    }
+
+    .inventory-preview-modal-content .modal-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .inventory-preview-modal-content .modal-actions-left,
+    .inventory-preview-modal-content .modal-actions-right {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Thu gọn mô tả thiết bị trong preview */
+    .inv-desc {
+        max-height: 3.6em; /* ~2 dòng */
+        overflow: hidden;
+        cursor: pointer;
+        position: relative;
+        color: var(--text-light);
+        font-size: 0.9em;
+        margin-top: 4px;
+    }
+
+    .inv-desc::after {
+        content: '▼ xem thêm';
+        display: block;
+        font-size: 0.75em;
+        color: var(--primary-color);
+        margin-top: 2px;
+    }
+
+    .inv-desc.expanded {
+        max-height: none;
+    }
+
+    .inv-desc.expanded::after {
+        content: '▲ thu gọn';
+    }
+
+    /* Shared modal responsive */
+    .modal-content {
+        min-width: unset;
+        width: 95%;
+    }
+}
