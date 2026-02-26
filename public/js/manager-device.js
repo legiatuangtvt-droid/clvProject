@@ -78,6 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const manualFileInput = document.getElementById('device-manual-file');
     const manualFileLink = document.getElementById('device-manual-link');
 
+    // Inventory Preview Modal Elements
+    const exportInventoryBtn = document.getElementById('export-inventory-btn');
+    const inventoryPreviewModal = document.getElementById('inventory-preview-modal');
+    const inventoryPreviewContainer = document.getElementById('inventory-preview-container');
+    const cancelInventoryPreviewBtn = document.getElementById('cancel-inventory-preview-btn');
+    const downloadWordBtn = document.getElementById('download-word-btn');
+
     // --- STATE ---
     let allItemsCache = [];
     let selectedNodeId = null;
@@ -990,6 +997,166 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
 
+    // --- INVENTORY REPORT (Biên bản kiểm kê) ---
+    const toRoman = (num) => {
+        const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'];
+        return numerals[num - 1] || String(num);
+    };
+
+    const renderInventoryTreeRows = (parentId, counter) => {
+        let html = '';
+        const children = allItemsCache
+            .filter(item => item.parentId === parentId)
+            .sort((a, b) => String(a.order || '').localeCompare(String(b.order || ''), undefined, { numeric: true, sensitivity: 'base' }));
+
+        children.forEach(child => {
+            if (child.type === 'category') {
+                // Category row - bold, spanning all columns
+                html += `<tr>
+                    <td colspan="6" style="border: 1px solid #000; padding: 4px 8px; font-weight: bold; text-transform: uppercase; font-size: 13pt;">
+                        ${child.name}
+                    </td>
+                </tr>`;
+                const result = renderInventoryTreeRows(child.id, counter);
+                html += result.html;
+                counter = result.counter;
+            } else if (child.type === 'device') {
+                counter++;
+                const desc = child.description ? child.description.replace(/\n/g, '<br/>') : '';
+                const nameAndDesc = desc ? `${child.name || ''}<br/>${desc}` : (child.name || '');
+                html += `<tr>
+                    <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${counter}</td>
+                    <td style="border: 1px solid #000; padding: 4px; font-size: 13pt;">${child.topic || ''}</td>
+                    <td style="border: 1px solid #000; padding: 4px; font-size: 13pt;">${nameAndDesc}</td>
+                    <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.unit || ''}</td>
+                    <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.quantity || 0}</td>
+                    <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.broken || 0}</td>
+                </tr>`;
+            }
+        });
+
+        return { html, counter };
+    };
+
+    const buildInventoryHTML = () => {
+        const topLevelCategories = allItemsCache.filter(item => !item.parentId && item.type === 'category');
+
+        // Build subject-to-categories mapping
+        const subjectMap = new Map();
+        topLevelCategories.forEach(cat => {
+            if (cat.subjects && cat.subjects.length > 0) {
+                cat.subjects.forEach(subjectName => {
+                    if (!subjectMap.has(subjectName)) {
+                        subjectMap.set(subjectName, []);
+                    }
+                    subjectMap.get(subjectName).push(cat);
+                });
+            }
+        });
+
+        // Sort subjects by allSubjectsCache order
+        const sortedSubjects = allSubjectsCache
+            .map(s => s.name)
+            .filter(name => subjectMap.has(name));
+
+        const hStyle = 'border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; font-size: 13pt;';
+
+        let html = `<div style="font-family: 'Times New Roman', serif; font-size: 13pt; line-height: 1.5; max-width: 800px; margin: 0 auto;">`;
+
+        // Header
+        html += `<table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="width: 40%; text-align: center; vertical-align: top; padding: 0;">
+                    <p style="margin: 0; font-size: 13pt;">SỞ GD&amp;ĐT QUẢNG TRỊ</p>
+                    <p style="margin: 0; font-weight: bold; font-size: 13pt;">TRƯỜNG THPT CHẾ LAN VIÊN</p>
+                </td>
+                <td style="width: 60%; text-align: center; vertical-align: top; padding: 0;">
+                    <p style="margin: 0; font-weight: bold; font-size: 13pt;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                    <p style="margin: 0; font-weight: bold; font-size: 13pt;"><u>Độc lập - Tự do - Hạnh phúc</u></p>
+                </td>
+            </tr>
+        </table>`;
+
+        // Title
+        html += `<p style="text-align: center; font-weight: bold; font-size: 15pt; margin-top: 25px; margin-bottom: 0;">BIÊN BẢN</p>`;
+        html += `<p style="text-align: center; font-weight: bold; font-size: 13pt; margin-top: 5px;">Về việc kiểm kê thiết bị dạy học</p>`;
+
+        // Body intro
+        html += `<p style="text-indent: 30px;">Căn cứ nhiệm vụ năm học .........., Trường THPT Chế Lan Viên thành lập Hội đồng kiểm kê thiết bị dạy học tối thiểu các bộ môn Vật lý, Hóa học, Sinh học, Công nghệ, Toán học, Lịch sử, Địa Lý, Ngữ văn, TD- QPAN, Trải nghiệm, Hướng nghiệp...</p>`;
+        html += `<p style="text-indent: 30px;">Thời gian kiểm kê: ..........</p>`;
+        html += `<p style="text-indent: 30px;">Địa điểm: Phòng học bộ môn Vật lý, Hóa học, Sinh học, Phòng Thiết bị, Phòng Bản đồ, Kho TD- QPAN trường THPT Chế Lan Viên</p>`;
+        html += `<p style="text-indent: 30px;">Thành phần kiểm kê gồm:</p>`;
+
+        // Committee members (placeholder)
+        for (let i = 1; i <= 10; i++) {
+            html += `<p style="margin-left: 50px; margin-top: 2px; margin-bottom: 2px;">${i}. ..........</p>`;
+        }
+
+        // For each subject, create a section with table
+        sortedSubjects.forEach((subjectName, index) => {
+            const romanNum = toRoman(index + 1);
+            html += `<p style="font-weight: bold; margin-top: 20px; font-size: 13pt;">${romanNum}. MÔN ${subjectName.toUpperCase()}</p>`;
+
+            html += `<table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="${hStyle} width: 6%;">Số<br/>TT</th>
+                        <th style="${hStyle} width: 15%;">Chủ đề dạy học</th>
+                        <th style="${hStyle} width: 39%;">Tên thiết bị</th>
+                        <th style="${hStyle} width: 12%;">Đơn vị tính</th>
+                        <th style="${hStyle} width: 10%;">Tổng số</th>
+                        <th style="${hStyle} width: 8%;">Hỏng</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            const categories = subjectMap.get(subjectName);
+            let deviceCounter = 0;
+
+            categories.forEach(topCat => {
+                const result = renderInventoryTreeRows(topCat.id, deviceCounter);
+                html += result.html;
+                deviceCounter = result.counter;
+            });
+
+            html += `</tbody></table>`;
+        });
+
+        html += `</div>`;
+        return html;
+    };
+
+    const openInventoryPreview = () => {
+        const html = buildInventoryHTML();
+        inventoryPreviewContainer.innerHTML = html;
+        inventoryPreviewModal.style.display = 'flex';
+    };
+
+    const downloadInventoryWord = () => {
+        const contentHtml = inventoryPreviewContainer.innerHTML;
+        const fullHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head>
+                <meta charset='utf-8'>
+                <title>Biên bản kiểm kê thiết bị dạy học</title>
+                <style>
+                    @page { size: A4; margin: 2cm 2cm 2cm 3cm; }
+                    body { font-family: 'Times New Roman', serif; font-size: 13pt; }
+                </style>
+            </head>
+            <body>${contentHtml}</body>
+        </html>`;
+        const blob = new Blob(['\ufeff' + fullHtml], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'bien-ban-kiem-ke-thiet-bi.doc';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Đã tải file Word thành công!', 'success');
+    };
+
     // --- BULK IMPORT ---
     const openBulkImportModal = () => {
         const parentItem = selectedNodeId ? allItemsCache.find(item => item.id === selectedNodeId) : null;
@@ -1141,6 +1308,11 @@ document.addEventListener('DOMContentLoaded', () => {
         addCategoryBtn?.addEventListener('click', () => openCategoryModal(false));
         addDeviceBtn?.addEventListener('click', addInlineDeviceRow); // <-- THAY ĐỔI Ở ĐÂY
         bulkImportBtn?.addEventListener('click', openBulkImportModal);
+
+        // Inventory preview
+        exportInventoryBtn?.addEventListener('click', openInventoryPreview);
+        cancelInventoryPreviewBtn?.addEventListener('click', () => inventoryPreviewModal.style.display = 'none');
+        downloadWordBtn?.addEventListener('click', downloadInventoryWord);
 
         // Đóng/Lưu modal Danh mục
         cancelCategoryBtn?.addEventListener('click', () => {
@@ -1353,6 +1525,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (confirmDeleteModal.style.display === 'flex') cancelDeleteBtn.click();
                 else if (bulkImportModal.style.display === 'flex') cancelBulkImportBtn.click();
                 else if (bulkImportPreviewModal.style.display === 'flex') cancelBulkImportPreviewBtn.click();                
+                else if (inventoryPreviewModal.style.display === 'flex') inventoryPreviewModal.style.display = 'none';
                 else if (qrCodeModal.style.display === 'flex') qrCodeModal.style.display = 'none';
             }
         });
