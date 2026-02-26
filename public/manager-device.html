@@ -50,9 +50,10 @@
                                     <!-- Breadcrumbs sẽ được JS render vào đây -->
                                 </div>
                                 <div class="page-actions">
-                                    <button id="add-category-btn" class="btn-secondary"><i class="fas fa-folder-plus"></i> Thêm Danh mục</button>                                    
+                                    <button id="add-category-btn" class="btn-secondary"><i class="fas fa-folder-plus"></i> Thêm Danh mục</button>
                                     <button id="bulk-import-btn" class="btn-primary" disabled><i class="fas fa-file-import"></i> Nhập hàng loạt</button>
                                     <button id="add-device-btn" class="btn-primary" disabled><i class="fas fa-plus"></i> Thêm Thiết bị</button>
+                                    <button id="export-inventory-btn" class="btn-secondary"><i class="fas fa-file-word"></i> Xuất biên bản kiểm kê</button>
                                 </div>
                             </div>
                             <div id="device-list-container" class="table-container">
@@ -224,6 +225,26 @@
                 <div class="modal-actions-right">
                     <button id="cancel-delete-btn" class="btn-cancel">Hủy</button>
                     <button id="confirm-delete-btn" class="btn-danger">Xóa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal xem trước biên bản kiểm kê -->
+    <div id="inventory-preview-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content inventory-preview-modal-content">
+            <h2><i class="fas fa-file-word"></i> Xem trước biên bản kiểm kê</h2>
+            <div id="inventory-preview-container" class="inventory-preview-container">
+                <!-- Nội dung biên bản HTML sẽ được JS render vào đây -->
+            </div>
+            <div class="modal-actions">
+                <div class="modal-actions-left">
+                    <button id="fill-sample-btn" class="btn-secondary"><i class="fas fa-fill-drip"></i> Điền mẫu</button>
+                    <button id="clear-fields-btn" class="btn-cancel"><i class="fas fa-eraser"></i> Xóa tất cả</button>
+                </div>
+                <div class="modal-actions-right">
+                    <button id="cancel-inventory-preview-btn" class="btn-cancel">Đóng</button>
+                    <button id="download-word-btn" class="btn-primary"><i class="fas fa-download"></i> Tải file Word</button>
                 </div>
             </div>
         </div>

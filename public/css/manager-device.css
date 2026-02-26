@@ -260,3 +260,159 @@
     color: var(--text-on-primary);
     border-style: solid;
 }
+
+/* --- Inventory Preview Modal --- */
+.inventory-preview-modal-content {
+    width: 90vw;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.inventory-preview-modal-content .modal-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.inventory-preview-modal-content .modal-actions-left {
+    display: flex;
+    gap: 8px;
+}
+
+.inventory-preview-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.inventory-preview-container .editable-field {
+    padding: 0 2px;
+    cursor: text;
+    transition: background-color 0.2s;
+}
+
+.inventory-preview-container .editable-field:empty::before {
+    content: '.....';
+    color: #ccc;
+}
+
+.inventory-preview-container .editable-field:hover {
+    background-color: #fff3cd;
+}
+
+.inventory-preview-container .editable-field:focus {
+    background-color: #fff3cd;
+    border-bottom: 1px solid var(--primary-color);
+    outline: none;
+}
+
+/* --- Responsive Mobile --- */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .page-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .page-actions .btn-secondary,
+    .page-actions .btn-primary,
+    .page-actions .btn-cancel {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Table scroll ngang */
+    #device-list-container {
+        overflow-x: auto;
+    }
+
+    .device-table {
+        min-width: 900px;
+    }
+
+    /* Inventory preview modal - full screen on mobile */
+    #inventory-preview-modal {
+        padding: 0;
+    }
+
+    .inventory-preview-modal-content {
+        width: 100%;
+        max-width: none;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    .inventory-preview-modal-content h2 {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .inventory-preview-container {
+        padding: 10px;
+        flex: 1;
+        min-height: 0; /* Cho phép flex item co lại */
+    }
+
+    .inventory-preview-modal-content .modal-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .inventory-preview-modal-content .modal-actions-left,
+    .inventory-preview-modal-content .modal-actions-right {
+        display: contents;
+    }
+
+    .inventory-preview-modal-content .modal-actions button {
+        width: 100%;
+    }
+
+    /* Thu gọn mô tả thiết bị trong preview */
+    .inv-desc {
+        max-height: 3.6em; /* ~2 dòng */
+        overflow: hidden;
+        cursor: pointer;
+        position: relative;
+        color: var(--text-light);
+        font-size: 0.9em;
+        margin-top: 4px;
+    }
+
+    .inv-desc::after {
+        content: '▼ xem thêm';
+        display: block;
+        font-size: 0.75em;
+        color: var(--primary-color);
+        margin-top: 2px;
+    }
+
+    .inv-desc.expanded {
+        max-height: none;
+    }
+
+    .inv-desc.expanded::after {
+        content: '▲ thu gọn';
+    }
+
+    /* Shared modal responsive */
+    .modal-content {
+        min-width: unset;
+        width: 95%;
+    }
+}

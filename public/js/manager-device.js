@@ -78,6 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const manualFileInput = document.getElementById('device-manual-file');
     const manualFileLink = document.getElementById('device-manual-link');
 
+    // Inventory Preview Modal Elements
+    const exportInventoryBtn = document.getElementById('export-inventory-btn');
+    const inventoryPreviewModal = document.getElementById('inventory-preview-modal');
+    const inventoryPreviewContainer = document.getElementById('inventory-preview-container');
+    const cancelInventoryPreviewBtn = document.getElementById('cancel-inventory-preview-btn');
+    const downloadWordBtn = document.getElementById('download-word-btn');
+
     // --- STATE ---
     let allItemsCache = [];
     let selectedNodeId = null;
@@ -990,6 +997,321 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
 
+    // --- INVENTORY REPORT (Biên bản kiểm kê) ---
+    const toRoman = (num) => {
+        const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'];
+        return numerals[num - 1] || String(num);
+    };
+
+    // depth 0 → A,B,C  |  depth 1 → I,II,III  |  depth 2 → 1,2,3  |  devices → parentNum.x
+    const renderInventoryTreeRows = (parentId, depth, parentNumStr) => {
+        let html = '';
+        const children = allItemsCache
+            .filter(item => item.parentId === parentId)
+            .sort((a, b) => String(a.order || '').localeCompare(String(b.order || ''), undefined, { numeric: true, sensitivity: 'base' }));
+
+        let catIdx = 0;
+        let deviceIdx = 0;
+
+        children.forEach(child => {
+            if (child.type === 'category') {
+                catIdx++;
+                let stt;
+                if (depth === 0) {
+                    stt = String.fromCharCode(64 + catIdx); // A, B, C...
+                } else if (depth === 1) {
+                    stt = toRoman(catIdx); // I, II, III...
+                } else {
+                    stt = String(catIdx); // 1, 2, 3...
+                }
+                html += `<tr>
+                    <td style="border: 1px solid #000; padding: 4px; text-align: center; font-weight: bold; font-size: 13pt;">${stt}</td>
+                    <td colspan="5" style="border: 1px solid #000; padding: 4px 8px; font-weight: bold; text-transform: uppercase; font-size: 13pt;">
+                        ${child.name}
+                    </td>
+                </tr>`;
+                // depth >= 2 categories pass their number as prefix for device STT
+                const numStr = depth >= 2 ? String(catIdx) : '';
+                const result = renderInventoryTreeRows(child.id, depth + 1, numStr);
+                html += result.html;
+            } else if (child.type === 'device') {
+                deviceIdx++;
+                const stt = parentNumStr ? `${parentNumStr}.${deviceIdx}` : String(deviceIdx);
+                const desc = child.description ? child.description.replace(/\n/g, '<br/>') : '';
+                const nameCell = desc
+                    ? `${child.name || ''}<div class="inv-desc" onclick="this.classList.toggle('expanded')">${desc}</div>`
+                    : (child.name || '');
+                html += `<tr>
+                    <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${stt}</td>
+                    <td style="border: 1px solid #000; padding: 4px; font-size: 13pt;">${child.topic || ''}</td>
+                    <td style="border: 1px solid #000; padding: 4px; font-size: 13pt;">${nameCell}</td>
+                    <td style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.unit || ''}</td>
+                    <td contenteditable="true" inputmode="numeric" data-device-id="${child.id}" data-field="quantity" style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.quantity || 0}</td>
+                    <td contenteditable="true" inputmode="numeric" data-device-id="${child.id}" data-field="broken" style="border: 1px solid #000; padding: 4px; text-align: center; font-size: 13pt;">${child.broken || 0}</td>
+                </tr>`;
+            }
+        });
+
+        return { html };
+    };
+
+    const buildInventoryHTML = () => {
+        const topLevelCategories = allItemsCache.filter(item => !item.parentId && item.type === 'category');
+
+        // Normalize Vietnamese for flexible matching (case-insensitive, ý/í variants)
+        const normalizeVi = (str) => str.normalize('NFC').replace(/[ýỳỷỹỵÝỲỶỸỴ]/g, m => m === m.toUpperCase() ? 'i' : 'i').toLowerCase().trim();
+
+        // Build subject-to-categories mapping using normalized keys
+        const subjectMap = new Map(); // normalized key → categories[]
+        topLevelCategories.forEach(cat => {
+            if (cat.subjects && cat.subjects.length > 0) {
+                cat.subjects.forEach(subjectName => {
+                    const normKey = normalizeVi(subjectName);
+                    if (!subjectMap.has(normKey)) {
+                        subjectMap.set(normKey, []);
+                    }
+                    subjectMap.get(normKey).push(cat);
+                });
+            }
+        });
+
+        // Sort subjects by predefined order (using actual DB names), then remaining alphabetically
+        const SUBJECT_ORDER = ['Toán', 'Vật Lý', 'Hóa học', 'Sinh học', 'CNCN', 'CNNN', 'Lịch sử', 'Địa Lý', 'Tin học', 'Ngữ Văn', 'GDQP AN', 'Giáo dục thể chất', 'Hoạt động trải nghiệm', 'KTGD&PL'];
+        const findOrderIndex = (name) => {
+            const norm = normalizeVi(name);
+            return SUBJECT_ORDER.findIndex(s => normalizeVi(s) === norm);
+        };
+        // Filter subjects that have categories mapped (using normalized matching)
+        const allSubjectNames = allSubjectsCache.map(s => s.name).filter(name => subjectMap.has(normalizeVi(name)));
+        const sortedSubjects = allSubjectNames.sort((a, b) => {
+            const idxA = findOrderIndex(a);
+            const idxB = findOrderIndex(b);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+            return a.localeCompare(b, 'vi');
+        });
+
+        const hStyle = 'border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; font-size: 13pt;';
+
+        let html = `<div style="font-family: 'Times New Roman', serif; font-size: 13pt; line-height: 1.5; max-width: 800px; margin: 0 auto;">`;
+
+        // Header
+        html += `<table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="width: 40%; text-align: center; vertical-align: top; padding: 0;">
+                    <p style="margin: 0; font-size: 13pt;">SỞ GD&amp;ĐT QUẢNG TRỊ</p>
+                    <p style="margin: 0; font-weight: bold; font-size: 13pt;">TRƯỜNG THPT CHẾ LAN VIÊN</p>
+                </td>
+                <td style="width: 60%; text-align: center; vertical-align: top; padding: 0;">
+                    <p style="margin: 0; font-weight: bold; font-size: 13pt;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                    <p style="margin: 0; font-weight: bold; font-size: 13pt;"><u>Độc lập - Tự do - Hạnh phúc</u></p>
+                </td>
+            </tr>
+        </table>`;
+
+        // Title
+        html += `<p style="text-align: center; font-weight: bold; font-size: 15pt; margin-top: 25px; margin-bottom: 0;">BIÊN BẢN</p>`;
+        html += `<p style="text-align: center; font-weight: bold; font-size: 13pt; margin-top: 5px;">Về việc kiểm kê thiết bị dạy học</p>`;
+
+        // Editable field helper with ID for localStorage persistence
+        const ef = (id, text) => `<span contenteditable="true" class="editable-field" data-field-id="${id}">${text}</span>`;
+
+        // Body intro
+        html += `<p style="text-indent: 30px;">Căn cứ nhiệm vụ năm học ${ef('nam-hoc', '')}, Trường THPT Chế Lan Viên thành lập Hội đồng kiểm kê thiết bị dạy học tối thiểu các bộ môn Vật lý, Hóa học, Sinh học, Công nghệ, Toán học, Lịch sử, Địa Lý, Ngữ văn, TD- QPAN, Trải nghiệm, Hướng nghiệp...</p>`;
+        html += `<p style="text-indent: 30px;">Thời gian kiểm kê: ${ef('thoi-gian', '')}</p>`;
+        html += `<p style="text-indent: 30px;">Địa điểm: ${ef('dia-diem', '')}</p>`;
+        html += `<p style="text-indent: 30px;">Thành phần kiểm kê gồm:</p>`;
+
+        // Committee members (editable placeholders)
+        for (let i = 1; i <= 10; i++) {
+            html += `<p style="margin-left: 50px; margin-top: 2px; margin-bottom: 2px;">${i}. ${ef(`member-${i}`, '')}</p>`;
+        }
+
+        // For each subject, create a section with table
+        sortedSubjects.forEach((subjectName, index) => {
+            const romanNum = toRoman(index + 1);
+            html += `<p style="font-weight: bold; margin-top: 20px; font-size: 13pt;">${romanNum}. MÔN ${subjectName.toUpperCase()}</p>`;
+
+            html += `<table style="width: 100%; border-collapse: collapse; table-layout: fixed; word-break: break-word;">
+                <thead>
+                    <tr>
+                        <th style="${hStyle} width: 6%;">Số<br/>TT</th>
+                        <th style="${hStyle} width: 15%;">Chủ đề dạy học</th>
+                        <th style="${hStyle} width: 39%;">Tên thiết bị</th>
+                        <th style="${hStyle} width: 12%;">Đơn vị tính</th>
+                        <th style="${hStyle} width: 10%;">Tổng số</th>
+                        <th style="${hStyle} width: 8%;">Hỏng</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            const categories = subjectMap.get(normalizeVi(subjectName));
+
+            categories.forEach(topCat => {
+                const result = renderInventoryTreeRows(topCat.id, 0, '');
+                html += result.html;
+            });
+
+            html += `</tbody></table>`;
+        });
+
+        html += `</div>`;
+        return html;
+    };
+
+    const INVENTORY_STORAGE_KEY = 'inventoryReportFields';
+
+    const INVENTORY_SAMPLE_DATA = {
+        'nam-hoc': '2024-2025',
+        'thoi-gian': '7h30 ngày 30 tháng 12 năm 2024',
+        'dia-diem': 'Phòng học bộ môn Vật lý, Hóa học, Sinh học, Phòng Thiết bị, Phòng Bản đồ, Kho TD- QPAN trường THPT Chế Lan Viên',
+        'member-1': 'Bà Nguyễn Thị Tân, Phó hiệu trưởng – Phụ trách CSVC',
+        'member-2': 'Bà Nguyễn Thị Loan, Nhân viên thiết bị',
+        'member-3': 'Bà Nguyễn Thị Mỹ Hạnh, Kế toán',
+        'member-4': 'Ông Hoàng Ngọc Phúc, TTCM tổ Sinh-TD-GDQP',
+        'member-5': 'Bà Nguyễn Thị Thùy Hoài, TPCM tổ Vật lý- CN',
+        'member-6': 'Ông Nguyễn Đức Đạt, TTCM tổ Địa -Tin',
+        'member-7': 'Ông Phan Quốc Dũng, TTCM tổ Sử- GDKT&PL',
+        'member-8': 'Ông Phạm Văn Lê Long, TPCM tổ Địa –Tin',
+        'member-9': 'Bà Nguyễn Thị Hải Hiền, TPCM tổ Sinh-TD-GDQP',
+        'member-10': 'Ông Từ Xuân Thành, TTCM tổ Hóa học'
+    };
+
+    const fillSampleData = () => {
+        inventoryPreviewContainer.querySelectorAll('.editable-field[data-field-id]').forEach(el => {
+            const value = INVENTORY_SAMPLE_DATA[el.dataset.fieldId];
+            if (value) el.innerHTML = value;
+        });
+        saveInventoryFields();
+    };
+
+    const clearAllFields = () => {
+        inventoryPreviewContainer.querySelectorAll('.editable-field[data-field-id]').forEach(el => {
+            el.innerHTML = '';
+        });
+        saveInventoryFields();
+    };
+
+    const saveInventoryFields = () => {
+        const fields = {};
+        inventoryPreviewContainer.querySelectorAll('.editable-field[data-field-id]').forEach(el => {
+            fields[el.dataset.fieldId] = el.innerHTML;
+        });
+        localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(fields));
+    };
+
+    const restoreInventoryFields = () => {
+        try {
+            const saved = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY));
+            if (!saved) return;
+            inventoryPreviewContainer.querySelectorAll('.editable-field[data-field-id]').forEach(el => {
+                if (saved[el.dataset.fieldId] !== undefined) {
+                    el.innerHTML = saved[el.dataset.fieldId];
+                }
+            });
+        } catch (e) { /* ignore parse errors */ }
+    };
+
+    const openInventoryPreview = () => {
+        const html = buildInventoryHTML();
+        inventoryPreviewContainer.innerHTML = html;
+        restoreInventoryFields();
+
+        // Auto-save editable fields on edit
+        inventoryPreviewContainer.addEventListener('input', (e) => {
+            if (e.target.classList.contains('editable-field')) {
+                saveInventoryFields();
+            }
+        });
+
+        // Auto-select all text on focus for quantity/broken cells
+        // Delay to avoid triggering mobile context menu (Cut/Copy/Paste) immediately
+        inventoryPreviewContainer.addEventListener('focus', (e) => {
+            if (e.target.dataset?.deviceId && e.target.dataset?.field) {
+                setTimeout(() => {
+                    const range = document.createRange();
+                    range.selectNodeContents(e.target);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }, 50);
+            }
+        }, true);
+
+        // Save quantity/broken to Firestore on blur
+        inventoryPreviewContainer.addEventListener('blur', async (e) => {
+            const cell = e.target;
+            const deviceId = cell.dataset?.deviceId;
+            const field = cell.dataset?.field;
+            if (!deviceId || !field) return;
+
+            const newValue = parseInt(cell.textContent.trim(), 10);
+            const item = allItemsCache.find(i => i.id === deviceId);
+            if (isNaN(newValue) || newValue < 0) {
+                cell.textContent = item ? (item[field] || 0) : 0;
+                return;
+            }
+
+            // Validate: broken <= quantity
+            if (field === 'broken') {
+                const qty = item ? (item.quantity || 0) : 0;
+                if (newValue > qty) {
+                    showToast(`Số hỏng (${newValue}) không được lớn hơn tổng số (${qty})!`, 'error');
+                    cell.textContent = item ? (item.broken || 0) : 0;
+                    return;
+                }
+            }
+            if (field === 'quantity') {
+                const broken = item ? (item.broken || 0) : 0;
+                if (newValue < broken) {
+                    showToast(`Tổng số (${newValue}) không được nhỏ hơn số hỏng (${broken})!`, 'error');
+                    cell.textContent = item ? (item.quantity || 0) : 0;
+                    return;
+                }
+            }
+
+            if (item && item[field] === newValue) return;
+
+            try {
+                await updateDoc(doc(firestore, 'devices', deviceId), { [field]: newValue });
+                // Update local cache
+                if (item) item[field] = newValue;
+            } catch (err) {
+                console.error('Lỗi cập nhật:', err);
+                showToast('Lỗi cập nhật dữ liệu!', 'error');
+                // Revert on error
+                cell.textContent = item ? (item[field] || 0) : 0;
+            }
+        }, true);
+
+        inventoryPreviewModal.style.display = 'flex';
+    };
+
+    const downloadInventoryWord = () => {
+        const contentHtml = inventoryPreviewContainer.innerHTML;
+        const fullHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head>
+                <meta charset='utf-8'>
+                <title>Biên bản kiểm kê thiết bị dạy học</title>
+                <style>
+                    @page { size: A4; margin: 2cm 2cm 2cm 3cm; }
+                    body { font-family: 'Times New Roman', serif; font-size: 13pt; }
+                </style>
+            </head>
+            <body>${contentHtml}</body>
+        </html>`;
+        const blob = new Blob(['\ufeff' + fullHtml], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'bien-ban-kiem-ke-thiet-bi.doc';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
     // --- BULK IMPORT ---
     const openBulkImportModal = () => {
         const parentItem = selectedNodeId ? allItemsCache.find(item => item.id === selectedNodeId) : null;
@@ -1141,6 +1463,13 @@ document.addEventListener('DOMContentLoaded', () => {
         addCategoryBtn?.addEventListener('click', () => openCategoryModal(false));
         addDeviceBtn?.addEventListener('click', addInlineDeviceRow); // <-- THAY ĐỔI Ở ĐÂY
         bulkImportBtn?.addEventListener('click', openBulkImportModal);
+
+        // Inventory preview
+        exportInventoryBtn?.addEventListener('click', openInventoryPreview);
+        cancelInventoryPreviewBtn?.addEventListener('click', () => inventoryPreviewModal.style.display = 'none');
+        downloadWordBtn?.addEventListener('click', downloadInventoryWord);
+        document.getElementById('fill-sample-btn')?.addEventListener('click', fillSampleData);
+        document.getElementById('clear-fields-btn')?.addEventListener('click', clearAllFields);
 
         // Đóng/Lưu modal Danh mục
         cancelCategoryBtn?.addEventListener('click', () => {
@@ -1353,6 +1682,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (confirmDeleteModal.style.display === 'flex') cancelDeleteBtn.click();
                 else if (bulkImportModal.style.display === 'flex') cancelBulkImportBtn.click();
                 else if (bulkImportPreviewModal.style.display === 'flex') cancelBulkImportPreviewBtn.click();                
+                else if (inventoryPreviewModal.style.display === 'flex') inventoryPreviewModal.style.display = 'none';
                 else if (qrCodeModal.style.display === 'flex') qrCodeModal.style.display = 'none';
             }
         });
